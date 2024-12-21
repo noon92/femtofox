@@ -120,7 +120,7 @@ echo "Installing meshtastic community projects..."
 echo "Installing meshing around BBS..."
 git clone https://github.com/spudgunman/meshing-around.git /opt/meshing-around
 # Dependencies for meshing around 
-pip3 install requests geopy maidenhead beautifulsoup4 dadjokes schedule wikipedia googlesearch-python
+pip3 install requests pyephem geopy maidenhead beautifulsoup4 dadjokes schedule wikipedia googlesearch-python
 
 # Set up the meshing around service
 # sudo cp /opt/meshing-around/meshing-around.service /etc/systemd/system/meshing-around.service
