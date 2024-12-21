@@ -13,17 +13,12 @@ dmesg -C
 rm ~/.bash_history
 history -c && history -w
 
-# Clear Shell History
-rm ~/.bash_history
-history -c && history -w
-
 # Clear Temporary Files
 rm -rf /tmp/*
 rm -rf /var/tmp/*
 
 # Stop BBS service and clear log
 systemctl stop mesh-bbs.service
-rm bbs.log
 
 # Clear Package Cache
 apt-get -y autoremove
@@ -81,11 +76,9 @@ echo "------- Delete dummy file -------"
 rm -f ~/delete_me
 sync
 sync
+fstrim -v /
 echo "-------Finish zeroing at $(date)-------"
 echo ""
-
-# Trim filesystem
-fstrim -v /
 
 # Clear dmesg Log
 dmesg -C
