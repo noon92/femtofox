@@ -29,7 +29,7 @@ if [ -z "$DISTRIB_DESCRIPTION" ] && [ -x /usr/bin/lsb_release ]; then
 fi
 
 [ -r /etc/lsb-release ] && . /etc/lsb-release
-foxbuntu_version=$(cat /etc/foxbuntu-release)
+foxbuntu_version=$(grep -oP 'major=\K[0-9]+' /etc/foxbuntu-release).$(grep -oP 'minor=\K[0-9]+' /etc/foxbuntu-release).$(grep -oP 'patch=\K[0-9]+' /etc/foxbuntu-release)
 spaces=$((9 - ${#foxbuntu_version}))
 
 # Print the result with the appropriate number of spaces
