@@ -15,7 +15,7 @@ To install Foxbuntu, you'll need the following:
 4. Following the instructions on the [USB Configuration Tool](usb_config.md) page, prepare your USB flash drive with your desired settings.
 5. Using your USB OTG adapter, plug  the USB flash drive into the Luckfox Pico Mini's USB port.
 6. Give power to the Femtofox.
-7. The Femtofox will perform its first boot. This can take up to 5 minutes. When boot is complete, the USR LED will blink 5 times, 1/2 a second each. At this point, Meshtastic should be running and if you plug in a wifi adapter you should have network.
+7. The Femtofox will perform its first boot. This can take up to 5 minutes (subsequent boots ~40 seconds). When boot is complete, the USR LED will blink 5 times, 1/2 a second each. At this point, Meshtastic should be running and if you plug in a wifi adapter you should have network.
 	* Optional: plug an RJ45 cable in to the ethernet port, if you have one installed.
 8. To connect to your Femtofox via SSH, open [PuTTY](https://www.putty.org/) or your favorite SSH client and connect to your Femtofox via `femtofox.local` or its IP (check your router).
 	* Username: `femto`
