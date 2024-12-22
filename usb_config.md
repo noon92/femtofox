@@ -62,7 +62,7 @@ A log (`femtofox-config.log`) is saved to `/home/femto` and the USB drive (excep
 <br>
 ### Boot codes
 When the Femtofox is finished booting, it will blink its User LED (see below) in a pattern which can be used to gather info on its status or help diagnose issues.
-![LEDs](https://github.com/noon92/femtofox/blob/main/leds.png)
+![LEDs](assets/images/leds.png)
 | LED blink pattern | Meaning | Possible causes | Solutions |
 |--|--|--|--|
 |<center>⚠️<br>________________<br>1 very long blink, lasting 5 seconds| Failed to mount USB drive. Ignoring.| <li>Invalid filesystem<li>Corrupted partition table<li>Defective USB drive<li>Defective USB OTG adapter | <li>Use a supported partition (FAT32, exFAT, NTFS, ext4)<li>Repair partition table<li>Try another USB drive<li>Try another USB OTG adapter |
@@ -74,6 +74,3 @@ When the Femtofox is finished booting, it will blink its User LED (see below) in
  
 > [!NOTE]
 > Boot codes can appear in sequence - for example: one long (4 second) blink, followed by 5 medium (half second) blinks means the USB drive failed to mount, and that the boot sequence is complete.
-<!--stackedit_data:
-eyJoaXN0b3J5IjpbLTEzNzY1NDc2MzJdfQ==
--->
