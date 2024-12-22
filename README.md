@@ -1,4 +1,4 @@
-<img src="https://github.com/noon92/luckfox/blob/main/KSE_side_shot.png" width="750">
+<img src="assets/images/KSE_side_shot.png" width="750">
 
 
 # Femtofox &nbsp;&nbsp;&nbsp;<sub><sub>The tiny, low power Linux Meshtastic node
@@ -46,7 +46,7 @@ There are four methods to get online:
 3. Preconfigured Ubuntu images: ethernet via the castellated pins at the bottom of the board. See pinout at the bottom of this readme.
 4. RDNIS via usb - [see this guide](https://web.archive.org/web/20241006173648/https://wiki.luckfox.com/Luckfox-Pico/Luckfox-Pico-Network-Sharing-1/). Note that in the preconfigured images USB is set to host mode, so you'll have to switch back to peripheral with `sudo luckfox-config`. This is not really recommended, but can be used in a pinch.
 
-### [Installation - connection to Meshtastic node via UART or USB](foxbuntu_install.md)
+### [Installation guide](foxbuntu_install.md)
 
 ### Pinout:
 |Pin #|Pin ID |Function      |Luckfox |Pin #|Pin ID |Function      |
@@ -66,8 +66,8 @@ There are four methods to get online:
 Pin ID explanation: **1C6** = GPIO bank **1**, group **C**, pin **6**.
 In Meshtasticd's config.yaml we use GPIO bank 1, and subtract 32 from the pin number.
 
-![pinout](https://github.com/noon92/luckfox/blob/main/luckfox_pinout.png)
-![pinout](https://github.com/noon92/luckfox/blob/main/luckfox_pico_mini_original_wiring_diagram.jpg)
+![pinout](assets/images/luckfox_pinout.png)
+![pinout](assets/images/luckfox_pico_mini_original_wiring_diagram.jpg)
 
 > [!NOTE]
 > The information on this page is given without warranty or guarantee. Links to vendors of products are for informational purposes only.
