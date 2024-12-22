@@ -46,12 +46,7 @@ There are four methods to get online:
 3. Preconfigured Ubuntu images: ethernet via the castellated pins at the bottom of the board. See pinout at the bottom of this readme.
 4. RDNIS via usb - [see this guide](https://web.archive.org/web/20241006173648/https://wiki.luckfox.com/Luckfox-Pico/Luckfox-Pico-Network-Sharing-1/). Note that in the preconfigured images USB is set to host mode, so you'll have to switch back to peripheral with `sudo luckfox-config`. This is not really recommended, but can be used in a pinch.
 
-### Installation - connection to Meshtastic node via UART or USB:
-
-1. Download the most recent OS image in [releases](https://github.com/noon92/femtofox/releases).
-2. Flash the image your MicroSD card using [Balena Etcher](https://etcher.balena.io/) or your favorite flashing program. You will likely get a warning that the image appears to be invalid or has no partition table. This is normal.
-3. Insert the microSD card into the Luckfox Pico Mini.
-4. Configure the system with a USB drive as described in [USB Configuration Tool](usb_config.md).
+### [Installation - connection to Meshtastic node via UART or USB](foxbuntu_install.md)
 
 ### Pinout:
 |Pin #|Pin ID |Function      |Luckfox |Pin #|Pin ID |Function      |
