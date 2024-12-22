@@ -1,4 +1,5 @@
-## Requirements for installing Foxbuntu
+## Foxbuntu Installation Guide
+### Requirements for installing Foxbuntu
 To install Foxbuntu, you'll need the following:
 1. microSD card. You can select one from [Supported Hardware](supported_hardware.md), but any card over 8gb and supporting UHS-I *should* work.
 2. microSD card reader for your PC.
@@ -6,7 +7,7 @@ To install Foxbuntu, you'll need the following:
 4. USB flash drive.
 5. A Femtofox.
 
-## Installation instructions
+### Installation instructions
 1. Download the latest [stable Foxbuntu release.](https://github.com/noon92/femtofox/releases). At the bottom of the release, click the <u>.7z</u> file to download.
 2. Flash the image your MicroSD card using [Balena Etcher](https://etcher.balena.io/) or your favorite flashing program. You will likely get a warning that the image appears to be invalid or has no partition table. This is normal.
 3. Insert the microSD card into the Luckfox Pico Mini.
