@@ -1,11 +1,11 @@
 [Unit]
-Description=Button Reboot Service
+Description=Button Service
 After=multi-user.target
 
 [Service]
-ExecStart=/usr/local/bin/buttonservice.sh
+ExecStart=/usr/local/bin/button.sh
 Restart=always
-User=femto
+User=root
 
 [Install]
 WantedBy=multi-user.target
