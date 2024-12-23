@@ -13,7 +13,7 @@ To install Foxbuntu, you'll need the following:
 3. Insert the microSD card into the Luckfox Pico Mini. The microSD slot is on the back of the board.
 4. Following the instructions on the [USB Configuration Tool](usb_config.md) page, prepare your USB flash drive with your desired settings.
 5. Using a USB OTG adapter, plug the USB flash drive into the *data* USB port.
-> [!NOTE]
+> [!TIP]
 > Optional: attach a USB to serial adapter to the Femtofox via the TX2 and RX2 pins for debug console. Remember to bridge the grounds!
 > Optional: plug an RJ45 cable in to the ethernet port, if you have one installed.
 7. Connect the Femtofox to power, either via the *power* USB-C port (on the same side as the ethernet port) or via the 3.3v or the 5v JST power plugs.
