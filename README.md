@@ -12,7 +12,7 @@
 - [Features](#features)
 - Specifications - coming soon
 - [Supported hardware](supported_hardware.md)
-- [Installation guide](foxbuntu_install)
+- [Installation guide](foxbuntu_install.md)
 - How to order - coming soon
 - DIY instructions - coming soon
 - [Networking](#networking)
