@@ -35,7 +35,7 @@
 
 Login for the images is `femto:fox`. Root is `root:root`.
 
-The preconfigured images will reboot every 24 hours. If the internal clock is accurate, this will be at 3am. Reboot timing is set in `crontab`. To keep accurate time, an RTC module can be installed (see [supported hardware](supported_hardware.md)) or internet connectivity can be maintained for NTP. If no authoritative time source is found, time will be set to 2024-01-01 00:00 on boot.
+The preconfigured images will reboot every 24 hours. If the internal clock is accurate, this will be at 3am. Reboot timing is set in `crontab`. To keep accurate time, an RTC module can be installed (see [supported hardware](supported_hardware.md)) or internet connectivity can be maintained for NTP via [Chrony](https://chrony-project.org/).
 
 ### [Supported hardware - click here](supported_hardware.md)
 
