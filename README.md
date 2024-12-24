@@ -11,7 +11,7 @@
 * Meshtastic native client support via SPI
 * USB host support
 * Wifi over USB
-* RTC support
+* RTC support for timekeeping
 
 **Accomplished:**
 - [x] Meshtastic native client controlling a LoRa radio (see [supported hardware](supported_hardware.md))
