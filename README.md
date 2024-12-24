@@ -33,8 +33,6 @@
 * A solar-deployable Meshtastic node running Linux, without needing a giant solar panel / battery
 * Wifi capabilities (with ability to disable/enable wifi via mesh for power savings)
 
-Login for the images is `femto:fox`. Root is `root:root`.
-
 The preconfigured images will reboot every 24 hours. If the internal clock is accurate, this will be at 3am. Reboot timing is set in `crontab`. To keep accurate time, an RTC module can be installed (see [supported hardware](supported_hardware.md)) or internet connectivity can be utilized for NTP via [Chrony](https://chrony-project.org/).
 
 ### [Supported hardware - click here](supported_hardware.md)
