@@ -4,13 +4,20 @@
 # Femtofox &nbsp;&nbsp;&nbsp;<sub><sub>The tiny, low power Linux Meshtastic node
 #### The Luckfox Pico Mini is a compact and power efficient Linux capable board, capable of running Ubuntu. Femtofox is an expansion of the Luckfox's capabilities, combining a customized Ubuntu image with a custom PCB, integrating it with a LoRa radio to create a power efficient, cheap and small Meshtastic Linux node.
 
+ - Features
+ - Supported hardware
+ - Installation guide
+ - How to order - coming soon
+ - Networking
+ - USB configuration tool 
+
 **Features:**
 * Tiny size (63x54mm for the Kitchen Sink Edition, 65x30mm for the Smol Edition). Roughly equivalent to a Raspberry Pi and Pi Zero.
 * Power efficiency (~0.35-0.4w average with a 30db radio and no wifi)
 * Full Linux CLI (Ubuntu) via our pre-built Foxbuntu image
 * Meshtastic native client support via SPI
 * USB host support
-* Wifi over USB
+* USB wifi support
 * RTC support for timekeeping
 
 **Accomplished:**
@@ -37,7 +44,7 @@ The preconfigured images will reboot every 24 hours. If the internal clock is ac
 
 ### [Supported hardware - click here](supported_hardware.md)
 
-### Networking:
+### (#Networking):
 There are four methods to get online:
 1. Ethernet over USB - most adapters should be supported, but I've only tested the RTL8152 chipset.
 2. USB wifi  (see [supported hardware](supported_hardware.md)).
