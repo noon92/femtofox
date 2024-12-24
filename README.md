@@ -44,7 +44,7 @@ The preconfigured images will reboot every 24 hours. If the internal clock is ac
 
 ### [Supported hardware - click here](supported_hardware.md)
 
-### (#Networking):
+### [Networking]:
 There are four methods to get online:
 1. Ethernet over USB - most adapters should be supported, but I've only tested the RTL8152 chipset.
 2. USB wifi  (see [supported hardware](supported_hardware.md)).
