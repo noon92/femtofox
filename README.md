@@ -4,21 +4,28 @@
 # Femtofox &nbsp;&nbsp;&nbsp;<sub><sub>The tiny, low power Linux Meshtastic node
 #### The Luckfox Pico Mini is a compact and power efficient Linux capable board, capable of running Ubuntu. Femtofox is an expansion of the Luckfox's capabilities, combining a customized Ubuntu image with a custom PCB, integrating it with a LoRa radio to create a power efficient, cheap and small Meshtastic Linux node.
 
- - Features
- - Supported hardware
- - Installation guide
- - How to order - coming soon
- - [Networking](#networking)
- - USB configuration tool 
 
-**Features:**
+**Project goals:**
+* A solar-deployable Meshtastic node running Linux, without needing a giant solar panel / battery
+* Wifi capabilities (with ability to disable/enable wifi via mesh for power savings)
+
+- [Features](#features)
+- Specifications - coming soon
+- [Supported hardware](supported_hardware.md)
+- [Installation guide](foxbuntu_install)
+- How to order - coming soon
+- DIY instructions - coming soon
+- [Networking](#networking)
+- [USB configuration tool](usbconfig.md) 
+
+### Features
 * Tiny size (63x54mm for the Kitchen Sink Edition, 65x30mm for the Smol Edition). Roughly equivalent to a Raspberry Pi and Pi Zero.
 * Power efficiency (~0.35-0.4w average with a 30db radio and no wifi)
 * Full Linux CLI (Ubuntu) via our pre-built Foxbuntu image
 * Meshtastic native client support via SPI
-* USB host support
-* USB wifi support
-* RTC support for timekeeping
+* USB host support - attach USB peripherals (see [supported hardware](supported_hardware.md))
+* USB wifi support (see [supported hardware](supported_hardware.md))
+* RTC support for timekeeping (see [supported hardware](supported_hardware.md))
 
 **Accomplished:**
 - [x] Meshtastic native client controlling a LoRa radio (see [supported hardware](supported_hardware.md))
@@ -35,10 +42,6 @@
 - [x] Meshtasticd to run LoRa radio over SPI (accomplished, updated image and instructions coming soon)
 - [x] Allow editing of config files by plugging in thumb drive
 - [x] Ability to activate or deactivate WIFI via Meshtastic admin
-
-**Project goals:**
-* A solar-deployable Meshtastic node running Linux, without needing a giant solar panel / battery
-* Wifi capabilities (with ability to disable/enable wifi via mesh for power savings)
 
 The preconfigured images will reboot every 24 hours. If the internal clock is accurate, this will be at 3am. Reboot timing is set in `crontab`. To keep accurate time, an RTC module can be installed (see [supported hardware](supported_hardware.md)) or internet connectivity can be utilized for NTP via [Chrony](https://chrony-project.org/).
 
