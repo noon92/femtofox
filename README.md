@@ -6,7 +6,7 @@
 
 **Features:**
 * Tiny size (63x54mm for the Kitchen Sink Edition, 65x30mm for the Smol Edition). Roughly equivalent to a Raspberry Pi and Pi Zero.
-* Power efficiency (~0.35-0.4w) with a 30db radio and no wifi
+* Power efficiency (~0.35-0.4w average) with a 30db radio and no wifi
 * Full Linux CLI (Ubuntu) via our pre-built Foxbuntu image
 * Meshtastic native client support via SPI
 * USB host support
