@@ -29,15 +29,12 @@ if [ -z "$DISTRIB_DESCRIPTION" ] && [ -x /usr/bin/lsb_release ]; then
 fi
 
 [ -r /etc/lsb-release ] && . /etc/lsb-release
-foxbuntu_version=$(grep -oP 'major=\K[0-9]+' /etc/foxbuntu-release).$(grep -oP 'minor=\K[0-9]+' /etc/foxbuntu-release).$(grep -oP 'patch=\K[0-9]+' /etc/foxbuntu-release)
-spaces=$((9 - ${#foxbuntu_version}))
+foxbuntu_version=$(grep -oP 'major=\K[0-9]+' /etc/foxbuntu-release).$(grep -oP 'minor=\K[0-9]+' /etc/foxbuntu-release).$(grep -oP 'patch=\K[0-9]+' /etc/foxbuntu-release)$(grep -oP 'hotfix=\K[a-z]+' /etc/foxbuntu-release)
+spaces=$((11 - ${#foxbuntu_version}))
 
 # Print the result with the appropriate number of spaces
-printf "                Foxbuntu v$foxbuntu_version%*s%s(%s)\n" $spaces "" "$DISTRIB_DESCRIPTION" "$(uname -r)"
-printf "            Meshtastic is a registered trademark of Meshtastic LLC.\n"
-printf "      Meshtastic software components are released under various licenses,\n"
-printf "    see GitHub for details. No warranty is provided - use at your own risk.\n"
-printf "  Luckfox: wiki.luckfox.com    This image built by github.com/noon92/femtofox\n"
-printf "    This system has been minimized.   To restore content, run 'unminimize'.\n\n"
+printf "                  Made for Femtofox  https://www.femtofox.com\n"
+printf "               Foxbuntu v$foxbuntu_version%*s%s(%s)\n" $spaces "" "$DISTRIB_DESCRIPTION" "$(uname -r)"
+printf "         For Femtofox, Foxbuntu and Meshtastic licenses, run \`license\`\n\n"
 
 printf "IP address: $(hostname -I | sed 's/ / /g') Uptime:$(uptime -p | awk '{$1=""; print $0}' | sed -e 's/ day\b/d/g' -e 's/ hour\b/h/g' -e 's/ hours\b/h/g' -e 's/ minute\b/m/g' -e 's/ minutes\b/m/g' | sed 's/,//g')\n"
