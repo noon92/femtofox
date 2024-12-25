@@ -1,3 +1,6 @@
 major=0
 minor=95
 patch=5
+hotfix=a
+
+# major, minor and patch must be numbers. hotfix must be letters.
