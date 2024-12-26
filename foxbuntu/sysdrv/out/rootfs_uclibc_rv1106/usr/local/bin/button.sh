@@ -20,14 +20,14 @@ evtest --grab /dev/input/event0 | while read line; do
       ) &
       wifi_status=$(cat /root/.portduino/default/prefs/config.proto | protoc --decode_raw | awk '/4 {/, /}/ {if ($1 == "1:") print $2}')
       if [ "$wifi_status" -eq 1 ]; then
-        echo "$duration second button press detected. Toggling wifi off."
+        logger "$duration second button press detected. Toggling wifi off."
         /usr/local/bin/updatemeshtastic.sh "--set network.wifi_enabled false" 10 "Button toggle wifi"
       else
-        echo "$duration second button press detected. Toggling wifi on."
+        logger "$duration second button press detected. Toggling wifi on."
         /usr/local/bin/updatemeshtastic.sh "--set network.wifi_enabled true" 10 "Button toggle wifi"
       fi
     else
-      echo "$duration second button press detected. Rebooting."
+      logger "$duration second button press detected. Rebooting."
       echo 1 > /sys/class/gpio/gpio34/value;
       sudo reboot
     fi
