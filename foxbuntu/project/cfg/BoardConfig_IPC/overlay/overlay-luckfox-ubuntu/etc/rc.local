@@ -1,8 +1,5 @@
 #!/bin/bash
 
-# not really needed after first boot
-/usr/bin/filesystem_resize.sh
-
 # supposedly needed for usb storage, but works anyway
 #/etc/init.d/S50usbdevice start
 
