@@ -35,6 +35,9 @@ clone_repos() {
 
 build_env() {
   echo "Setting up SDK env..."
+  echo "When the menu appears to choose your board choose Luckfox Pico Mini A (1), SDCard (0) and Ubuntu (1)."
+  echo "Press any key to continue building the enviroment..."
+  read -n 1 -s -r
   cd /home/${sudoer}/luckfox-pico
   ./build.sh env
 }
@@ -58,7 +61,7 @@ build_rootfs() {
 }
 
 copy_femtofox_kernelcfg() {
-  echo "Merging in femtofox items..."
+  echo "Merging in Foxbuntu modifications..."
   cd /home/${sudoer}/femtofox/foxbuntu/
   # need to change updatefs.sh, kernel stuff here and rootfs stuff later
   # ./updatefs.sh
@@ -69,10 +72,65 @@ copy_femtofox_kernelcfg() {
 }
 
 build_kernelconfig() {
-  echo "Building kernelconfig... Please exit without making any changes"
+  echo "Building kernelconfig... Please exit without making any changes unless you know what you are doing."
+  echo "Press any key to continue building the kernel..."
+  read -n 1 -s -r
   cd /home/${sudoer}/luckfox-pico
   ./build.sh kernelconfig
   ./build.sh kernel
+}
+
+modify_kernel() {
+  echo "Building kernel... ."
+  echo "After making kernel configuration changes, make sure to save as .config (default) before exiting."
+  echo "Press any key to continue building the kernel..."
+  read -n 1 -s -r
+  cd /home/${sudoer}/luckfox-pico
+  ./build.sh kernelconfig
+  ./build.sh kernel
+  build_rootfs
+  build_firmware
+  cp /home/${sudoer}/luckfox-pico/sysdrv/out/kernel_drv_ko/* /home/${sudoer}/luckfox-pico/sysdrv/out/rootfs_uclibc_rv1106/lib/modules/5.10.160/
+  echo "Entering chroot..."
+  mount --bind /proc /home/${sudoer}/luckfox-pico/sysdrv/out/rootfs_uclibc_rv1106/proc
+  mount --bind /sys /home/${sudoer}/luckfox-pico/sysdrv/out/rootfs_uclibc_rv1106/sys
+  mount --bind /dev /home/${sudoer}/luckfox-pico/sysdrv/out/rootfs_uclibc_rv1106/dev
+  mount --bind /dev/pts /home/${sudoer}/luckfox-pico/sysdrv/out/rootfs_uclibc_rv1106/dev/pts
+  chroot /home/${sudoer}/luckfox-pico/sysdrv/out/rootfs_uclibc_rv1106 /bin/bash <<EOF
+echo "Inside chroot environment..."
+echo "Setting up kernel modules..."
+depmod -a 5.10.160
+echo "Cleaning up chroot..."
+apt clean && rm -rf /var/lib/apt/lists/* && rm -rf /tmp/* && rm -rf /var/tmp/* && find /var/log -type f -exec truncate -s 0 {} + && : > /root/.bash_history && history -c
+exit
+EOF
+
+  umount /home/${sudoer}/luckfox-pico/sysdrv/out/rootfs_uclibc_rv1106/dev/pts
+  umount /home/${sudoer}/luckfox-pico/sysdrv/out/rootfs_uclibc_rv1106/proc
+  umount /home/${sudoer}/luckfox-pico/sysdrv/out/rootfs_uclibc_rv1106/sys
+  umount /home/${sudoer}/luckfox-pico/sysdrv/out/rootfs_uclibc_rv1106/dev
+  build_rootfs
+  build_firmware
+  create_image
+}
+
+
+modify_chroot() {
+  echo "Entering chroot... make your changes and then type exit when you are done and it will build the image with your changes."
+  echo "Press any key to continue entering chroot..."
+  read -n 1 -s -r
+  mount --bind /proc /home/${sudoer}/luckfox-pico/sysdrv/out/rootfs_uclibc_rv1106/proc
+  mount --bind /sys /home/${sudoer}/luckfox-pico/sysdrv/out/rootfs_uclibc_rv1106/sys
+  mount --bind /dev /home/${sudoer}/luckfox-pico/sysdrv/out/rootfs_uclibc_rv1106/dev
+  mount --bind /dev/pts /home/${sudoer}/luckfox-pico/sysdrv/out/rootfs_uclibc_rv1106/dev/pts
+  chroot /home/${sudoer}/luckfox-pico/sysdrv/out/rootfs_uclibc_rv1106 /bin/bash
+  umount /home/${sudoer}/luckfox-pico/sysdrv/out/rootfs_uclibc_rv1106/dev/pts
+  umount /home/${sudoer}/luckfox-pico/sysdrv/out/rootfs_uclibc_rv1106/proc
+  umount /home/${sudoer}/luckfox-pico/sysdrv/out/rootfs_uclibc_rv1106/sys
+  umount /home/${sudoer}/luckfox-pico/sysdrv/out/rootfs_uclibc_rv1106/dev
+  build_rootfs
+  build_firmware
+  create_image
 }
 
 modify_rootfs() {
@@ -204,12 +262,17 @@ create_image() {
   cd /home/${sudoer}/luckfox-pico/output/image
   sudo /home/${sudoer}/luckfox-pico/output/image/blkenvflash /home/${sudoer}/luckfox-pico/foxbuntu.img
   if [[ $? -eq 2 ]]; then echo "Error, sdcard img failed to build..."; exit 2; else echo "foxbuntu.img build completed."; fi
+  du -h /home/${sudoer}/luckfox-pico/foxbuntu.img
 }
 
 usage() {
   echo "The following functions are available in this script:"
-  echo "install_prerequisites clone_repos build_env build_sysdrv copy_femtofox_kernelcfg build_kernelconfig modify_rootfs build_firmware get_envblkflash create_image"
-  echo "To run all commands use the arg 'all'"
+  echo "To install the development environment use the arg 'install' and is intended to be run ONCE only."
+  echo "To modify the chroot and build an updated image use the arg 'modify_chroot'."
+  echo "To modify the kernel and build an updated image use the arg 'modify_kernel'."
+  echo "other args: install_prerequisites clone_repos build_env build_sysdrv copy_femtofox_kernelcfg build_kernelconfig modify_rootfs build_rootf build_uboot build_firmware get_envblkflash create_image"
+  echo "Example:  sudo ~/foxbunto_env_setup.sh install"
+  echo "Example:  sudo ~/foxbunto_env_setup.sh modify_chroot"
   exit 0
 }
 
@@ -222,11 +285,11 @@ if [[ $(echo ${1} | egrep -i "^(h|help)$") ]]; then
   usage
 elif [[ -z ${1} ]]; then
   usage
-#elif [[ ${1} == "modify_chroot" ]]; then
-#  modify_chroot
-#elif [[ ${1} == "modify_kernel" ]]; then
-#  modify_kernel
-elif [[ ${1} == "all" ]]; then
+elif [[ ${1} == "modify_chroot" ]]; then
+  modify_chroot
+elif [[ ${1} == "modify_kernel" ]]; then
+  modify_kernel
+elif [[ ${1} == "install" ]]; then
   { echo 'Defaults timestamp_timeout=180' | sudo EDITOR='tee -a' visudo; } > /dev/null 2>&1
   start_time=$(date +%s)
   install_prerequisites
@@ -248,7 +311,7 @@ elif [[ ${1} == "all" ]]; then
   hours=$(( elapsed / 3600 ))
   minutes=$(( (elapsed % 3600) / 60 ))
   seconds=$(( elapsed % 60 ))
-  printf "Build execution time: %02d:%02d:%02d\n" $hours $minutes $seconds
+  printf "Environment installation time: %02d:%02d:%02d\n" $hours $minutes $seconds
 else
   ${1}
 fi
