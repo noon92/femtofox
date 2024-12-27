@@ -226,13 +226,13 @@ echo "Adding femto and pico users/groups..."
 groupmod -n femto pico
 usermod -l femto pico
 usermod -aG sudo,input femto
-echo "femto ALL=(ALL:ALL) ALL" | tee /etc/sudoers.d/femto > /dev/null
+echo "femto ALL=(ALL:ALL) ALL" | tee /etc/sudoers.d/femto
 chmod 440 /etc/sudoers.d/femto
 
 # this seems messy, user:group should be set cleanly and not corrected after?  OSC: somethings were owned my pico from factory
 
-find / -group pico -exec chgrp femto {} \; 2>/dev/null
-find / -user pico -exec chown femto {} \; 2>/dev/null
+find / -group pico -exec chgrp femto {} \
+find / -user pico -exec chown femto {} \
 usermod -d /home/femto -m femto
 ls -ld /home/femto
 echo 'femto:fox' | chpasswd
@@ -317,3 +317,4 @@ else
 fi
 
 exit 0
+
