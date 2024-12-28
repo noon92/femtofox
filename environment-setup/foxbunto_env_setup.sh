@@ -133,6 +133,19 @@ modify_chroot() {
   create_image
 }
 
+update_image() {
+  #we still need the chroot scripts function but this will work for now.
+  echo "Updating repo..."
+  cd /home/${sudoer}/femtofox
+  git pull
+  cd /home/${sudoer}/
+  copy_femtofox_kernelcfg
+  build_kernelconfig
+  build_rootfs
+  build_firmware
+  create_image
+}
+
 modify_rootfs() {
   echo "Modifying rootfs..."
   cd /home/${sudoer}/luckfox-pico/output/image
@@ -289,6 +302,8 @@ elif [[ ${1} == "modify_chroot" ]]; then
   modify_chroot
 elif [[ ${1} == "modify_kernel" ]]; then
   modify_kernel
+elif [[ ${1} == "update_image" ]]; then
+  update_image
 elif [[ ${1} == "install" ]]; then
   { echo 'Defaults timestamp_timeout=180' | sudo EDITOR='tee -a' visudo; } > /dev/null 2>&1
   start_time=$(date +%s)
