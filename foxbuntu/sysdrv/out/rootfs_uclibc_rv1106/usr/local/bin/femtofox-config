@@ -2,27 +2,47 @@
 
 # Function to handle Wi-Fi settings
 wifi_settings() {
-  local wpa_supplicant_conf="/etc/wpa_supplicant/wpa_supplicant.conf"
-  local wifi_ssid=""
-  local wifi_psk=""
-  local wifi_country=""
-  wifi_ssid=$(dialog --inputbox "Enter Wi-Fi SSID:" 8 40 3>&1 1>&2 2>&3)
-  wifi_psk=$(dialog --passwordbox "Enter Wi-Fi Password:" 8 40 3>&1 1>&2 2>&3)
-  wifi_country=$(dialog --inputbox "Enter Country Code (e.g., US, DE):" 8 40 3>&1 1>&2 2>&3)
-  sed -i "/country=/s/\".*\"/\"$wifi_country\"/" "$wpa_supplicant_conf"
-  sed -i "/ssid=/s/\".*\"/\"$wifi_ssid\"/" "$wpa_supplicant_conf"
-  sed -i "/psk=/s/\".*\"/\"$wifi_psk\"/" "$wpa_supplicant_conf"
-  systemctl restart wpa_supplicant
-  wpa_cli -i wlan0 reconfigure
-  echo "wpa_supplicant.conf updated and wifi restarted. Enabling Meshtastic wifi setting."
-  timeout 30s dhclient -v
-  updatemeshtastic.sh "--set network.wifi_enabled true" 10 "USB config" #| tee -a /tmp/femtofox-config.log
-  if [ $? -eq 1 ]; then
-    echo "Update of Meshtastic FAILED."
-  else
-    echo "Updated Meshtastic successfully."
-  fi
-  dialog --msgbox "Wi-Fi Settings Saved:\nSSID: $wifi_ssid\nPassword: (hidden)\nCountry: $wifi_country\nMeshtastic wifi setting set to ON" 10 40
+
+  local option=""
+  option=$(dialog --menu "Wifi settings" 15 40 4 \
+    1 "View wifi settings" \
+    2 "Change wifi settings" \
+    3 "Back to Main Menu" 3>&1 1>&2 2>&3)
+  
+  case $option in
+    1)
+      local name=""
+      name=$(dialog --inputbox "Enter device name:" 8 40 3>&1 1>&2 2>&3)
+      dialog --msgbox "Device name set to: $name" 8 40
+    ;;
+    2)
+      local wpa_supplicant_conf="/etc/wpa_supplicant/wpa_supplicant.conf"
+      local wifi_ssid=""
+      local wifi_psk=""
+      local wifi_country=""
+      wifi_ssid=$(dialog --title "Wifi settings" --inputbox "Enter Wi-Fi SSID:" 8 40 3>&1 1>&2 2>&3)
+      wifi_psk=$(dialog --title "Wifi settings" --passwordbox "Enter Wi-Fi Password:" 8 40 3>&1 1>&2 2>&3)
+      wifi_country=$(dialog --title "Wifi settings" --inputbox "Enter Country Code (e.g., US, DE):" 8 40 3>&1 1>&2 2>&3)
+      sed -i "/country=/s/\".*\"/\"$wifi_country\"/" "$wpa_supplicant_conf"
+      sed -i "/ssid=/s/\".*\"/\"$wifi_ssid\"/" "$wpa_supplicant_conf"
+      sed -i "/psk=/s/\".*\"/\"$wifi_psk\"/" "$wpa_supplicant_conf"
+      systemctl restart wpa_supplicant
+      wpa_cli -i wlan0 reconfigure
+      echo "wpa_supplicant.conf updated and wifi restarted. Enabling Meshtastic wifi setting."
+      timeout 30s dhclient -v
+      updatemeshtastic.sh "--set network.wifi_enabled true" 10 "USB config" #| tee -a /tmp/femtofox-config.log
+      if [ $? -eq 1 ]; then
+        echo "Update of Meshtastic FAILED."
+      else
+        echo "Updated Meshtastic successfully."
+      fi
+      dialog --title "Wifi settings" --msgbox "Wi-Fi Settings Saved:\nSSID: $wifi_ssid\nPassword: (hidden)\nCountry: $wifi_country\nMeshtastic wifi setting set to ON" 10 40
+    ;;
+    3)
+      return
+    ;;
+  esac
+
 }
 
 # Function to handle region settings
