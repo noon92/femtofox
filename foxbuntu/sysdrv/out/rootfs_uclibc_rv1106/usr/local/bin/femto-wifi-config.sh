@@ -1,6 +1,18 @@
 #!/bin/bash
+if [[ $EUID -ne 0 ]]; then
+   echo "This script must be run as root. Try \`sudo femto-config\`."
+   exit 1
+fi
+
 wpa_supplicant_conf="/etc/wpa_supplicant/wpa_supplicant.conf"
-help="Options are -v (verbose mode), -s (ssid), -p (PSK), -c (country)."
+help=$(cat <<EOF
+Options are:
+-h             This message
+-s "SSID"      Set wifi SSID
+-p "PSK"       Set wifi PSK (password)
+-c "COUNTRY"   Set wifi 2-letter country code (such as US, DE)
+EOF
+)
 
 # Initialize variables
 verbose="false"
@@ -11,12 +23,12 @@ country=""
 
 if [ $# -eq 0 ]; then
   echo "No arguments provided."
-  echo "$help"
+  echo -e "$help"
   exit 1
 fi
 
 # Parse options
-while getopts ":s:p:c:" opt; do
+while getopts ":s:p:c:h" opt; do
   case ${opt} in
     s)  # Option -s (ssid)
       sed -i "/ssid=/s/\".*\"/\"$OPTARG\"/" "$wpa_supplicant_conf"
@@ -33,14 +45,17 @@ while getopts ":s:p:c:" opt; do
       echo "Setting country to $OPTARG."
       updated_wifi="true"
       ;;
+    h) # Option -h (help)
+      echo -e "$help"
+      ;;
     \?)  # Invalid option
-      echo "Invalid option: -$OPTARG."
-      echo "$help"
+      echo "Invalid option: -$OPTARG"
+      echo -e "$help"
       exit 1
       ;;
     :) # Missing argument for option
-      echo "Option -$OPTARG requires an argument."
-      echo "$help"
+      echo "Option -$OPTARG requires a setting."
+      echo -e "$help"
       exit 1
       ;;
   esac
