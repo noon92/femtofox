@@ -20,18 +20,17 @@ while getopts ":s:p:c:" opt; do
   case ${opt} in
     s)  # Option -s (ssid)
       sed -i "/ssid=/s/\".*\"/\"$OPTARG\"/" "$wpa_supplicant_conf"
-      echo "Set SSID to $OPTARG."
+      echo "Setting SSID to $OPTARG."
       updated_wifi="true"
       ;;
     p)  # Option -p (psk)
       sed -i "/psk=/s/\".*\"/\"$OPTARG\"/" "$wpa_supplicant_conf"
-      echo "Set PSK to $OPTARG."
+      echo "Setting PSK to $OPTARG."
       updated_wifi="true"
       ;;
     c) # Option -c (country)
-      country=$OPTARG
-      sed -i "/country=/s/\".*\"/\"$OPTARG\"/" "$wpa_supplicant_conf"
-      echo "Set country to $OPTARG."
+      sed -i "/country=/s/=[^ ]*/=$OPTARG/" "/etc/wpa_supplicant/wpa_supplicant.conf"
+      echo "Setting country to $OPTARG."
       updated_wifi="true"
       ;;
     \?)  # Invalid option
@@ -49,7 +48,7 @@ done
 
 if [ "$updated_wifi" = true ]; then
   systemctl restart wpa_supplicant
-  wpa_cli -i wlan0 reconfigure
+  wpa_cli -i wlan0 reconfigure # <-------- add watch for FAIL response, error out
   timeout 30s dhclient -v
   echo "wpa_supplicant.conf updated and wifi restarted. Enabling Meshtastic wifi setting."
   updatemeshtastic.sh "--set network.wifi_enabled true" 10 "USB config" #| tee -a /tmp/femtofox-config.log
