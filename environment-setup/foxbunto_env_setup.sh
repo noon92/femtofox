@@ -289,6 +289,71 @@ usage() {
   exit 0
 }
 
+################### MENU SYSTEM ###################
+
+while true; do
+  CHOICE=$(dialog --clear --backtitle "Foxbuntu SDK Builder" \
+    --title "Main Menu" \
+    --menu "Choose an action:" 20 60 12 \
+    1 "Update Image" \
+    2 "Modify Chroot" \
+    3 "Modify Kernel" \
+    4 "Install Prerequisites" \
+    5 "Clone Repositories" \
+    6 "Build Environment" \
+    7 "Build SysDrv" \
+    8 "Build U-Boot" \
+    9 "Build RootFS" \
+    10 "Create Final Image" \
+    11 "Install (Run All Steps)" \
+    12 "Exit" \
+    2>&1 >/dev/tty)
+
+  clear
+
+  case $CHOICE in
+    1)
+      update_image
+      ;;
+    2)
+      modify_chroot
+      ;;
+    3)
+      modify_kernel
+      ;;
+    4)
+      install_prerequisites
+      ;;
+    5)
+      clone_repos
+      ;;
+    6)
+      build_env
+      ;;
+    7)
+      build_sysdrv
+      ;;
+    8)
+      build_uboot
+      ;;
+    9)
+      build_rootfs
+      ;;
+    10)
+      create_image
+      ;;
+    11)
+      install
+      ;;
+    12)
+      echo "Exiting..."
+      break
+      ;;
+    *)
+      echo "Invalid option, please try again."
+      ;;
+  esac
+done
 
 ### Run all functions. Broken out so any individual step can be performed if failed.
 # Should add clean functions...
