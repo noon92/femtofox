@@ -1,16 +1,19 @@
 #!/bin/bash
 
-export NCURSES_NO_UTF8_ACS=1 # prevents weirdness over tty
+# prevents weirdness over tty
+export NCURSES_NO_UTF8_ACS=1
+export TERM=xterm-256color
+export LANG=C.UTF-8
 
 if [[ $EUID -ne 0 ]]; then
    echo "This script must be run as root."
-   echo "Try \`sudo femto-config\`."
+   echo "Try \`sudo femtofox-config\`."
    exit 1
 fi
 
-
 # Function to handle Wi-Fi settings
 wifi_settings() {
+  title="Wifi settings"
   wpa_supplicant_conf="/etc/wpa_supplicant/wpa_supplicant.conf"
   while true; do
     local option=""
@@ -31,28 +34,45 @@ wifi_settings() {
         wifi_ssid=$(grep -m 1 '^\s*ssid=' "$wpa_supplicant_conf" | cut -d '"' -f 2)
         wifi_psk=$(grep -m 1 '^\s*psk=' "$wpa_supplicant_conf" | cut -d '"' -f 2)
         if [ "$(cat /root/.portduino/default/prefs/config.proto | protoc --decode_raw | awk '/4 {/, /}/ {if ($1 == "1:") print $2}')" -eq 1 ]; then
-          mesh_wifi_status="on"
+          mesh_wifi_status="enabled"
         else
-          mesh_wifi_status="off"
+          mesh_wifi_status="disabled"
         fi
-        dialog --title "Wifi settings" --msgbox "SSID: $wifi_ssid\nPassword: $wifi_psk\nCountry: $wifi_country\nMeshtastic wifi setting: $mesh_wifi_status" 10 40
-      ;;
+        dialog --title "$title" --msgbox "\
+SSID:            $wifi_ssid\n\
+Password:        $wifi_psk\n\
+Country:         $wifi_country\n\
+Meshtastic wifi: $mesh_wifi_status\n\
+\n\
+Connected to:    $(iwconfig 2>/dev/null | grep -i 'ESSID' | awk -F 'ESSID:"' '{print $2}' | awk -F '"' '{print $1}')\n\
+Signal Strength: $(iwconfig 2>/dev/null | grep -i 'Signal level' | awk -F 'Signal level=' '{print $2}' | awk '{print $1}')\n\
+Current IP:      $(hostname -I | awk '{print $1}')\n\
+For more details, enter \`iwconfig\`.
+" 0 0
+        ;;
       2)
         local wifi_ssid=""
         local wifi_psk=""
         local wifi_country=""
-        wifi_ssid=$(dialog --title "Wifi settings" --inputbox "Enter Wi-Fi SSID:" 8 40 3>&1 1>&2 2>&3)
-        wifi_psk=$(dialog --title "Wifi settings" --inputbox "Enter Wi-Fi Password:" 8 40 3>&1 1>&2 2>&3)
-        wifi_country=$(dialog --title "Wifi settings" --inputbox "Enter Country Code (e.g., US, DE) - optional:" 8 40 3>&1 1>&2 2>&3)
+        wifi_ssid=$(dialog --title "$title" --inputbox "Enter Wi-Fi SSID:" 8 40 3>&1 1>&2 2>&3)
+        wifi_psk=$(dialog --title "$title" --inputbox "Enter Wi-Fi Password:" 8 40 3>&1 1>&2 2>&3)
+        wifi_country=$(dialog --title "$title" --inputbox "Enter Country Code (e.g., US, DE) - optional:" 9 40 3>&1 1>&2 2>&3)
         cmd="femto-wifi-config.sh -s \"$wifi_ssid\" -p \"$wifi_psk\""
         [ -n "$wifi_country" ] && cmd="$cmd -c \"$wifi_country\""
         echo $cmd
-        exit
+        if [ -z "$wifi_ssid" ]; then
+          dialog --title "$title" --msgbox "\nSSID is required." 8 40
+          return
+        fi
         eval $cmd
-        dialog --title "Wifi settings" --msgbox "Wi-Fi Settings Saved:\nSSID: $wifi_ssid\nPassword: $wifi_psk\nCountry: $wifi_country\nMeshtastic wifi setting set to ON" 10 40
+        dialog --title "$title" --msgbox "Wi-Fi Settings Saved:\nSSID: $wifi_ssid\nPassword: $wifi_psk\nCountry: $wifi_country\nMeshtastic wifi setting set to ON" 10 40
       ;;
       3)
-        femto-wifi-config.sh -r
+        dialog --title "Wifi restart" --yesno "Wifi will be restarted.\nMeshtastic wifi setting will be set to ON." 7 50
+        exitstatus=$?
+        if [ $exitstatus -eq 0 ]; then
+          femto-wifi-config.sh -r
+        fi
       ;;
       4)
         return
@@ -61,84 +81,107 @@ wifi_settings() {
   done
 }
 
-# Function to handle timezone settings
+# Function to handle misc settings
+misc_settings() {
+  while true; do
+    local option=""
+    option=$(dialog --menu "Misc Settings" 15 40 4 \
+      1 "Set system timezone" \
+      2 "blah" \
+      3 "blah" \
+      4 "Back to Main Menu" 3>&1 1>&2 2>&3)
 
-# Function to select and set the time zone
-set_timezone() {
-local selected_timezone
-local timezones
-
-# Fetch available time zones
-timezones=$(timedatectl list-timezones)
-if [[ -z "$timezones" ]]; then
-    dialog --msgbox "Failed to retrieve time zones. Ensure 'timedatectl' is installed and functional." 8 50
-    return
-fi
-
-# Build options for dialog menu
-local options=()
-while IFS= read -r timezone; do
-    options+=("$timezone" "$timezone")
-done <<< "$timezones"
-
-# Convert options array to string
-options_str=$(printf '%s\n' "${options[@]}")
-
-# Show timezone selection menu
-selected_timezone=$(dialog --title "Select Time Zone" --menu "Choose a time zone:" 20 60 10 $(printf "%s " "${options[@]}") 3>&1 1>&2 2>&3)
-exit_status=$?
-if [[ $exit_status -eq 0 && -n "$selected_timezone" ]]; then
-    # Set the selected time zone
-    if timedatectl set-timezone "$selected_timezone"; then
-        dialog --msgbox "Time zone set to $selected_timezone successfully." 8 40
-    else
-        dialog --msgbox "Failed to set the time zone. Please try again." 8 40
+    exit_status=$? # This line checks the exit status of the dialog command
+    if [ $exit_status -ne 0 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
+      break
     fi
-else
-    dialog --msgbox "No time zone selected. Returning to menu." 8 40
-fi
+    
+    case $option in
+      1)
+        femto-set-timezone.sh
+      ;;
+      2)
+        local channel=""
+        channel=$(dialog --inputbox "Enter channel ID:" 8 40 3>&1 1>&2 2>&3)
+        dialog --msgbox "Channel ID set to: $channel" 8 40
+      ;;
+      3)
+        dialog --msgbox "Node info retrieved successfully!" 8 40
+      ;;
+      4)
+        return
+      ;;
+    esac
+  done
 }
 
-# Function to handle Meshtastic CLI settings
-misc_settings() {
-  local option=""
-  option=$(dialog --menu "Meshtastic CLI Options" 15 40 4 \
-    1 "Set system timezone" \
-    2 "blah" \
-    3 "blah" \
-    4 "Back to Main Menu" 3>&1 1>&2 2>&3)
 
-  exit_status=$? # This line checks the exit status of the dialog command
-  if [ $exit_status -ne 0 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
-    break
-  fi
-  
-  case $option in
-    1)
-      set_timezone
-    ;;
-    2)
-      local channel=""
-      channel=$(dialog --inputbox "Enter channel ID:" 8 40 3>&1 1>&2 2>&3)
-      dialog --msgbox "Channel ID set to: $channel" 8 40
-    ;;
-    3)
-      dialog --msgbox "Node info retrieved successfully!" 8 40
-    ;;
-    4)
-      return
-    ;;
-  esac
+# Function to handle Meshtasticd settings
+meshtasticd_settings() {
+      while true; do
+        local option=""
+        option=$(dialog --menu "Meshtasticd Settings" 15 40 4 \
+          1 "Configuration URL (QR code)" \
+          2 "LoRa radio" \
+          3 "Admin key" \
+          4 "Legacy admin channel" \
+          5 "Upgrade Meshtasticd" \
+          6 "Uninstall Meshtasticd" \
+          7 "Back to Main Menu" 3>&1 1>&2 2>&3)
+
+        exit_status=$? # This line checks the exit status of the dialog command
+        if [ $exit_status -ne 0 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
+          break
+        fi
+        
+        case $option in
+          1)
+            echo "Getting current Meshtastic QR code and URL..."
+            url=$(meshtastic --host --qr-all | grep -oP '(?<=Complete URL \(includes all channels\): )https://[^ ]+')
+            echo "$url" | qrencode -o - -t UTF8 -s 1
+            echo "Meshtastic configuration URL:"
+            echo $url
+            echo "Press any key to continue..."
+            read -n 1 -s -r
+            newurl=$(dialog --title "Meshtastic URL" --inputbox "New Meshtasticd URL (SHIFT+INS to paste):" 8 50 3>&1 1>&2 2>&3)
+            if [ -n "$newurl" ]; then
+              dialog --title "Meshtastic URL" --yesno "New Meshtasticd URL:\n$url\n\nConfirm?" 15 60
+              if [ $? -eq 0 ]; then
+                echo "Submitting to Meshtastic..."
+                updatemeshtastic.sh "--seturl $newurl" 10 "Set URL"
+              fi
+            fi
+      ;;
+      2)
+        
+      ;;
+      3)
+        
+      ;;
+      4)
+        
+      ;;
+      5)
+        
+      ;;
+      6)
+        
+      ;;
+      7)
+        return
+      ;;
+    esac
+  done
 }
 
 
 # Main menu
 while true; do
-  choice=$(dialog --menu "Femtofox Config" 15 40 5 \
+  choice=$(dialog --title "$(date)" --menu "Femtofox Config" 15 40 5 \
     1 "Wi-Fi" \
     2 "Meshtasticd" \
     3 "Misc" \
-    4 "Install third party apps" \
+    4 "Software" \
     5 "Run OEM luckfox-config" \
     6 "Help" \
     7 "Exit" 3>&1 1>&2 2>&3)
@@ -153,7 +196,7 @@ while true; do
     1) wifi_settings ;;
     2) meshtasticd_settings ;;
     3) misc_settings ;;
-    4) 3rd_party ;;
+    4) software_settings ;;
     5) luckfox-config ;;
     6) femto_help ;;
     7) break ;;

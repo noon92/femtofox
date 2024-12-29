@@ -1,6 +1,6 @@
 #!/bin/bash
 if [[ $EUID -ne 0 ]]; then
-   echo "This script must be run as root. Try \`sudo femto-config\`."
+   echo "This script must be run as root. Try \`sudo femto-wifi-config\`."
    exit 1
 fi
 
@@ -11,6 +11,7 @@ Options are:
 -s "SSID"      Set wifi SSID
 -p "PSK"       Set wifi PSK (password)
 -c "COUNTRY"   Set wifi 2-letter country code (such as US, DE)
+-r             Restart wifi
 EOF
 )
 
@@ -28,7 +29,7 @@ if [ $# -eq 0 ]; then
 fi
 
 # Parse options
-while getopts ":s:p:c:h" opt; do
+while getopts ":s:p:c:hr" opt; do
   case ${opt} in
     s)  # Option -s (ssid)
       sed -i "/ssid=/s/\".*\"/\"$OPTARG\"/" "$wpa_supplicant_conf"
@@ -48,6 +49,9 @@ while getopts ":s:p:c:h" opt; do
     h) # Option -h (help)
       echo -e "$help"
       ;;
+    r) # Option -r (restart wifi)
+      updated_wifi="true"
+      ;;
     \?)  # Invalid option
       echo "Invalid option: -$OPTARG"
       echo -e "$help"
@@ -65,11 +69,13 @@ if [ "$updated_wifi" = true ]; then
   systemctl restart wpa_supplicant
   wpa_cli -i wlan0 reconfigure # <-------- add watch for FAIL response, error out
   timeout 30s dhclient -v
-  echo "wpa_supplicant.conf updated and wifi restarted. Enabling Meshtastic wifi setting."
+  echo "    Wifi restarted. Enabling Meshtastic wifi setting."
   updatemeshtastic.sh "--set network.wifi_enabled true" 10 "USB config" #| tee -a /tmp/femtofox-config.log
   if [ $? -eq 1 ]; then
     echo "Update of Meshtastic FAILED."
+    exit 1
   else
     echo "Updated Meshtastic successfully."
+    exit 0
   fi
 fi

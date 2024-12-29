@@ -2,7 +2,7 @@
 export NCURSES_NO_UTF8_ACS=1 # prevents weirdness over tty
 
 if [[ $EUID -ne 0 ]]; then
-   echo "This script must be run as root. Try \`sudo femto-config\`."
+   echo "This script must be run as root. Try \`sudo femto-set-timezone\`."
    exit 1
 fi
 
