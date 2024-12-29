@@ -68,11 +68,8 @@ For more details, enter \`iwconfig\`.
         dialog --title "$title" --msgbox "Wi-Fi Settings Saved:\nSSID: $wifi_ssid\nPassword: $wifi_psk\nCountry: $wifi_country\nMeshtastic wifi setting set to ON" 10 40
       ;;
       3)
-        dialog --title "Wifi restart" --yesno "Wifi will be restarted.\nMeshtastic wifi setting will be set to ON." 7 50
-        exitstatus=$?
-        if [ $exitstatus -eq 0 ]; then
-          femto-wifi-config.sh -r
-        fi
+        dialog --title "Wifi restart" --msgbox "Wifi will be restarted.\nMeshtastic wifi setting will be set to ON." 7 50
+        femto-wifi-config.sh -r
       ;;
       4)
         return
