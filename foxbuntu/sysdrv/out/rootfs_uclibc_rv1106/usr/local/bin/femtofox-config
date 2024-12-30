@@ -1,19 +1,24 @@
 #!/bin/bash
-
 # prevents weirdness over tty
 export NCURSES_NO_UTF8_ACS=1
 export TERM=xterm-256color
 export LANG=C.UTF-8
 
 if [[ $EUID -ne 0 ]]; then
-   echo "This script must be run as root."
-   echo "Try \`sudo femtofox-config\`."
-   exit 1
+  echo "This script must be run as root."
+  echo "Try \`sudo femtofox-config\`."
+  exit 1
 fi
+
+# pause
+pause() {
+  echo "Press any key to continue..."
+  read -n 1 -s -r
+}
 
 # Function to handle Wi-Fi settings
 wifi_settings() {
-  title="Wifi settings"
+  local title="Wifi settings"
   wpa_supplicant_conf="/etc/wpa_supplicant/wpa_supplicant.conf"
   while true; do
     local option=""
@@ -21,13 +26,13 @@ wifi_settings() {
       1 "View wifi settings" \
       2 "Change wifi settings" \
       3 "Restart wifi" \
-      4 "Back to Main Menu" 3>&1 1>&2 2>&3)
+    4 "Back to Main Menu" 3>&1 1>&2 2>&3)
     
     exit_status=$? # This line checks the exit status of the dialog command
     if [ $exit_status -ne 0 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
       break
     fi
-
+    
     case $option in
       1)
         wifi_country=$(grep -m 1 "^country=" "$wpa_supplicant_conf" | cut -d '=' -f 2)
@@ -48,8 +53,8 @@ Connected to:    $(iwconfig 2>/dev/null | grep -i 'ESSID' | awk -F 'ESSID:"' '{p
 Signal Strength: $(iwconfig 2>/dev/null | grep -i 'Signal level' | awk -F 'Signal level=' '{print $2}' | awk '{print $1}')\n\
 Current IP:      $(hostname -I | awk '{print $1}')\n\
 For more details, enter \`iwconfig\`.
-" 0 0
-        ;;
+        " 0 0
+      ;;
       2)
         local wifi_ssid=""
         local wifi_psk=""
@@ -80,14 +85,15 @@ For more details, enter \`iwconfig\`.
 
 # Function to handle misc settings
 misc_settings() {
+  local title="Wifi Settings"
   while true; do
     local option=""
     option=$(dialog --menu "Misc Settings" 15 40 4 \
       1 "Set system timezone" \
-      2 "blah" \
+      2 "Add ham radio support" \
       3 "blah" \
-      4 "Back to Main Menu" 3>&1 1>&2 2>&3)
-
+    4 "Back to Main Menu" 3>&1 1>&2 2>&3)
+    
     exit_status=$? # This line checks the exit status of the dialog command
     if [ $exit_status -ne 0 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
       break
@@ -98,9 +104,23 @@ misc_settings() {
         femto-set-timezone.sh
       ;;
       2)
-        local channel=""
-        channel=$(dialog --inputbox "Enter channel ID:" 8 40 3>&1 1>&2 2>&3)
-        dialog --msgbox "Channel ID set to: $channel" 8 40
+        dialog --title "$title" --msgbox "Amateur radio support can be added in kernel for:\
+CONFIG_HAMRADIO\
+CONFIG_AX25\
+CONFIG_AX25_DAMA_SLAVE\
+CONFIG_NETROM\
+CONFIG_ROSE\
+CONFIG_MKISS\
+CONFIG_6PACK\
+CONFIG_BPQETHER\
+CONFIG_BAYCOM_SER_FDX\
+CONFIG_BAYCOM_SER_HDX\
+CONFIG_YAM\
+CONFIG_MEDIA_RADIO_SUPPORT\
+CONFIG_MEDIA_SDR_SUPPORT\
+CONFIG_MEDIA_PLATFORM_SUPPORT\
+CONFIG_SDR_PLATFORM_DRIVERS\
+        CONFIG_SDR_MAX2175" 10 60
       ;;
       3)
         dialog --msgbox "Node info retrieved successfully!" 8 40
@@ -112,59 +132,167 @@ misc_settings() {
   done
 }
 
+#set lora radio
+set_lora_radio() {
+    while true; do
+    local option=""
+    option=$(dialog --menu "Misc Settings" 0 0 10 \
+      1 "ebyte-e22-900m30s" \
+      2 "ebyte-e22-900m22s" \
+      3 "ebyte-e80-900m22s" \
+      4 "heltec-ht-ra62" \
+      5 "seeed-wio-sx1262" \
+      6 "waveshare-sx126x-xxxm" \
+      7 "ai-thinker-ra-01sh" \
+      8 "sx1262_tcxo" \
+      9 "sx1262_xtal" \
+      10 "lr1121_tcxo" \
+      11 "none (simulated radio)" \
+      12 "Back to Main Menu" 3>&1 1>&2 2>&3)
+    
+    exit_status=$? # This line checks the exit status of the dialog command
+    if [ $exit_status -ne 0 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
+      break
+    fi
+    
+    local radio=""
+    case $option in
+      1)
+        radio="sx1262_tcxo"
+      ;;
+      2)
+        radio="sx1262_tcxo"
+      ;;
+      3)
+        radio="sx1262_xtal"
+      ;;
+      4)
+        radio="sx1262_tcxo"
+      ;;
+      5)
+        radio="sx1262_tcxo"
+      ;;
+      6)
+        radio="sx1262_xtal"
+      ;;
+      7)
+        radio="sx1262_xtal"
+      ;;
+      8)
+        radio="sx1262_tcxo"
+      ;;
+      9)
+        radio="sx1262_xtal"
+      ;;
+      10)
+        radio="lr1121_tcxo"
+      ;;
+      11)
+        radio="none"
+      ;;
+      12)
+        return
+      ;;
+    esac
+    if [ -n "$radio" ]; then #if a radio was selected
+      femto-meshtasticd-config.sh -l "$radio"
+      return
+    fi
+  done
+}
 
 # Function to handle Meshtasticd settings
 meshtasticd_settings() {
-      while true; do
-        local option=""
-        option=$(dialog --menu "Meshtasticd Settings" 15 40 4 \
-          1 "Configuration URL (QR code)" \
-          2 "LoRa radio" \
-          3 "Admin key" \
-          4 "Legacy admin channel" \
-          5 "Upgrade Meshtasticd" \
-          6 "Uninstall Meshtasticd" \
-          7 "Back to Main Menu" 3>&1 1>&2 2>&3)
-
-        exit_status=$? # This line checks the exit status of the dialog command
-        if [ $exit_status -ne 0 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
-          break
-        fi
-        
-        case $option in
-          1)
-            echo "Getting current Meshtastic QR code and URL..."
-            url=$(meshtastic --host --qr-all | grep -oP '(?<=Complete URL \(includes all channels\): )https://[^ ]+')
-            echo "$url" | qrencode -o - -t UTF8 -s 1
-            echo "Meshtastic configuration URL:"
-            echo $url
-            echo "Press any key to continue..."
-            read -n 1 -s -r
-            newurl=$(dialog --title "Meshtastic URL" --inputbox "New Meshtasticd URL (SHIFT+INS to paste):" 8 50 3>&1 1>&2 2>&3)
-            if [ -n "$newurl" ]; then
-              dialog --title "Meshtastic URL" --yesno "New Meshtasticd URL:\n$url\n\nConfirm?" 15 60
-              if [ $? -eq 0 ]; then
-                echo "Submitting to Meshtastic..."
-                updatemeshtastic.sh "--seturl $newurl" 10 "Set URL"
-              fi
-            fi
+  local title="Meshtasticd Settings"
+  while true; do
+    local option=""
+    option=$(dialog --menu "$title" 17 50 4 \
+      1 "Get current configuration URL & QR code" \
+      2 "Set new configuration URL" \
+      3 "Get current lora radio selection" \
+      4 "Set LoRa radio" \
+      5 "View current admin keys" \
+      6 "Set admin key" \
+      7 "Clear admin keys" \
+      8 "Enable legacy admin channel" \
+      9 "Disable legacy admin channel" \
+      10 "Upgrade Meshtasticd" \
+      11 "Uninstall Meshtasticd" \
+      12 "Back to Main Menu" 3>&1 1>&2 2>&3)
+    
+    exit_status=$? # This line checks the exit status of the dialog command
+    if [ $exit_status -ne 0 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
+      break
+    fi
+    
+    case $option in
+      1) #Get current configuration URL & QR code)
+        femto-meshtasticd-config.sh -g
       ;;
       2)
-        
+        newurl=$(dialog --title "Meshtastic URL" --inputbox "New Meshtasticd URL (SHIFT+INS to paste):" 8 50 3>&1 1>&2 2>&3)
+        if [ -n "$newurl" ]; then #if a URL was entered
+          dialog --title "$title" --yesno "New Meshtasticd URL:\n$newurl\n\nConfirm?" 15 60
+          if [ $? -eq 0 ]; then #unless cancel/no
+            femto-meshtasticd-config.sh -q "$newurl"
+            pause
+          fi
+        fi
       ;;
       3)
-        
+        dialog --title "LoRa radio" --msgbox "Currently configured LoRa radio: $(femto-meshtasticd-config.sh -k)" 6 40
       ;;
       4)
-        
+        set_lora_radio
       ;;
       5)
-        
+        echo "Getting admin keys..."
+        dialog --title "Admin keys" --msgbox "Up to 3 admin keys are permitted, more will be ignored.\n\nKeys:$(femto-meshtasticd-config.sh -v | tail -n 1 | sed 's/|n/\\n/g')" 0 0
       ;;
-      6)
-        
+      6) #set admin key)
+        key=$(dialog --title "Meshtastic Admin Key" --inputbox "Meshtastic admin key - up to 3, more will be ignored.\n(SHIFT+INS to paste):" 8 50 3>&1 1>&2 2>&3)
+        if [ -n "$key" ]; then #if a URL was entered
+          femto-meshtasticd-config.sh -a "$key"
+          pause
+        fi
       ;;
       7)
+        dialog --title "$title" --yesno "Meshtasticd can have up to 3 admin keys.\nClear admin key list?" 0 0
+        if [ $? -eq 0 ]; then #unless cancel/no
+          femto-meshtasticd-config.sh -c
+          pause
+        fi
+      ;;
+      8) #enable legacy)
+        dialog --title "$title" --yesno "Enable legacy admin channel?" 0 0
+        if [ $? -eq 0 ]; then #unless cancel/no
+          femto-meshtasticd-config.sh -e
+          pause
+        fi
+      ;;
+      9) #disable legacy)
+        dialog --title "$title" --yesno "Disable legacy admin channel?" 0 0
+        if [ $? -eq 0 ]; then #unless cancel/no
+          femto-meshtasticd-config.sh -d
+          pause
+        fi
+      ;;
+      10) #Upgrade meshtasticd)
+        dialog --title "$title" --yesno "Upgrade Meshtasticd?\nRequires internet connection." 0 0
+        if [ $? -eq 0 ]; then #unless cancel/no
+          femto-meshtasticd-config.sh -u
+          pause
+        fi
+      ;;
+      11)
+        dialog --title "$title" --yesno "Uninstall Meshtasticd?" 0 0
+        if [ $? -eq 0 ]; then
+          femto-meshtasticd-config.sh -r
+          dialog --msgbox "Meshtasticd uninstalled. To purge all remnants, run \`sudo apt purge\`.\nAfter reinstallation but before first launch, run \`sudo runonce.sh\`." 8 40
+        fi
+        pause
+      ;;
+      12)
         return
       ;;
     esac
@@ -181,7 +309,7 @@ while true; do
     4 "Software" \
     5 "Run OEM luckfox-config" \
     6 "Help" \
-    7 "Exit" 3>&1 1>&2 2>&3)
+  7 "Exit" 3>&1 1>&2 2>&3)
   
   exit_status=$? # This line checks the exit status of the dialog command
   
