@@ -335,7 +335,7 @@ while true; do
     2>&1 >/dev/tty)
 
   clear
- 
+
   case $CHOICE in
     1)
       update_image
