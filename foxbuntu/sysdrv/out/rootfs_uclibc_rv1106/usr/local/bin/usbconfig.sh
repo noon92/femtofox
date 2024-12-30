@@ -149,36 +149,36 @@ if [ -f "$mount_point/femtofox-config.txt" ]; then
     meshtastic_lora_radio=$(echo "$meshtastic_lora_radio" | tr '[:upper:]' '[:lower:]')
     case "$meshtastic_lora_radio" in
       'ebyte-e22-900m30s')
-        cp /etc/meshtasticd/available.d/femtofox_SX1262_TCXO.yaml /etc/meshtasticd/config.d
+        cp /etc/meshtasticd/available.d/femtofox/femtofox_SX1262_TCXO.yaml /etc/meshtasticd/config.d
       ;;
       'ebyte-e22-900m22s')
-        cp /etc/meshtasticd/available.d/femtofox_SX1262_TCXO.yaml /etc/meshtasticd/config.d
+        cp /etc/meshtasticd/available.d/femtofox/femtofox_SX1262_TCXO.yaml /etc/meshtasticd/config.d
       ;;
       'heltec-ht-ra62')
-        cp /etc/meshtasticd/available.d/femtofox_SX1262_TCXO.yaml /etc/meshtasticd/config.d
+        cp /etc/meshtasticd/available.d/femtofox/femtofox_SX1262_TCXO.yaml /etc/meshtasticd/config.d
       ;;
       'seeed-wio-sx1262')
-        cp /etc/meshtasticd/available.d/femtofox_SX1262_TCXO.yaml /etc/meshtasticd/config.d
+        cp /etc/meshtasticd/available.d/femtofox/femtofox_SX1262_TCXO.yaml /etc/meshtasticd/config.d
       ;;
       'waveshare-sx126x-xxxm')
-        cp /etc/meshtasticd/available.d/femtofox_SX1262_XTAL.yaml /etc/meshtasticd/config.d
+        cp /etc/meshtasticd/available.d/femtofox/femtofox_SX1262_XTAL.yaml /etc/meshtasticd/config.d
       ;;
       'ai-thinker-ra-01sh')
-        cp /etc/meshtasticd/available.d/femtofox_SX1262_XTAL.yaml /etc/meshtasticd/config.d
+        cp /etc/meshtasticd/available.d/femtofox/femtofox_SX1262_XTAL.yaml /etc/meshtasticd/config.d
       ;;
       'ebyte-e80-900m22s')
         #not yet implemented
-        cp /etc/meshtasticd/available.d/femtofox_LR1121_TCXO.yaml /etc/meshtasticd/config.d
+        cp /etc/meshtasticd/available.d/femtofox/femtofox_LR1121_TCXO.yaml /etc/meshtasticd/config.d
       ;;
       'sx1262_tcxo')
-        cp /etc/meshtasticd/available.d/femtofox_SX1262_TCXO.yaml /etc/meshtasticd/config.d
+        cp /etc/meshtasticd/available.d/femtofox/femtofox_SX1262_TCXO.yaml /etc/meshtasticd/config.d
       ;;
       'sx1262_xtal')
-        cp /etc/meshtasticd/available.d/femtofox_SX1262_XTAL.yaml /etc/meshtasticd/config.d
+        cp /etc/meshtasticd/available.d/femtofox/femtofox_SX1262_XTAL.yaml /etc/meshtasticd/config.d
       ;;
       'lr1121_tcxo')
         #not yet implemented
-        cp /etc/meshtasticd/available.d/femtofox_LR1121_TCXO.yaml /etc/meshtasticd/config.d
+        cp /etc/meshtasticd/available.d/femtofox/femtofox_LR1121_TCXO.yaml /etc/meshtasticd/config.d
       ;;
       'none')
       ;;

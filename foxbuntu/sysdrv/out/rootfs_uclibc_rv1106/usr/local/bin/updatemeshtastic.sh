@@ -1,8 +1,8 @@
 #!/bin/bash
-
 command="$1"
 attempts=$2
 ref="$3: "
+echo "Submitting to Meshtastic..."
 for retries in $(seq 1 $attempts); do
   
   output=$(meshtastic --host 127.0.0.1 $command) #>&2 lets meshtastic's output display on screen

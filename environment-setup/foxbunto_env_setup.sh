@@ -239,13 +239,13 @@ echo "Adding femto and pico users/groups..."
 groupmod -n femto pico
 usermod -l femto pico
 usermod -aG sudo,input femto
-echo "femto ALL=(ALL:ALL) ALL" | tee /etc/sudoers.d/femto
+echo "femto ALL=(ALL:ALL) ALL" | tee /etc/sudoers.d/femto > /dev/null
 chmod 440 /etc/sudoers.d/femto
 
 # this seems messy, user:group should be set cleanly and not corrected after?  OSC: somethings were owned my pico from factory
 
-find / -group pico -exec chgrp femto {} \
-find / -user pico -exec chown femto {} \
+find / -group pico -exec chgrp femto {} \; 2>/dev/null
+find / -user pico -exec chown femto {} \; 2>/dev/null
 usermod -d /home/femto -m femto
 ls -ld /home/femto
 echo 'femto:fox' | chpasswd
@@ -278,13 +278,38 @@ create_image() {
   du -h /home/${sudoer}/luckfox-pico/foxbuntu.img
 }
 
+sdk_install() {
+  { echo 'Defaults timestamp_timeout=180' | sudo EDITOR='tee -a' visudo; } > /dev/null 2>&1
+  start_time=$(date +%s)
+  install_prerequisites
+  clone_repos
+  build_env
+  build_uboot
+  copy_femtofox_kernelcfg
+  build_kernelconfig
+  build_rootfs
+  rsync -aHAXv --progress --keep-dirlinks --itemize-changes /home/${sudoer}/femtofox/foxbuntu/sysdrv/out/rootfs_uclibc_rv1106/ /home/${sudoer}/luckfox-pico/sysdrv/out/rootfs_uclibc_rv1106/
+  build_firmware
+  modify_rootfs
+  build_rootfs
+  build_firmware
+  create_image
+  { sudo sed -i '/Defaults timestamp_timeout=180/d' /etc/sudoers; } > /dev/null 2>&1
+  end_time=$(date +%s)
+  elapsed=$(( end_time - start_time ))
+  hours=$(( elapsed / 3600 ))
+  minutes=$(( (elapsed % 3600) / 60 ))
+  seconds=$(( elapsed % 60 ))
+  printf "Environment installation time: %02d:%02d:%02d\n" $hours $minutes $seconds
+}
+
 usage() {
   echo "The following functions are available in this script:"
-  echo "To install the development environment use the arg 'install' and is intended to be run ONCE only."
+  echo "To install the development environment use the arg 'sdk_install' and is intended to be run ONCE only."
   echo "To modify the chroot and build an updated image use the arg 'modify_chroot'."
   echo "To modify the kernel and build an updated image use the arg 'modify_kernel'."
   echo "other args: install_prerequisites clone_repos build_env build_sysdrv copy_femtofox_kernelcfg build_kernelconfig modify_rootfs build_rootf build_uboot build_firmware get_envblkflash create_image"
-  echo "Example:  sudo ~/foxbunto_env_setup.sh install"
+  echo "Example:  sudo ~/foxbunto_env_setup.sh sdk_install"
   echo "Example:  sudo ~/foxbunto_env_setup.sh modify_chroot"
   exit 0
 }
@@ -305,7 +330,7 @@ while true; do
     8 "Build U-Boot" \
     9 "Build RootFS" \
     10 "Create Final Image" \
-    11 "Install (Run All Steps)" \
+    11 "SDK Install (Run All Steps)" \
     12 "Exit" \
     2>&1 >/dev/tty)
 
@@ -343,7 +368,7 @@ while true; do
       create_image
       ;;
     11)
-      install
+      sdk_install
       ;;
     12)
       echo "Exiting..."
@@ -369,32 +394,10 @@ elif [[ ${1} == "modify_kernel" ]]; then
   modify_kernel
 elif [[ ${1} == "update_image" ]]; then
   update_image
-elif [[ ${1} == "install" ]]; then
-  { echo 'Defaults timestamp_timeout=180' | sudo EDITOR='tee -a' visudo; } > /dev/null 2>&1
-  start_time=$(date +%s)
-  install_prerequisites
-  clone_repos
-  build_env
-  build_uboot
-  copy_femtofox_kernelcfg
-  build_kernelconfig
-  build_rootfs
-  rsync -aHAXv --progress --keep-dirlinks --itemize-changes /home/${sudoer}/femtofox/foxbuntu/sysdrv/out/rootfs_uclibc_rv1106/ /home/${sudoer}/luckfox-pico/sysdrv/out/rootfs_uclibc_rv1106/
-  build_firmware
-  modify_rootfs
-  build_rootfs
-  build_firmware
-  create_image
-  { sudo sed -i '/Defaults timestamp_timeout=180/d' /etc/sudoers; } > /dev/null 2>&1
-  end_time=$(date +%s)
-  elapsed=$(( end_time - start_time ))
-  hours=$(( elapsed / 3600 ))
-  minutes=$(( (elapsed % 3600) / 60 ))
-  seconds=$(( elapsed % 60 ))
-  printf "Environment installation time: %02d:%02d:%02d\n" $hours $minutes $seconds
+elif [[ ${1} == "sdk_install" ]]; then
+  sdk_install
 else
   ${1}
 fi
 
 exit 0
-
