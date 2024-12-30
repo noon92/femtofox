@@ -22,7 +22,7 @@ sudoer=$(echo $SUDO_USER)
 install_prerequisites() {
   echo “Setting up Foxbuntu build environment…”
   apt update
-  apt install -y git ssh make gcc gcc-multilib g++-multilib module-assistant expect g++ gawk texinfo libssl-dev bison flex fakeroot cmake unzip gperf autoconf device-tree-compiler libncurses5-dev pkg-config bc python-is-python3 passwd openssl openssh-server openssh-client vim file cpio rsync qemu-user-static binfmt-support
+  apt install -y git ssh make gcc gcc-multilib g++-multilib module-assistant expect g++ gawk texinfo libssl-dev bison flex fakeroot cmake unzip gperf autoconf device-tree-compiler libncurses5-dev pkg-config bc python-is-python3 passwd openssl openssh-server openssh-client vim file cpio rsync qemu-user-static binfmt-support dialog
 }
 
 clone_repos() {
@@ -190,7 +190,7 @@ ln -sf /usr/share/zoneinfo/UTC /etc/localtime
 echo "Installing packages..."
 
 apt update
-DEBIAN_FRONTEND=noninteractive apt install -y --option Dpkg::Options::="--force-confold" linux-firmware wireless-tools git python3.10-venv libgpiod-dev libyaml-cpp-dev libbluetooth-dev openssl libssl-dev libulfius-dev liborcania-dev evtest screen avahi-daemon protobuf-compiler telnet fonts-noto-color-emoji ninja-build chrony
+DEBIAN_FRONTEND=noninteractive apt install -y --option Dpkg::Options::="--force-confold" linux-firmware wireless-tools git python3.10-venv libgpiod-dev libyaml-cpp-dev libbluetooth-dev openssl libssl-dev libulfius-dev liborcania-dev evtest screen avahi-daemon protobuf-compiler telnet fonts-noto-color-emoji ninja-build chrony qrencode
 if [[ $? -eq 2 ]]; then echo "Error, step failed..."; fi
 DEBIAN_FRONTEND=noninteractive apt upgrade -y --option Dpkg::Options::="--force-confold"
 
@@ -248,7 +248,8 @@ find / -group pico -exec chgrp femto {} \
 find / -user pico -exec chown femto {} \
 usermod -d /home/femto -m femto
 ls -ld /home/femto
-echo 'femto:fox' | chpasswd
+echo 'femto:femto' | chpasswd
+sudo chage -d 0 femto
 usermod -a -G tty femto
 usermod -a -G dialout femto
 
@@ -289,6 +290,71 @@ usage() {
   exit 0
 }
 
+################### MENU SYSTEM ###################
+
+while true; do
+  CHOICE=$(dialog --clear --backtitle "Foxbuntu SDK Builder" \
+    --title "Main Menu" \
+    --menu "Choose an action:" 20 60 12 \
+    1 "Update Image" \
+    2 "Modify Chroot" \
+    3 "Modify Kernel" \
+    4 "Install Prerequisites" \
+    5 "Clone Repositories" \
+    6 "Build Environment" \
+    7 "Build SysDrv" \
+    8 "Build U-Boot" \
+    9 "Build RootFS" \
+    10 "Create Final Image" \
+    11 "Install (Run All Steps)" \
+    12 "Exit" \
+    2>&1 >/dev/tty)
+
+  clear
+
+  case $CHOICE in
+    1)
+      update_image
+      ;;
+    2)
+      modify_chroot
+      ;;
+    3)
+      modify_kernel
+      ;;
+    4)
+      install_prerequisites
+      ;;
+    5)
+      clone_repos
+      ;;
+    6)
+      build_env
+      ;;
+    7)
+      build_sysdrv
+      ;;
+    8)
+      build_uboot
+      ;;
+    9)
+      build_rootfs
+      ;;
+    10)
+      create_image
+      ;;
+    11)
+      install
+      ;;
+    12)
+      echo "Exiting..."
+      break
+      ;;
+    *)
+      echo "Invalid option, please try again."
+      ;;
+  esac
+done
 
 ### Run all functions. Broken out so any individual step can be performed if failed.
 # Should add clean functions...
