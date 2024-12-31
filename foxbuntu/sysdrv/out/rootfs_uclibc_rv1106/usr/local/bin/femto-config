@@ -354,6 +354,21 @@ meshtasticd_settings() {
           femto-meshtasticd-config.sh -r
           dialog --msgbox "Meshtasticd uninstalled. To purge all remnants, run \`sudo apt purge\`.\nAfter reinstallation but before first launch, run \`sudo runonce.sh\`." 8 40
         fi
+        pause
+      ;;
+      12)
+        return
+      ;;
+    esac
+  done
+}
+
+
+# Main menu
+while true; do
+  choice=$(dialog --title "$(date)" --menu "Femtofox Config" 15 40 5 \
+    1 "Wi-Fi" \
+    2 "Meshtasticd" \
     3 "Misc" \
     4 "Software" \
     5 "Help" \
