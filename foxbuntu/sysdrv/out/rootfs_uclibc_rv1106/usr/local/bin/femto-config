@@ -83,6 +83,34 @@ For more details, enter \`iwconfig\`.
   done
 }
 
+  # Pinout menu
+femto_pinouts() {
+  while true; do
+    local option=""
+    option=$(dialog --menu "Pinouts" 15 40 5 \
+      1 "Femtofox" \
+      2 "Femtofox Zero" \
+      3 "Femtofox Tiny" \
+      4 "Luckfox Pico Mini" \
+      5 "Back to Misc Settings" 3>&1 1>&2 2>&3)
+    
+    exit_status=$? # This line checks the exit status of the dialog command
+    
+    if [ $exit_status -ne 0 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
+      break
+    fi
+    
+    case $option in
+      1) dialog --title "Femtofox" --msgbox "$(femto-pinout.sh -f)" 38 70 ;;
+      2) dialog --title "Femtofox Zero" --msgbox "$(femto-pinout.sh -z)" 38 70 ;;
+      3) dialog --title "Femtofox Tiny" --msgbox "$(femto-pinout.sh -t)" 38 70 ;;
+      4) dialog --title "Luckfox Pico Mini" --msgbox "$(femto-pinout.sh -l)" 23 63 ;;
+      5) return ;;
+      *) echo "Invalid option selected!" ;;
+    esac
+  done
+}
+
 # Function to handle misc settings
 misc_settings() {
   local title="Misc Settings"
@@ -155,7 +183,7 @@ Rerunning the script will not cause any issues if these things are already in pl
         fi
       ;;
       4)
-        dialog --title "$title" --msgbox "$(femto-pinout.sh -a | sed 's/|n/\\n/g')" 0 0
+        femto_pinouts
       ;;
       5)
         luckfox-config
@@ -242,9 +270,9 @@ meshtasticd_settings() {
   while true; do
     local option=""
     option=$(dialog --menu "$title" 19 50 4 \
-      1 "Get current configuration URL & QR code" \
+      1 "View current configuration URL & QR code" \
       2 "Set new configuration URL" \
-      3 "Get current lora radio selection" \
+      3 "View current lora radio selection" \
       4 "Set LoRa radio" \
       5 "View current admin keys" \
       6 "Set admin key" \
