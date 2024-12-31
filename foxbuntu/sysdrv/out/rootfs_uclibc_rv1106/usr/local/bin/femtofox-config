@@ -91,8 +91,10 @@ misc_settings() {
     option=$(dialog --menu "Misc Settings" 15 40 4 \
       1 "Set system timezone" \
       2 "Ham radio support" \
-      3 "blah" \
-    4 "Back to Main Menu" 3>&1 1>&2 2>&3)
+      3 "Re-run first-boot script" \
+      4 "Display pinout" \
+      5 "Run OEM luckfox-config" \
+      6 "Back to Main Menu" 3>&1 1>&2 2>&3)
     
     exit_status=$? # This line checks the exit status of the dialog command
     if [ $exit_status -ne 0 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
@@ -145,9 +147,20 @@ then \`depmod\` will be run. To remove support, those modules will be deleted.\n
         depmod -a 5.10.160
       ;;
       3)
-        dialog --msgbox "Node info retrieved successfully!" 8 40
+        dialog --title "$title" --yesno "Rerunning the first-boot script will add support for RTC (real time clock), \
+set the eth0 MAC address and Meshtastic nodeID to a derivative of the CPU serial number and enable wifi in Meshtastic settings. \
+Rerunning the script will not cause any issues if these things are already in place. Femtofox will reboot after execution.\n\nConfirm?" 12 60
+         if [ $? -eq 0 ]; then #unless cancel/no
+          runonce.sh
+        fi
       ;;
       4)
+        dialog --title "$title" --msgbox "$(femto-pinout.sh -a | sed 's/|n/\\n/g')" 0 0
+      ;;
+      5)
+        luckfox-config
+      ;;
+      6)
         return
       ;;
     esac
@@ -158,7 +171,7 @@ then \`depmod\` will be run. To remove support, those modules will be deleted.\n
 set_lora_radio() {
   while true; do
     local option=""
-    option=$(dialog --menu "Misc Settings" 0 0 10 \
+    option=$(dialog --menu "Misc" 0 0 10 \
       1 "ebyte-e22-900m30s" \
       2 "ebyte-e22-900m22s" \
       3 "ebyte-e80-900m22s" \
@@ -250,6 +263,7 @@ meshtasticd_settings() {
     case $option in
       1) #Get current configuration URL & QR code)
         femto-meshtasticd-config.sh -g
+        pause
       ;;
       2)
         newurl=$(dialog --title "Meshtastic URL" --inputbox "New Meshtasticd URL (SHIFT+INS to paste):" 8 50 3>&1 1>&2 2>&3)
@@ -329,9 +343,8 @@ while true; do
     2 "Meshtasticd" \
     3 "Misc" \
     4 "Software" \
-    5 "Run OEM luckfox-config" \
-    6 "Help" \
-  7 "Exit" 3>&1 1>&2 2>&3)
+    5 "Help" \
+    6 "Exit" 3>&1 1>&2 2>&3)
   
   exit_status=$? # This line checks the exit status of the dialog command
   
@@ -344,9 +357,8 @@ while true; do
     2) meshtasticd_settings ;;
     3) misc_settings ;;
     4) software_settings ;;
-    5) luckfox-config ;;
-    6) femto_help ;;
-    7) break ;;
+    5) femto_help ;;
+    6) break ;;
     *) dialog --msgbox "Invalid choice, please try again." 8 40 ;;
   esac
 done
