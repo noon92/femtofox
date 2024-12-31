@@ -40,8 +40,8 @@ luckfox="
            VBUS 5V ●│●   │ USB-C │   ●│● 1V8 OUT            \n\
                GND ●│●   │       │   ●│● GND                \n\
         3V3 IN/OUT ●│●    ───────    ●│● 145 (1.8V)         \n\
-UART-TX2 DEBUG, 42 ●│●               ●│● 144 (1.8V)         \n\
-UART-RX2 DEBUG, 43 ●│●        [BTN]  ●│● 4                  \n\
+UART2-TX DEBUG, 42 ●│●               ●│● 144 (1.8V)         \n\
+UART2-RX DEBUG, 43 ●│●        [BTN]  ●│● 4                  \n\
            CS0, 48 ●│●               ●│● 55, IRQ            \n\
            CLK, 49 ●│●               ●│● 54  BUSY           \n\
           MOSI, 50 ●│●               ●│● 59, I2C SCL        \n\
@@ -91,7 +91,39 @@ femtofox="\
     S  U  R  N     N              N        N  S  X  X  N  V  V    \n\
     0  S  Q  D     D              D        D  T  4  4  D          \n\
        Y                                                          "
-femtofox_zero="coming soon"
+
+
+femtofox_zero="\
+          _____               _____          \n\
+         │()   \             /   ()│         \n\
+         │      \           /      │         \n\
+         │        ─────────        │         \n\
+         │    ─────────────────    │         \n\
+         │  ●│●     USB-C     ●│●  │         \n\
+         │  ●│●               ●│●  │         \n\
+         │  ●│●               ●│●  │         \n\
+         │  ●│●    LUCKFOX    ●│●  │         \n\
+         │  ●│●   PICO MINI   ●│●  │         \n\
+         │  ●│●               ●│●  │         \n\
+         │  ●│●    FOXHOLE    ●│●  │         \n\
+         │  ●│●               ●│●  │         \n\
+         │  ●│●               ●│●  │         \n\
+         │  ●│●               ●│●  │         \n\
+         │  ●│●               ●│●  │         \n\
+         │    ────●─●─●─●─●────    │         \n\
+         │───   ─────────────   ───│         \n\
+     GND │ ● │ │   HT-RA62   │ │ ● │ GND     \n\
+     3V3 │ ● │ │   _______   │ │ ● │ 3V3     \n\
+UART4-RX │ ● │ │  │       │  │ │ ● │ I2C SDA \n\
+UART4-TX │ ● │ │  │  WIO  │  │ │ ● │ I2C SCL \n\
+         │───  │  │SX 1262│  │  ───│         \n\
+         │     │  │_______│  │   ● │ UNUSED  \n\
+         │      ─────────────    ● │ GND     \n\
+         │()         ETH         ()│         \n\
+          ────────●─●─●─●─●────────          \n\
+                  R R G T T                  \n\
+                  X X N X X                  \n\
+                  - + D - +                  \n"
 
 femtofox_tiny="coming soon"
 
