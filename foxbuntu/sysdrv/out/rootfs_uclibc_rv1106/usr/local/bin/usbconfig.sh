@@ -265,6 +265,7 @@ if [ -f "$mount_point/femtofox-config.txt" ]; then
       fi
     fi
     
+		log_message "USB config complete, unplug USB drive."
     for _ in {1..10}; do #do our successful config boot code
       blink "0.125" && sleep 0.125
     done
