@@ -85,7 +85,7 @@ while getopts ":hgkl:q:va:cedur" opt; do
       apt install --only-upgrade meshtasticd
       ;;
     r) # Option -r (uninstall meshtasticd)
-
+      apt remove meshtasticd
       ;;
     \?)  # Invalid option
       echo "Invalid option: -$OPTARG"

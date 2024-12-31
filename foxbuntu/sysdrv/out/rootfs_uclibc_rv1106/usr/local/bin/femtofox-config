@@ -90,7 +90,7 @@ misc_settings() {
     local option=""
     option=$(dialog --menu "Misc Settings" 15 40 4 \
       1 "Set system timezone" \
-      2 "Add ham radio support" \
+      2 "Ham radio support" \
       3 "blah" \
     4 "Back to Main Menu" 3>&1 1>&2 2>&3)
     
@@ -138,8 +138,11 @@ SAA7706H Car Radio DSP\n\
 TEF6862 Car Radio Enhanced Selectivity Tuner\n\
 Texas Instruments WL1273 I2C FM Radio\n\
 Renesas Digital Radio Interface (DRIF)" 20 65
-        dialog --title "$title" --msgbox "To add support, kernel modules for all these will be copied to from \`DIRECTORY\` to \`/lib/modules/5.10.160/\`,\
-        then \`depmod -a 5.10.160\` will be run.\nAfter installation, many redundant network interfaces will appear." 10 50
+        dialog --title "$title" --msgbox "To add support, kernel modules for all these will be copied to \`/lib/modules/5.10.160/\`,\
+then \`depmod\` will be run. To remove support, those modules will be deleted.\n\nAfter installation, many redundant network interfaces will appear." 11 50
+        #add code to choose add or remove
+        cp /oem/usr/ko/ham/* /lib/modules/5.10.160/
+        depmod -a 5.10.160
       ;;
       3)
         dialog --msgbox "Node info retrieved successfully!" 8 40
@@ -225,7 +228,7 @@ meshtasticd_settings() {
   local title="Meshtasticd Settings"
   while true; do
     local option=""
-    option=$(dialog --menu "$title" 17 50 4 \
+    option=$(dialog --menu "$title" 19 50 4 \
       1 "Get current configuration URL & QR code" \
       2 "Set new configuration URL" \
       3 "Get current lora radio selection" \
