@@ -83,6 +83,34 @@ For more details, enter \`iwconfig\`.
   done
 }
 
+  # Pinout menu
+femto_pinouts() {
+  while true; do
+    local option=""
+    option=$(dialog --menu "Pinouts" 15 40 5 \
+      1 "Femtofox" \
+      2 "Femtofox Zero" \
+      3 "Femtofox Tiny" \
+      4 "Luckfox" \
+      5 "Back to Main Menu" 3>&1 1>&2 2>&3)
+    
+    exit_status=$? # This line checks the exit status of the dialog command
+    
+    if [ $exit_status -ne 0 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
+      break
+    fi
+    
+    case $option in
+      1) dialog --title "$title" --msgbox "$(femto-pinout.sh -f)" 38 70 ;;
+      2) dialog --title "$title" --msgbox "$(femto-pinout.sh -z)" 38 70 ;;
+      3) dialog --title "$title" --msgbox "$(femto-pinout.sh -t)" 38 70 ;;
+      4) dialog --title "$title" --msgbox "$(femto-pinout.sh -l)" 23 63 ;;
+      5) return ;;
+      *) echo "Invalid option selected!" ;;
+    esac
+  done
+}
+
 # Function to handle misc settings
 misc_settings() {
   local title="Misc Settings"
@@ -155,7 +183,7 @@ Rerunning the script will not cause any issues if these things are already in pl
         fi
       ;;
       4)
-        dialog --title "$title" --msgbox "$(femto-pinout.sh -a | sed 's/|n/\\n/g')" 0 0
+        femto_pinouts
       ;;
       5)
         luckfox-config
@@ -326,21 +354,6 @@ meshtasticd_settings() {
           femto-meshtasticd-config.sh -r
           dialog --msgbox "Meshtasticd uninstalled. To purge all remnants, run \`sudo apt purge\`.\nAfter reinstallation but before first launch, run \`sudo runonce.sh\`." 8 40
         fi
-        pause
-      ;;
-      12)
-        return
-      ;;
-    esac
-  done
-}
-
-
-# Main menu
-while true; do
-  choice=$(dialog --title "$(date)" --menu "Femtofox Config" 15 40 5 \
-    1 "Wi-Fi" \
-    2 "Meshtasticd" \
     3 "Misc" \
     4 "Software" \
     5 "Help" \
