@@ -1,0 +1,95 @@
+echo "Inside chroot environment..."
+echo "tmpfs /run tmpfs rw,nodev,nosuid,size=32M 0 0" | tee -a /etc/fstab
+
+# Temporarily removed for SEGFAULT fix done after upgrade below.
+#echo "Installing Meshtastic..."
+
+#wget -qO- https://meshtastic.github.io/meshtastic-deb.asc | tee /etc/apt/keyrings/meshtastic-deb.asc >/dev/null
+#if [[ $? -eq 2 ]]; then echo "Error, step failed..."; fi
+#echo "deb [arch=all signed-by=/etc/apt/keyrings/meshtastic-deb.asc] https://meshtastic.github.io/deb stable main" | tee /etc/apt/sources.list.d/meshtastic-deb.list >/dev/null
+
+echo "Removing netdevice rules..."
+
+ln -s /dev/null /etc/udev/rules.d/80-net-setup-link.rules
+
+echo "Setting up kernel modules..."
+
+touch /lib/modules/5.10.160/modules.order
+touch /lib/modules/5.10.160/modules.builtin
+depmod -a 5.10.160
+if [[ $? -eq 2 ]]; then echo "Error, step failed..."; fi
+
+echo "Setting localtime to UTC..."
+
+rm /etc/localtime
+ln -sf /usr/share/zoneinfo/UTC /etc/localtime
+
+echo "Installing packages..."
+
+apt update
+DEBIAN_FRONTEND=noninteractive apt install -y --option Dpkg::Options::="--force-confold" linux-firmware wireless-tools git python3.10-venv libgpiod-dev libyaml-cpp-dev libbluetooth-dev openssl libssl-dev libulfius-dev liborcania-dev evtest screen avahi-daemon protobuf-compiler telnet fonts-noto-color-emoji ninja-build chrony
+if [[ $? -eq 2 ]]; then echo "Error, step failed..."; fi
+DEBIAN_FRONTEND=noninteractive apt upgrade -y --option Dpkg::Options::="--force-confold"
+
+# Tempfix for SEGFAULT
+wget https://github.com/meshtastic/firmware/releases/download/v2.5.11.8e2a3e5/meshtasticd_2.5.11.8e2a3e5_armhf.deb
+DEBIAN_FRONTEND=noninteractive apt install -y --option Dpkg::Options::="--force-confold" ./meshtasticd_2.5.11.8e2a3e5_armhf.deb
+
+
+echo "Installing dependencies for meshing-around and meshtastic cli..."
+
+pip3 install requests pyephem pytap2 meshtastic pypubsub geopy maidenhead beautifulsoup4 dadjokes schedule wikipedia googlesearch-python
+if [[ $? -eq 2 ]]; then echo "Error, step failed..."; fi
+
+echo "Setting MOTD..."
+
+mv /etc/update-motd.d/10-help-text /etc/update-motd.d/10-help-text.bak
+mv /etc/update-motd.d/60-unminimize /etc/update-motd.d/60-unminimize.bak
+
+echo "Setting hostname to femtofox..."
+
+echo "femtofox" | tee /etc/hostname > /dev/null
+
+echo "Configuring autostart of systemd services..."
+
+systemctl enable button
+systemctl enable wifi-mesh-control
+systemctl disable NetworkManager
+systemctl disable NetworkManager-dispatcher
+systemctl disable NetworkManager-wait-online
+systemctl disable vsftpd.service
+systemctl disable ModemManager.service
+systemctl disable getty@tty1.service
+systemctl disable acpid
+systemctl disable acpid.socket
+systemctl disable acpid.service
+systemctl mask alsa-restore.service
+systemctl disable alsa-restore.service
+systemctl disable alsa-state.service
+systemctl mask sound.target
+systemctl disable sound.target
+systemctl disable veritysetup.target
+systemctl disable systemd-pstore.service
+
+echo "Adding femto and pico users/groups..."
+
+groupmod -n femto pico
+usermod -l femto pico
+usermod -aG sudo,input femto
+echo "femto ALL=(ALL:ALL) ALL" | tee /etc/sudoers.d/femto > /dev/null
+chmod 440 /etc/sudoers.d/femto
+
+# this seems messy, user:group should be set cleanly and not corrected after?  OSC: somethings were owned my pico from factory
+
+find / -group pico -exec chgrp femto {} \; 2>/dev/null
+find / -user pico -exec chown femto {} \; 2>/dev/null
+usermod -d /home/femto -m femto
+ls -ld /home/femto
+echo 'femto:fox' | chpasswd
+usermod -a -G tty femto
+usermod -a -G dialout femto
+
+echo "Cleaning up chroot..."
+
+apt clean && rm -rf /var/lib/apt/lists/* && rm -rf /tmp/* && rm -rf /var/tmp/* && find /var/log -type f -exec truncate -s 0 {} + && : > /root/.bash_history && history -c
+exit
