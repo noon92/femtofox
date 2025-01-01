@@ -237,7 +237,7 @@ if [ -f "$mount_point/femtofox-config.txt" ]; then
       log_message "wpa_supplicant.conf updated and wifi restarted. Enabling Meshtastic wifi setting."
       timeout 30s dhclient -v 2>&1 | tee -a /tmp/femtofox-config.log
       
-      /usr/local/bin/updatemeshtastic.sh "--set network.wifi_enabled true" 10 "USB config" #| tee -a /tmp/femtofox-config.log
+      femto-meshtasticd-config.sh -m "--set network.wifi_enabled true" 10 "USB config" #| tee -a /tmp/femtofox-config.log
       if [ $? -eq 1 ]; then
         log_message "Update of Meshtastic FAILED."
       else
@@ -247,7 +247,7 @@ if [ -f "$mount_point/femtofox-config.txt" ]; then
     
     if [ "$update_meshtastic_url" != "" ]; then
       log_message "Connecting to Meshtastic radio and submitting $update_meshtastic_url"
-      /usr/local/bin/updatemeshtastic.sh "$update_meshtastic_url" 10 "USB config" #| tee -a /tmp/femtofox-config.log
+      femto-meshtasticd-config.sh -m "$update_meshtastic_url" 10 "USB config" #| tee -a /tmp/femtofox-config.log
       if [ $? -eq 1 ]; then
         log_message "Update of Meshtastic FAILED."
       else
@@ -257,7 +257,7 @@ if [ -f "$mount_point/femtofox-config.txt" ]; then
     
     if [ "$update_meshtastic_security" != "" ]; then
       log_message "Connecting to Meshtastic radio and submitting $update_meshtastic_security"
-      /usr/local/bin/updatemeshtastic.sh "$update_meshtastic_security" 10 "USB config" #| tee -a /tmp/femtofox-config.log
+      femto-meshtasticd-config.sh -m "$update_meshtastic_security" 10 "USB config" #| tee -a /tmp/femtofox-config.log
       if [ $? -eq 1 ]; then
         log_message "Update of Meshtastic FAILED."
       else
