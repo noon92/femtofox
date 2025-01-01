@@ -44,12 +44,6 @@ build_env() {
   ./build.sh env
 }
 
-build_sysdrv() {
-  echo "Building sysdrv..."
-  cd /home/${sudoer}/luckfox-pico
-  ./build.sh sysdrv
-}
-
 build_uboot() {
   echo "Building uboot..."
   cd /home/${sudoer}/luckfox-pico
@@ -62,12 +56,44 @@ build_rootfs() {
   ./build.sh rootfs
 }
 
-copy_femtofox_kernelcfg() {
+build_firmware() {
+  echo "Building firmware..."
+  cd /home/${sudoer}/luckfox-pico/
+  ./build.sh firmware
+}
+
+sync_foxbuntu_changes() {
+  SOURCE_DIR=/home/${sudoer}/femtofox/foxbuntu
+  DEST_DIR=/home/${sudoer}/luckfox-pico
+
+  # Ensure the source is updated
+  cd "$SOURCE_DIR" || exit
+  git pull
+
+  # Get a list of all Git-tracked files in the source
+  cd "$SOURCE_DIR" || exit
+  git ls-files > /tmp/source_files.txt
+  
   echo "Merging in Foxbuntu modifications..."
-  cd /home/${sudoer}/femtofox/foxbuntu/
   rsync -aHAXv --progress --keep-dirlinks --itemize-changes /home/${sudoer}/femtofox/foxbuntu/sysdrv/ /home/${sudoer}/luckfox-pico/sysdrv/
   rsync -aHAXv --progress --keep-dirlinks --itemize-changes /home/${sudoer}/femtofox/foxbuntu/project/ /home/${sudoer}/luckfox-pico/project/
-  rsync -aHAXv --progress --keep-dirlinks --itemize-changes /home/${sudoer}/femtofox/foxbuntu/output/image/ /home/${sudoer}/luckfox-pico/output/image/
+  rsync -aHAXv --progress --keep-dirlinks --itemize-changes /home/${sudoer}/femtofox/foxbuntu/output/image/ /home/${sudoer}/luckfox-pico/output/image/   
+  
+  # Remove files in the destination that are no longer in the source repository
+  while read -r file; do
+      src_file="$SOURCE_DIR/$file"
+      dest_file="$DEST_DIR/$file"
+
+      if [ ! -f "$src_file" ] && [ -f "$dest_file" ]; then
+          echo "Deleting $dest_file as it is no longer in the git repository."
+          rm -f "$dest_file"
+      fi
+  done < /tmp/source_files.txt
+
+  # Clean up
+  rm /tmp/source_files.txt
+
+  echo "Synchronization complete."  
 }
 
 build_kernelconfig() {
@@ -167,14 +193,14 @@ update_image() {
   cd /home/${sudoer}/femtofox
   git pull
   cd /home/${sudoer}/
-  copy_femtofox_kernelcfg
+  sync_foxbuntu_changes
   build_kernelconfig
   build_rootfs
   build_firmware
   create_image
 }
 
-modify_rootfs() {
+install_rootfs() {
   echo "Modifying rootfs..."
   cd /home/${sudoer}/luckfox-pico/output/image
   echo "Copying kernel modules..."
@@ -208,17 +234,12 @@ modify_rootfs() {
   rm /home/${sudoer}/luckfox-pico/sysdrv/out/rootfs_uclibc_rv1106/tmp/chroot_script.sh
 }
 
-build_firmware() {
-  echo "Building firmware..."
-  cd /home/${sudoer}/luckfox-pico/
-  ./build.sh firmware
-}
-
 create_image() {
   echo "Creating final sdcard img..."
   cd /home/${sudoer}/luckfox-pico/output/image
   /home/${sudoer}/luckfox-pico/output/image/blkenvflash /home/${sudoer}/luckfox-pico/foxbuntu.img
   if [[ $? -eq 2 ]]; then echo "Error, sdcard img failed to build..."; exit 2; else echo "foxbuntu.img build completed."; fi
+  ls -la /home/${sudoer}/luckfox-pico/foxbuntu.img
   du -h /home/${sudoer}/luckfox-pico/foxbuntu.img
 }
 
@@ -228,12 +249,12 @@ sdk_install() {
   clone_repos
   build_env
   build_uboot
-  copy_femtofox_kernelcfg
+  sync_foxbuntu_changes
   build_kernelconfig
   build_rootfs
   rsync -aHAXv --progress --keep-dirlinks --itemize-changes /home/${sudoer}/femtofox/foxbuntu/sysdrv/out/rootfs_uclibc_rv1106/ /home/${sudoer}/luckfox-pico/sysdrv/out/rootfs_uclibc_rv1106/
   build_firmware
-  modify_rootfs
+  install_rootfs
   build_rootfs
   build_firmware
   create_image
@@ -250,7 +271,7 @@ usage() {
   echo "To install the development environment use the arg 'sdk_install' and is intended to be run ONCE only."
   echo "To modify the chroot and build an updated image use the arg 'modify_chroot'."
   echo "To modify the kernel and build an updated image use the arg 'modify_kernel'."
-  echo "other args: install_prerequisites clone_repos build_env build_sysdrv copy_femtofox_kernelcfg build_kernelconfig modify_rootfs build_rootf build_uboot build_firmware get_envblkflash create_image"
+  echo "other args: build_env sync_foxbuntu_changes build_kernelconfig install_rootfs build_rootfs build_uboot build_firmware create_image"
   echo "Example:  sudo ~/foxbunto_env_setup.sh sdk_install"
   echo "Example:  sudo ~/foxbunto_env_setup.sh modify_chroot"
   exit 0
@@ -269,37 +290,35 @@ elif [[ -z ${1} ]]; then
     CHOICE=$(dialog --clear --no-cancel --backtitle "Foxbuntu SDK Builder" \
       --title "Main Menu" \
       --menu "Choose an action:" 20 60 12 \
-      1 "Update Image" \
-      2 "Modify Chroot" \
-      3 "Inject Chroot" \
-      4 "Modify Kernel" \
-      5 "Install Prerequisites" \
-      6 "Clone Repositories" \
-      7 "Build Environment" \
-      8 "Build SysDrv" \
-      9 "Build U-Boot" \
-      10 "Build RootFS" \
-      11 "Create Final Image" \
-      12 "SDK Install (Run All Steps)" \
-      13 "Exit" \
+      1 "Get Image Updates" \
+      2 "Modify Kernel Menu" \
+      3 "Enter and Modify Chroot" \
+      4 "Inject Chroot Script" \
+      5 "Manual Build Environment" \
+      6 "Manual Build U-Boot" \
+      7 "Manual Build RootFS" \
+      8 "Manual Build Firmware" \
+      9 "Manual Create Final Image" \
+      "" "" \
+      10 "SDK Install (Run first and only once)" \
+      "" "" \
+      11 "Exit" \
       2>&1 >/dev/tty)
 
     clear
 
     case $CHOICE in
       1) update_image ;;
-      2) modify_chroot ;;
-      3) inject_chroot ;;
-      4) modify_kernel ;;
-      5) install_prerequisites ;;
-      6) clone_repos ;;
-      7) build_env ;;
-      8) build_sysdrv ;;
-      9) build_uboot ;;
-      10) build_rootfs ;;
-      11) create_image ;;
-      12) sdk_install ;;
-      13) echo "Exiting..."; break ;;
+      2) modify_kernel ;;
+      3) modify_chroot ;;
+      4) inject_chroot ;;
+      5) build_env ;;
+      6) build_uboot ;;
+      7) build_rootfs ;;
+      8) build_firmware ;;
+      9) create_image ;;
+      10) sdk_install ;;
+      11) echo "Exiting..."; break ;;
       *) echo "Invalid option, please try again." ;;
     esac
 
