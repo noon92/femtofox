@@ -17,16 +17,19 @@ pause() {
 }
 
 # Function to handle Wi-Fi settings
-wifi_settings() {
-  local title="Wifi settings"
+networking_settings() {
+  local title="Networking"
+  local title2="Wifi Settings"
   wpa_supplicant_conf="/etc/wpa_supplicant/wpa_supplicant.conf"
   while true; do
     local option=""
-    option=$(dialog --menu "Wifi settings" 15 40 4 \
+    option=$(dialog --menu "$title" 15 40 4 \
       1 "View wifi settings" \
       2 "Change wifi settings" \
       3 "Restart wifi" \
-    4 "Back to Main Menu" 3>&1 1>&2 2>&3)
+      4 "Ethernet settings" \
+      5 "Test internet connection" \
+    6 "Back to Main Menu" 3>&1 1>&2 2>&3)
     
     exit_status=$? # This line checks the exit status of the dialog command
     if [ $exit_status -ne 0 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
@@ -43,7 +46,7 @@ wifi_settings() {
         else
           mesh_wifi_status="disabled"
         fi
-        dialog --title "$title" --msgbox "\
+        dialog --title "$title2" --msgbox "\
 SSID:            $wifi_ssid\n\
 Password:        $wifi_psk\n\
 Country:         $wifi_country\n\
@@ -51,6 +54,7 @@ Meshtastic wifi: $mesh_wifi_status\n\
 \n\
 Connected to:    $(iwconfig 2>/dev/null | grep -i 'ESSID' | awk -F 'ESSID:"' '{print $2}' | awk -F '"' '{print $1}')\n\
 Signal Strength: $(iwconfig 2>/dev/null | grep -i 'Signal level' | awk -F 'Signal level=' '{print $2}' | awk '{print $1}')\n\
+MAC address:     $(ifconfig wlan0 | grep ether | awk '{print $2}')\n\
 Current IP:      $(hostname -I | awk '{print $1}')\n\
 For more details, enter \`iwconfig\`.
         " 0 0
@@ -59,24 +63,54 @@ For more details, enter \`iwconfig\`.
         local wifi_ssid=""
         local wifi_psk=""
         local wifi_country=""
-        wifi_ssid=$(dialog --title "$title" --inputbox "Enter Wi-Fi SSID:" 8 40 3>&1 1>&2 2>&3)
-        wifi_psk=$(dialog --title "$title" --inputbox "Enter Wi-Fi Password:" 8 40 3>&1 1>&2 2>&3)
-        wifi_country=$(dialog --title "$title" --inputbox "Enter Country Code (e.g., US, DE) - optional:" 9 40 3>&1 1>&2 2>&3)
+        wifi_ssid=$(dialog --title "$title2" --inputbox "Enter Wi-Fi SSID:" 8 40 3>&1 1>&2 2>&3)
+        wifi_psk=$(dialog --title "$title2" --inputbox "Enter Wi-Fi Password:" 8 40 3>&1 1>&2 2>&3)
+        wifi_country=$(dialog --title "$title2" --inputbox "Enter Country Code (e.g., US, DE) - optional:" 9 40 3>&1 1>&2 2>&3)
         cmd="femto-wifi-config.sh -s \"$wifi_ssid\" -p \"$wifi_psk\""
         [ -n "$wifi_country" ] && cmd="$cmd -c \"$wifi_country\""
         echo $cmd
         if [ -z "$wifi_ssid" ]; then
-          dialog --title "$title" --msgbox "\nSSID is required." 8 40
+          dialog --title "$title2" --msgbox "\nSSID is required." 8 40
           return
         fi
         eval $cmd
-        dialog --title "$title" --msgbox "Wi-Fi Settings Saved:\nSSID: $wifi_ssid\nPassword: $wifi_psk\nCountry: $wifi_country\nMeshtastic wifi setting set to ON" 10 40
+        dialog --title "$title2" --msgbox "Wi-Fi Settings Saved:\nSSID: $wifi_ssid\nPassword: $wifi_psk\nCountry: $wifi_country\nMeshtastic wifi setting set to ON" 10 40
       ;;
       3)
-        dialog --title "Wifi restart" --msgbox "Wifi will be restarted.\nMeshtastic wifi setting will be set to ON." 7 50
-        femto-wifi-config.sh -r
+        dialog --title "$title2" --yesno "Wifi and Ethernet will be restarted.\nMeshtastic wifi setting will be set to ON." 7 50
+        if [ $? -eq 0 ]; then #unless cancel/no
+          femto-wifi-config.sh -r
+        fi
       ;;
       4)
+        dialog --title "Ethernet (eth0) settings" --msgbox "\
+IPv4 Address: $(ifconfig eth0 | grep 'inet ' | awk '{print $2}')\n\
+IPv6 Address: $(ifconfig eth0 | grep 'inet6 ' | awk '{print $2}')\n\
+MAC Address:  $(ifconfig eth0 | grep 'ether ' | awk '{print $2}')" 0 0
+      ;;
+      5)
+        echo "Testing internet connection..."
+        # Define ping targets and initialize counter
+        targets=("1.1.1.1" "8.8.8.8")
+        successful=0
+        count=0
+        total=0
+
+        # Ping each target 5 times and count successful pings
+        for target in "${targets[@]}"; do
+          count=$(ping -c 5 -W 1 "$target" | grep -c 'bytes from') # Count lines with successful pings
+          successful=$((successful + count))
+          ((total+=5))
+        done
+
+        # Use dialog to display message based on successful pings count
+        if [ "$successful" -eq 0 ]; then
+          dialog --msgbox "No internet connection detected." 6 50
+        else
+          dialog --msgbox "Internet connection is up.\n\nPinged $(echo "${targets[*]}" | sed 's/ /, /g').\nReceived $successful/$total responses." 8 40
+        fi
+      ;;
+      6)
         return
       ;;
     esac
@@ -92,7 +126,7 @@ femto_pinouts() {
       2 "Femtofox Zero" \
       3 "Femtofox Tiny" \
       4 "Luckfox Pico Mini" \
-      5 "Back to Misc Settings" 3>&1 1>&2 2>&3)
+      5 "Back to Help Menu" 3>&1 1>&2 2>&3)
     
     exit_status=$? # This line checks the exit status of the dialog command
     
@@ -101,8 +135,8 @@ femto_pinouts() {
     fi
     
     case $option in
-      1) dialog --title "Femtofox" --msgbox "$(femto-pinout.sh -f)" 38 70 ;;
-      2) dialog --title "Femtofox Zero" --msgbox "$(femto-pinout.sh -z)" 38 70 ;;
+      1) dialog --title "Femtofox" --msgbox "$(femto-pinout.sh -f)" 41 70 ;;
+      2) dialog --title "Femtofox Zero" --msgbox "$(femto-pinout.sh -z)" 34 48 ;;
       3) dialog --title "Femtofox Tiny" --msgbox "$(femto-pinout.sh -t)" 38 70 ;;
       4) dialog --title "Luckfox Pico Mini" --msgbox "$(femto-pinout.sh -l)" 23 63 ;;
       5) return ;;
@@ -120,9 +154,8 @@ misc_settings() {
       1 "Set system timezone" \
       2 "Ham radio support" \
       3 "Re-run first-boot script" \
-      4 "Display pinout" \
-      5 "Run OEM luckfox-config" \
-      6 "Back to Main Menu" 3>&1 1>&2 2>&3)
+      4 "Run OEM luckfox-config" \
+      5 "Back to Main Menu" 3>&1 1>&2 2>&3)
     
     exit_status=$? # This line checks the exit status of the dialog command
     if [ $exit_status -ne 0 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
@@ -183,12 +216,9 @@ Rerunning the script will not cause any issues if these things are already in pl
         fi
       ;;
       4)
-        femto_pinouts
-      ;;
-      5)
         luckfox-config
       ;;
-      6)
+      5)
         return
       ;;
     esac
@@ -211,7 +241,7 @@ set_lora_radio() {
       9 "sx1262_xtal" \
       10 "lr1121_tcxo" \
       11 "none (simulated radio)" \
-    12 "Back to Main Menu" 3>&1 1>&2 2>&3)
+    12 "Back to Meshtasticd Settings" 3>&1 1>&2 2>&3)
     
     exit_status=$? # This line checks the exit status of the dialog command
     if [ $exit_status -ne 0 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
@@ -363,11 +393,61 @@ meshtasticd_settings() {
   done
 }
 
+#Help menu
+help_menu() {
+  while true; do
+  local title="Help / About"
+    local option=""
+    option=$(dialog --menu "$title" 0 0 6 \
+      1 "About Femtofox" \
+      2 "Display pinout" \
+      3 "Femtofox licensing info - short" \
+      4 "Femtofox licensing info - long" \
+      5 "Meshtastic licensing info" \
+      6 "About Luckfox" \
+      7 "About Ubuntu" \
+    8 "Back to Main Menu" 3>&1 1>&2 2>&3)
+    
+    exit_status=$? # This line checks the exit status of the dialog command
+    if [ $exit_status -ne 0 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
+      break
+    fi
+    
+    case $option in
+      1)
+        dialog --msgbox "$(femto-license.sh -a)" 0 0
+      ;;
+      2)
+        femto_pinouts
+      ;;
+      3)
+        dialog --msgbox "$(femto-license.sh -f)" 28 60
+      ;;
+      4)
+        femto-license.sh -F
+        echo -e "\nPress any key to continue...\n"
+        read -n 1 -s -r
+      ;;
+      5)
+        dialog --msgbox "$(femto-license.sh -m)" 0 0
+      ;;
+      6)
+        dialog --msgbox "$(femto-license.sh -l)" 0 0
+      ;;
+      7)
+        dialog --msgbox "$(femto-license.sh -u)" 0 0
+      ;;
+      8)
+        return
+      ;;
+    esac
+  done
+}
 
 # Main menu
 while true; do
   choice=$(dialog --title "$(date)" --menu "Femtofox Config" 15 40 5 \
-    1 "Wi-Fi" \
+    1 "Networking" \
     2 "Meshtasticd" \
     3 "Misc" \
     4 "Software" \
@@ -381,11 +461,11 @@ while true; do
   fi
   
   case $choice in
-    1) wifi_settings ;;
+    1) networking_settings ;;
     2) meshtasticd_settings ;;
     3) misc_settings ;;
     4) software_settings ;;
-    5) femto_help ;;
+    5) help_menu ;;
     6) break ;;
     *) dialog --msgbox "Invalid choice, please try again." 8 40 ;;
   esac
