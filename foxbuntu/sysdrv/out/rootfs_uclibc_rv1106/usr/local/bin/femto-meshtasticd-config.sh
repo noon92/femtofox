@@ -18,6 +18,8 @@ Options are:
 -d             Disable legacy admin channel
 -u             Upgrade Meshtasticd
 -r             Uninstall Meshtasticd
+-m             Meshtastic update tool. Syntax: \`femto-meshtasticd-config.sh -m \"--set security.admin_channel_enabled false\" 10 \"Disable legacy admin\"\`
+               Will retry the \`--set security.admin_channel_enabled false\` command until successful or up to 10 times, and tag status reports with \`Disable legacy admin\` via echo and to system log.
 EOF
 )
 
@@ -27,8 +29,44 @@ if [ $# -eq 0 ]; then
   exit 1
 fi
 
+meshtastic_update() {
+  local command="$1"
+  local attempts=$2
+  local ref="$3: "
+  echo "Submitting to Meshtastic..."
+  for retries in $(seq 1 $attempts); do
+    local output=$(meshtastic --host $command) #>&2 lets meshtastic's output display on screen
+    echo $output
+    logger $output
+    if echo "$output" | grep -qiE "Abort|invalid|Error|refused|Errno"; then
+      if [ "$retries" -lt $attempts ]; then
+        local msg="${ref:+$ref }Meshtastic update failed, retrying ($(($retries + 1))/$attempts)..."
+        echo "$msg"
+        logger "$msg"
+        sleep 2 # Add a small delay before retrying
+      fi
+    else
+      local success="true"
+      msg="${ref:+$ref }Meshtastic update successful!"
+      echo "$msg"
+      logger "$msg"
+      if [ -n "$external" ]; then
+        exit 0
+      fi
+    fi
+  done
+  if [ -z "$success" ]; then
+    msg="${ref:+$ref }Meshtastic update failed."
+    echo "$msg"
+    logger "$msg"
+    if [ -n "$external" ]; then
+      exit 1
+    fi
+  fi
+}
+
 # Parse options
-while getopts ":hgkl:q:va:cedur" opt; do
+while getopts ":hgkl:q:va:cedurm" opt; do
   case ${opt} in
     h) # Option -h (help)
       echo -e "$help"
@@ -61,7 +99,7 @@ while getopts ":hgkl:q:va:cedur" opt; do
       fi
       ;;
     q) # Option -q (set config URL)
-      updatemeshtastic.sh "--seturl $OPTARG" 10 "Set URL"
+      meshtastic_update "--seturl $OPTARG" 10 "Set URL"
       ;;
     v) # Option -v (view admin keys)
       echo "Getting admin keys..."
@@ -69,16 +107,16 @@ while getopts ":hgkl:q:va:cedur" opt; do
       echo "${keys:-none}"
       ;;
     a) # Option -a (add admin key)
-      updatemeshtastic.sh "--set security.admin_key base64:$OPTARG" 10 "Set admin key"
+      meshtastic_update "--set security.admin_key base64:$OPTARG" 10 "Set admin key"
       ;;
     c) # Option -c (clear admin key list)
-      updatemeshtastic.sh "--set security.admin_key 0" 10 "Set admin key"
+      meshtastic_update "--set security.admin_key 0" 10 "Set admin key"
       ;;
     e) # Option -e (enable legacy admin)
-      updatemeshtastic.sh "--set security.admin_channel_enabled true" 10 "Enable legacy admin"
+      meshtastic_update "--set security.admin_channel_enabled true" 10 "Enable legacy admin"
       ;;
     d) # Option -d (disable legacy admin)
-      updatemeshtastic.sh "--set security.admin_channel_enabled false" 10 "Disable legacy admin"
+      meshtastic_update "--set security.admin_channel_enabled false" 10 "Disable legacy admin"
       ;;
     u) # Option -u (upgrade meshtasticd)
       apt update
@@ -86,6 +124,10 @@ while getopts ":hgkl:q:va:cedur" opt; do
       ;;
     r) # Option -r (uninstall meshtasticd)
       apt remove meshtasticd
+      ;;
+    m)
+      external="true" # set a variable so the function knows it was called by an an external script and not locally
+      meshtastic_update "$2" $3 "$4"
       ;;
     \?)  # Invalid option
       echo "Invalid option: -$OPTARG"
