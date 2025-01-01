@@ -35,7 +35,7 @@ fi
 #                               X X N X X\n\
 #                               - + D - +"
 
-luckfox="
+luckfox="\
                      ─────────────────                      \n\
            VBUS 5V ●│●   │ USB-C │   ●│● 1V8 OUT            \n\
                GND ●│●   │       │   ●│● GND                \n\
@@ -58,7 +58,7 @@ GPIO BANK 4: 144 145                                           "
 
 femtofox="\
  ──────────────────────────────────────────────────────────────── \n\
-│( ):FUSE ●│●    USB-C    ●│●         PWR-IN |+ -| 3.3-5V     ( )│\n\
+│()⦂︎KILL  ●│●    USB-C    ●│●         PWR-IN |+ -| 3.3-5V      ()│\n\
 │───────  ●│●             ●│●                 ───                │\n\
 │ USB-C │ ●│●             ●│●     ─────────────────────────────  │\n\
 │ POWER │ ●│●   LUCKFOX   ●│●    │        _____________        │ │\n\
@@ -69,7 +69,7 @@ femtofox="\
 │ ● │TX4  ●│●             ●│●    │   |   │             │       │ │\n\
 │ ● │RX4  ●│●             ●│●    │   9   │             │       │ │\n\
 │───      ●│●             ●│●    │   0   │_____________│       │ │\n\
-│( )        ───●─●─●─●─●───      │   0     ___________         │ │\n\
+│()         ───●─●─●─●─●───      │   0     ___________         │ │\n\
 │──────────────────              │   M    │           │        │ │\n\
 │ ● RX-            │  I2C GROVE  │   3    │   SEEED   │        │ │\n\
 │ ● RX+            │   ───────   │   0    │WIO  SX1262│        │ │\n\
@@ -78,7 +78,7 @@ femtofox="\
 │ ● TX+            │  │● ● ● ●│  │                             │ │\n\
 │──────────────────    ───────    ─────────────────────────────  │\n\
 │   ●  ●  ●  ●  ●  ●  ●  ●  ●  ●  ●  ●  ●  ●  ●  ●  ●  ●  ●  ●   │\n\
-│( )●  ●  ●  ●  ●  ●  ●  ●  ●  ●  ●  ●  ●  ●  ●  ●  ●  ●  ●  ●( )│\n\
+│() ●  ●  ●  ●  ●  ●  ●  ●  ●  ●  ●  ●  ●  ●  ●  ●  ●  ●  ●  ● ()│\n\
  ──────────────────────────────────────────────────────────────── \n\
                                                                   \n\
                 R              M  M                               \n\
@@ -90,7 +90,10 @@ femtofox="\
     C  B  I  G     G              G        G  R  R  T  G  5  5    \n\
     S  U  R  N     N              N        N  S  X  X  N  V  V    \n\
     0  S  Q  D     D              D        D  T  4  4  D          \n\
-       Y                                                          "
+       Y                                                          \n\
+ꙩ︎ pins available on Femtofox Pro. Unused on Femtofox basic model. \n\
+  KILL pins available on Femtofox Pro only. Add power switch or   \n\
+  thermal fuse/cutoff here and remove resistor.                   "
 
 
 femtofox_zero="\
