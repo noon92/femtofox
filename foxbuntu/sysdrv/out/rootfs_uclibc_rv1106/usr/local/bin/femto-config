@@ -27,7 +27,7 @@ networking_settings() {
       1 "View wifi settings" \
       2 "Change wifi settings" \
       3 "Restart wifi" \
-      4 "Ethernet settings" \
+      4 "View ethernet settings" \
       5 "Test internet connection" \
     6 "Back to Main Menu" 3>&1 1>&2 2>&3)
     
