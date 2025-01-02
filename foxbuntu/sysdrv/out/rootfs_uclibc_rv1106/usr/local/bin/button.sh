@@ -29,7 +29,7 @@ evtest --grab /dev/input/event0 | while read line; do
     else
       logger "$duration second button press detected. Rebooting."
       echo 1 > /sys/class/gpio/gpio34/value;
-      sudo reboot
+      reboot
     fi
   fi
 done

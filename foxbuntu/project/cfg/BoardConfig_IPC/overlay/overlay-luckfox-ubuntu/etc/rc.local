@@ -7,7 +7,7 @@ luckfox-config load
 
 #run only on first boot
 if [ -e "/usr/local/bin/.firstboot" ]; then
-  /usr/local/bin/runonce.sh
+  /usr/local/bin/femto_runonce.sh
 fi
 
 # try enable RTC

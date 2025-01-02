@@ -121,11 +121,11 @@ if [ "$updated_wifi" = true ]; then
   timeout 30s dhclient -v
   echo "    Wifi restarted. Enabling Meshtastic wifi setting."
   femto-meshtasticd-config.sh -m "--set network.wifi_enabled true" 10 "USB config" #| tee -a /tmp/femtofox-config.log
-  if [ $? -eq 1 ]; then
-    echo "Update of Meshtastic FAILED."
-    exit 1
-  else
-    echo "Updated Meshtastic successfully."
-    exit 0
-  fi
+  # if [ $? -eq 1 ]; then
+  #   echo "Update of Meshtastic FAILED."
+  #   exit 1
+  # else
+  #   echo "Updated Meshtastic successfully."
+  #   exit 0
+  # fi
 fi

@@ -1,13 +1,11 @@
 #!/bin/bash
+mount_point="/mnt/usb" # Set the mount point
 
-# Set the mount point
-mount_point="/mnt/usb"
-
-# Function to log both to the screen and syslog
+# Function to log to screen, syslog and logfile to be saved to usb drive
 log_message() {
-  echo "USB config: $1"  # Echo to the screen
-  logger "USB config: $1"  # Log to the system log
-  echo "$(date +"%Y-%m-%d %H:%M:%S") $1" >> /tmp/femtofox-config.log # Log to file
+  echo "USB config: $1"
+  logger "USB config: $1"
+  echo "$(date +"%Y-%m-%d %H:%M:%S") $1" >> /tmp/femtofox-config.log
 }
 
 exit_script() {
@@ -38,11 +36,6 @@ escape_sed() {
 # Check if the mount point exists and if a USB drive is plugged in
 usb_path=$(lsblk -o NAME,FSTYPE,SIZE,TYPE,MOUNTPOINT | grep -E "vfat|ext4|ntfs|exfat" | grep -E "sd[a-z]([0-9]*)" | awk '{print $1}' | sed 's/[^a-zA-Z0-9]//g' | head -n 1)
 full_device_path="/dev/$usb_path" # Construct the full device path
-
-#if [ -d "$mount_point" ]; then
-#  rmdir "$mount_point"
-#  log_message "/mnt/usb deleted."
-#fi
 
 # If no USB device is found, exit
 if [ -z "$usb_path" ]; then
@@ -92,8 +85,8 @@ if [ -f "$mount_point/femtofox-config.txt" ]; then
   meshtastic_lora_radio=""
   found_config="false"
   update_wifi="false"
-  update_meshtastic_url=""
-  update_meshtastic_security=""
+  wifi_command="femto-network-config.sh"
+  meshtastic_security_command="femto-meshtasticd-config.sh"
   
   # Escape and read the fields from the USB config file if they exist
   while IFS='=' read -r key value; do
@@ -113,30 +106,25 @@ if [ -f "$mount_point/femtofox-config.txt" ]; then
   
   # Update wpa_supplicant.conf with the new values, if specified
   if [[ -n "$wifi_country" ]]; then
-    # Update or add the country field
-    if grep -q "^country=" "$wpa_supplicant_conf"; then
-      sed -i "s/^country=.*/country=$wifi_country/" "$wpa_supplicant_conf"
-      log_message "Updated Wi-Fi country in wpa_supplicant.conf to $wifi_country."
-    else
-      echo "country=$wifi_country" >> "$wpa_supplicant_conf"
-      log_message "Added Wi-Fi country to wpa_supplicant.conf as $wifi_country."
-    fi
+    # Update country field
+    wifi_command="$wifi_command -c \"$wifi_country\""
+    log_message "Updating Wi-Fi country in wpa_supplicant.conf to $wifi_country."
     found_config="true"
     update_wifi="true"
   fi
   
   if [[ -n "$wifi_ssid" ]]; then
     # Update the ssid in the network block
-    sed -i "/ssid=/s/\".*\"/\"$wifi_ssid\"/" "$wpa_supplicant_conf"
-    log_message "Updated Wi-Fi SSID in wpa_supplicant.conf to $wifi_ssid."
+    wifi_command="$wifi_command -s \"$wifi_ssid\""
+    log_message "Updating Wi-Fi SSID in wpa_supplicant.conf to \`$wifi_ssid\`."
     found_config="true"
     update_wifi="true"
   fi
   
   if [[ -n "$wifi_psk" ]]; then
     # Update the psk in the network block
-    sed -i "/psk=/s/\".*\"/\"$wifi_psk\"/" "$wpa_supplicant_conf"
-    log_message "Updated Wi-Fi PSK in wpa_supplicant.conf."
+    wifi_command="$wifi_command -p \"$wifi_psk\""
+    log_message "Updating Wi-Fi PSK in wpa_supplicant.conf to \`$wifi_psk\`."
     found_config="true"
     update_wifi="true"
   fi
@@ -149,120 +137,99 @@ if [ -f "$mount_point/femtofox-config.txt" ]; then
     meshtastic_lora_radio=$(echo "$meshtastic_lora_radio" | tr '[:upper:]' '[:lower:]')
     case "$meshtastic_lora_radio" in
       'ebyte-e22-900m30s')
-        cp /etc/meshtasticd/available.d/femtofox/femtofox_SX1262_TCXO.yaml /etc/meshtasticd/config.d
+        radio="sx1262_tcxo"
       ;;
       'ebyte-e22-900m22s')
-        cp /etc/meshtasticd/available.d/femtofox/femtofox_SX1262_TCXO.yaml /etc/meshtasticd/config.d
+        radio="sx1262_tcxo"
       ;;
       'heltec-ht-ra62')
-        cp /etc/meshtasticd/available.d/femtofox/femtofox_SX1262_TCXO.yaml /etc/meshtasticd/config.d
+        radio="sx1262_tcxo"
       ;;
       'seeed-wio-sx1262')
-        cp /etc/meshtasticd/available.d/femtofox/femtofox_SX1262_TCXO.yaml /etc/meshtasticd/config.d
+        radio="sx1262_tcxo"
       ;;
       'waveshare-sx126x-xxxm')
-        cp /etc/meshtasticd/available.d/femtofox/femtofox_SX1262_XTAL.yaml /etc/meshtasticd/config.d
+        radio="sx1262_xtal"
       ;;
       'ai-thinker-ra-01sh')
-        cp /etc/meshtasticd/available.d/femtofox/femtofox_SX1262_XTAL.yaml /etc/meshtasticd/config.d
+        radio="sx1262_xtal"
       ;;
       'ebyte-e80-900m22s')
-        #not yet implemented
-        cp /etc/meshtasticd/available.d/femtofox/femtofox_LR1121_TCXO.yaml /etc/meshtasticd/config.d
+        radio="lr1121_tcxo" # not yet implemented
       ;;
       'sx1262_tcxo')
-        cp /etc/meshtasticd/available.d/femtofox/femtofox_SX1262_TCXO.yaml /etc/meshtasticd/config.d
+        radio="sx1262_tcxo"
       ;;
       'sx1262_xtal')
-        cp /etc/meshtasticd/available.d/femtofox/femtofox_SX1262_XTAL.yaml /etc/meshtasticd/config.d
+        radio="sx1262_xtal"
       ;;
       'lr1121_tcxo')
-        #not yet implemented
-        cp /etc/meshtasticd/available.d/femtofox/femtofox_LR1121_TCXO.yaml /etc/meshtasticd/config.d
+        radio="lr1121_tcxo" # not yet implemented
       ;;
       'none')
+        radio="none"
       ;;
       *)
         log_message "Invalid LoRa radio name: $meshtastic_lora_radio, ignoring."
-        found_config="false"
       ;;
     esac
-    if [ "$found_config" = "true" ]; then
-      systemctl restart meshtasticd
+    if [[ -n "$radio" ]]; then # if a radio was found
+      femto-meshtasticd-config.sh -l "$radio" -s 2>&1 | tee -a /tmp/femtofox-config.log # set the radio and restart the service
       log_message "Set LoRa radio to $meshtastic_lora_radio, restarting Meshtasticd."
     fi
   fi
   
-  if [[ -n "$timezone" ]]; then
-    #sed -i "/timezone=/s/\".*\"/\"$timezone\"/" "$wpa_supplicant_conf"
+  if [[ -n "$timezone" ]]; then # set timezone
     timezone=$(echo "$timezone" | sed 's/\\//g')
     log_message "Updating system timezone to $timezone."
-    rm /etc/localtime
-    ln -sf /usr/share/zoneinfo/$timezone /etc/localtime >> /tmp/femtofox-config.log 2>&1
+    femto-set-timezone.sh -t "$timezone"
     found_config="true"
   fi
   
-  if [[ -n "$meshtastic_url" ]]; then
-    meshtastic_url=$(echo "$meshtastic_url" | sed 's/\\//g')
+  if [[ -n "$meshtastic_url" ]]; then # set meshtastic URL
+    meshtastic_url=$(echo "$meshtastic_url" | sed 's/\\//g') # remove weirdo windows characters
     log_message "Updating Meshtastic URL."
     found_config="true"
-    update_meshtastic_url="--seturl $meshtastic_url"
   fi
   
   if [[ -n "$meshtastic_admin_key" ]]; then
-    meshtastic_admin_key=$(echo "$meshtastic_admin_key" | sed 's/\\//g')
+    meshtastic_admin_key=$(echo "$meshtastic_admin_key" | sed 's/\\//g') # remove weirdo windows characters
     if [ "$meshtastic_admin_key" = "clear" ]; then
       log_message "Clearing Meshtastic admin key list."
       meshtastic_admin_key="0"
     else
-      meshtastic_admin_key="base64:$meshtastic_admin_key"
+      meshtastic_admin_key="$meshtastic_admin_key"
       log_message "Updating Meshtastic admin key."
     fi
     found_config="true"
-    update_meshtastic_security+=" --set security.admin_key $meshtastic_admin_key"
+    meshtastic_security_command+=" -a \"$meshtastic_admin_key\"" # add to the command list
   fi
   
   if [[ -n "$meshtastic_legacy_admin" ]]; then
-    meshtastic_legacy_admin=$(echo "$meshtastic_legacy_admin" | sed 's/\\//g')
+    meshtastic_legacy_admin=$(echo "$meshtastic_legacy_admin" | sed 's/\\//g') # remove weirdo windows characters
     log_message "Updating Meshtastic legacy admin."
     found_config="true"
-    update_meshtastic_security+=" --set security.admin_channel_enabled $meshtastic_legacy_admin"
+    meshtastic_security_command+=" -o \"$meshtastic_legacy_admin\"" # add to the command list
   fi
   
   if [ "$found_config" = true ]; then #if we found a config file containing valid data
     
     if [ "$update_wifi" = true ]; then #if wifi config found, restart wifi
-      systemctl restart wpa_supplicant 2>&1 | tee -a /tmp/femtofox-config.log
-      wpa_cli -i wlan0 reconfigure 2>&1 | tee -a /tmp/femtofox-config.log
+      log_message "Making changes to wifi settings and restarting wifi."
+      wifi_command="$wifi_command -r"
+      eval $wifi_command 2>&1 | tee -a /tmp/femtofox-config.log
       log_message "wpa_supplicant.conf updated and wifi restarted. Enabling Meshtastic wifi setting."
-      timeout 30s dhclient -v 2>&1 | tee -a /tmp/femtofox-config.log
-      
-      femto-meshtasticd-config.sh -m "--set network.wifi_enabled true" 10 "USB config" #| tee -a /tmp/femtofox-config.log
-      if [ $? -eq 1 ]; then
-        log_message "Update of Meshtastic FAILED."
-      else
-        log_message "Updated Meshtastic successfully."
-      fi
     fi
     
-    if [ "$update_meshtastic_url" != "" ]; then
-      log_message "Connecting to Meshtastic radio and submitting $update_meshtastic_url"
-      femto-meshtasticd-config.sh -m "$update_meshtastic_url" 10 "USB config" #| tee -a /tmp/femtofox-config.log
-      if [ $? -eq 1 ]; then
-        log_message "Update of Meshtastic FAILED."
-      else
-        log_message "Updated Meshtastic successfully."
-      fi
+    if [ "$meshtastic_url" != "" ]; then
+      log_message "Connecting to Meshtastic radio and submitting $meshtastic_url"
+      femto-meshtasticd-config.sh -q "$meshtastic_url" 2>&1 | tee -a /tmp/femtofox-config.log
     fi
     
-    if [ "$update_meshtastic_security" != "" ]; then
-      log_message "Connecting to Meshtastic radio and submitting $update_meshtastic_security"
-      femto-meshtasticd-config.sh -m "$update_meshtastic_security" 10 "USB config" #| tee -a /tmp/femtofox-config.log
-      if [ $? -eq 1 ]; then
-        log_message "Update of Meshtastic FAILED."
-      else
-        log_message "Updated Meshtastic successfully."
-      fi
+    if [ "$meshtastic_security_command" != "" ]; then
+      log_message "Connecting to Meshtastic radio and submitting $meshtastic_security_command
+  "
+      eval "$meshtastic_security_command" 2>&1 | tee -a /tmp/femtofox-config.log
     fi
     
     for _ in {1..10}; do #do our successful config boot code
