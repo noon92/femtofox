@@ -1,8 +1,27 @@
 #!/bin/bash
 
+################ TODO ################
+# Add more error handling
+# Address potential issues in comments
+# Package selection with curses
+# Switch chroot packages install
+# Modify DTS etc to enable SPI1
+######################################
+
 if [[ $(id -u) != 0 ]]; then
   echo "This script must be run as root; use sudo"
   exit 1
+fi
+
+if [ -f /etc/os-release ]; then
+    . /etc/os-release
+    if [ "$VERSION_ID" != "22.04" ] || [ "$NAME" != "Ubuntu" ]; then
+        echo "This script is intended for Ubuntu 22.04, exiting..."
+        exit 1
+    fi
+else
+    echo "This script is intended for Ubuntu 22.04, exiting..."
+    exit 1
 fi
 
 sudoer=$(echo $SUDO_USER)
@@ -14,25 +33,48 @@ if ! command -v dialog &> /dev/null; then
   apt update && apt install -y dialog
 fi
 
-################ TODO ################
-# Add more error handling
-# Address potential issues in comments
-# Package selection with curses
-# Switch chroot packages install
-# Modify DTS etc to enable SPI1
-######################################
-
 install_prerequisites() {
   echo "Setting up Foxbuntu build environment..."
   apt update
   apt install -y git ssh make gcc gcc-multilib g++-multilib module-assistant expect g++ gawk texinfo libssl-dev bison flex fakeroot cmake unzip gperf autoconf device-tree-compiler libncurses5-dev pkg-config bc python-is-python3 passwd openssl openssh-server openssh-client vim file cpio rsync qemu-user-static binfmt-support dialog
 }
 
+#clone_repos() {
+#  echo "Cloning repos..."
+#  cd /home/${sudoer}/
+#  git clone https://github.com/LuckfoxTECH/luckfox-pico.git
+#  git clone https://github.com/noon92/femtofox.git
+#}
+
 clone_repos() {
   echo "Cloning repos..."
-  cd /home/${sudoer}/
-  git clone https://github.com/LuckfoxTECH/luckfox-pico.git
-  git clone https://github.com/noon92/femtofox.git
+  cd /home/${sudoer}/ || return 1  # Ensure we successfully change the directory
+
+  # Helper function to retry cloning a repo
+  clone_with_retries() {
+    local repo_url="$1"
+    local retries=3
+    local count=0
+    local success=0
+
+    while [ $count -lt $retries ]; do
+      echo "Attempting to clone $repo_url (Attempt $((count + 1))/$retries)"
+      git clone "$repo_url" && success=1 && break
+      count=$((count + 1))
+      echo "Retrying..."
+    done
+
+    if [ $success -eq 0 ]; then
+      echo "Failed to clone $repo_url after $retries attempts."
+      return 1
+    fi
+  }
+
+  # Clone both repos
+  clone_with_retries "https://github.com/LuckfoxTECH/luckfox-pico.git" || return 1
+  clone_with_retries "https://github.com/noon92/femtofox.git" || return 1
+
+  return 0  # Indicate success if all repos cloned
 }
 
 build_env() {
@@ -259,9 +301,29 @@ create_image() {
 }
 
 sdk_install() {
+  echo "Installing Foxbuntu SDK Disk Image Builder..."
+  # get the luckfox build environment
+  if [ -d /home/${sudoer}/femtofox ]; then
+      echo "WARNING: ~/femtofox exists, this script will DESTROY and recreate it."
+      echo "Press Ctrl+C to cancel, or Enter to continue."
+      read
+      rm -rf /home/${sudoer}//femtofox
+  fi
+  if [ -d /home/${sudoer}/luckfox-pico ]; then
+      echo "WARNING: ~/luckfox-pico exists, this script will DESTROY and recreate it."
+      echo "Press Ctrl+C to cancel, or Enter to continue."
+      read
+      rm -rf /home/${sudoer}/luckfox-pico
+  fi
+
   start_time=$(date +%s)
   install_prerequisites
-  clone_repos
+
+  clone_repos || {
+    echo "Failed to clone repositories. Exiting SDK installation."
+    return 1
+  }
+
   build_env
   build_uboot
   sync_foxbuntu_changes
@@ -315,7 +377,7 @@ elif [[ -z ${1} ]]; then
       8 "Manual Build Firmware" \
       9 "Manual Create Final Image" \
       "" "" \
-      10 "SDK Install (Run first and only once)" \
+      10 "SDK Install (Run this first.)" \
       "" "" \
       11 "Exit" \
       2>&1 >/dev/tty)
