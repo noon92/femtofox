@@ -6,7 +6,7 @@ export LANG=C.UTF-8
 
 if [[ $EUID -ne 0 ]]; then
   echo "This script must be run as root."
-  echo "Try \`sudo femtofox-config\`."
+  echo "Try \`sudo femto-config\`."
   exit 1
 fi
 
@@ -14,6 +14,24 @@ fi
 pause() {
   echo "Press any key to continue..."
   read -n 1 -s -r
+}
+
+wifi_config() {
+  local wifi_ssid=""
+  local wifi_psk=""
+  local wifi_country=""
+  wifi_ssid=$(dialog --title "$title2" --cancel-label "Skip" --inputbox "Enter Wi-Fi SSID:" 8 40 3>&1 1>&2 2>&3)
+  wifi_psk=$(dialog --title "$title2" --cancel-label "Skip" --inputbox "Enter Wi-Fi Password:" 8 40 3>&1 1>&2 2>&3)
+  wifi_country=$(dialog --title "$title2" --cancel-label "Skip" --inputbox "Enter Country Code (e.g., US, DE) - optional:" 9 40 3>&1 1>&2 2>&3)
+  cmd="femto-network-config.sh -s \"$wifi_ssid\" -p \"$wifi_psk\""
+  [ -n "$wifi_country" ] && cmd="$cmd -c \"$wifi_country\""
+  cmd="$cmd -r"
+  if [ -z "$wifi_ssid" ]; then
+    dialog --title "$title2" --msgbox "\nSSID is required." 8 40
+    return
+  fi
+  eval $cmd
+  dialog --title "$title2" --msgbox "Wi-Fi Settings Saved:\nSSID: $wifi_ssid\nPassword: $wifi_psk\nCountry: $wifi_country\nMeshtastic wifi setting set to ON" 9 40
 }
 
 # Function to handle Wi-Fi settings
@@ -28,8 +46,9 @@ networking_settings() {
       2 "Change wifi settings" \
       3 "Restart wifi" \
       4 "View ethernet settings" \
-      5 "Test internet connection" \
-    6 "Back to Main Menu" 3>&1 1>&2 2>&3)
+      5 "Set hostname" \
+      6 "Test internet connection" \
+    7 "Back to Main Menu" 3>&1 1>&2 2>&3)
     
     exit_status=$? # This line checks the exit status of the dialog command
     if [ $exit_status -ne 0 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
@@ -42,21 +61,7 @@ networking_settings() {
         dialog --msgbox "$(femto-network-config.sh -w)" 0 0
       ;;
       2)
-        local wifi_ssid=""
-        local wifi_psk=""
-        local wifi_country=""
-        wifi_ssid=$(dialog --title "$title2" --inputbox "Enter Wi-Fi SSID:" 8 40 3>&1 1>&2 2>&3)
-        wifi_psk=$(dialog --title "$title2" --inputbox "Enter Wi-Fi Password:" 8 40 3>&1 1>&2 2>&3)
-        wifi_country=$(dialog --title "$title2" --inputbox "Enter Country Code (e.g., US, DE) - optional:" 9 40 3>&1 1>&2 2>&3)
-        cmd="femto-network-config.sh -s \"$wifi_ssid\" -p \"$wifi_psk\""
-        [ -n "$wifi_country" ] && cmd="$cmd -c \"$wifi_country\""
-        cmd="$cmd -r"
-        if [ -z "$wifi_ssid" ]; then
-          dialog --title "$title2" --msgbox "\nSSID is required." 8 40
-          return
-        fi
-        eval $cmd
-        dialog --title "$title2" --msgbox "Wi-Fi Settings Saved:\nSSID: $wifi_ssid\nPassword: $wifi_psk\nCountry: $wifi_country\nMeshtastic wifi setting set to ON" 10 40
+        wifi_config
       ;;
       3)
         dialog --title "$title2" --yesno "Wifi and Ethernet will be restarted.\nMeshtastic wifi setting will be set to ON." 7 50
@@ -68,11 +73,18 @@ networking_settings() {
         echo "Getting ethernet configuration..."
         dialog --title "Ethernet (eth0) settings" --msgbox "$(femto-network-config.sh -e)" 0 0
       ;;
-      5)
+      5) # set hostname)
+        new_hostname=$(dialog --title "$title" --cancel-label "Skip" --inputbox "Enter new hostname:" 8 40 $(hostname) 3>&1 1>&2 2>&3)
+        if [ $? -eq 0 ]; then #unless cancel/no
+          femto-network-config.sh -n "$new_hostname"
+          dialog --title "$title" --msgbox "Femtofox is now reachable at\n$new_hostname.local" 8 40
+        fi
+      ;;
+      6)
         echo "Testing internet connection..."
         dialog --title "Ethernet (eth0) settings" --msgbox "$(femto-network-config.sh -t)" 8 40
       ;;
-      6)
+      7)
         return
       ;;
     esac
@@ -125,10 +137,10 @@ misc_settings() {
     fi
     
     case $option in
-      1)
+      1) # set timezone)
         femto-set-timezone.sh
       ;;
-      2) # the contents of this should probably moved to a script
+      2) # the contents of this should probably moved to a script)
         dialog --title "$title" --msgbox "Amateur radio support can be added in kernel for:\n\n\
 Amateur Radio AX.25 Level 2 protocol\n\
 AX.25 DAMA Slave support\n\
@@ -191,8 +203,8 @@ Rerunning the script will not cause any issues if these things are already in pl
 set_lora_radio() {
   while true; do
     local option=""
-    option=$(dialog --menu "Misc" 0 0 10 \
-      1 "ebyte-e22-900m30s" \
+    option=$(dialog --cancel-label "Skip" --menu "Select your installed Meshtastic LoRa radio." 0 0 10 \
+      1 "ebyte-e22-900m30s (Femtofox Pro)" \
       2 "ebyte-e22-900m22s" \
       3 "ebyte-e80-900m22s" \
       4 "heltec-ht-ra62" \
@@ -203,7 +215,7 @@ set_lora_radio() {
       9 "sx1262_xtal" \
       10 "lr1121_tcxo" \
       11 "none (simulated radio)" \
-    12 "Back to Meshtasticd Settings" 3>&1 1>&2 2>&3)
+    12 "Skip radio selection" 3>&1 1>&2 2>&3)
     
     exit_status=$? # This line checks the exit status of the dialog command
     if [ $exit_status -ne 0 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
@@ -250,7 +262,7 @@ set_lora_radio() {
       ;;
     esac
     if [ -n "$radio" ]; then #if a radio was selected
-      femto-meshtasticd-config.sh -l "$radio" -s # set the radio, then restart.
+      femto-meshtasticd-config.sh -l "$radio" -s # set the radio, then restart meshtasticd
       return
     fi
   done
@@ -289,7 +301,7 @@ meshtasticd_settings() {
         pause
       ;;
       2)
-        newurl=$(dialog --title "Meshtastic URL" --inputbox "New Meshtasticd URL (SHIFT+INS to paste):" 8 50 3>&1 1>&2 2>&3)
+        newurl=$(dialog --title "Meshtastic URL" --cancel-label "Skip" --inputbox "New Meshtasticd URL (SHIFT+INS to paste):" 8 50 3>&1 1>&2 2>&3)
         if [ -n "$newurl" ]; then #if a URL was entered
           dialog --title "$title" --yesno "New Meshtasticd URL:\n$newurl\n\nConfirm?" 15 60
           if [ $? -eq 0 ]; then #unless cancel/no
@@ -309,7 +321,7 @@ meshtasticd_settings() {
         dialog --title "Admin keys" --msgbox "Up to 3 admin keys are permitted, more will be ignored.\n\nKeys:$(femto-meshtasticd-config.sh -v | tail -n 1 | sed 's/|n/\\n/g')" 0 0
       ;;
       6) #set admin key)
-        key=$(dialog --title "Meshtastic Admin Key" --inputbox "Meshtastic admin key - up to 3, more will be ignored.\n(SHIFT+INS to paste):" 8 50 3>&1 1>&2 2>&3)
+        key=$(dialog --title "Meshtastic Admin Key" --cancel-label "Skip" --inputbox "Meshtastic admin key - up to 3, more will be ignored.\n\n(SHIFT+INS to paste):" 8 50 3>&1 1>&2 2>&3)
         if [ -n "$key" ]; then #if a URL was entered
           femto-meshtasticd-config.sh -a "$key"
           pause
@@ -424,15 +436,32 @@ help_menu() {
   done
 }
 
+# Parse options
+while getopts ":lw" opt; do
+  case ${opt} in
+    l) # Option -l (set lora radio)
+      set_lora_radio
+    ;;
+    w) # Option -w (wifi config)
+      wifi_config
+    ;;
+  esac
+done
+
+if [ -n "$1" ]; then
+  exit
+fi
+
 # Main menu
 while true; do
   choice=$(dialog --title "$(date)" --menu "Femtofox Config" 15 40 5 \
-    1 "Networking" \
-    2 "Meshtasticd" \
-    3 "Misc" \
-    4 "Software" \
-    5 "Help" \
-    6 "Exit" 3>&1 1>&2 2>&3)
+    1 "Settings wizard" \
+    2 "Networking" \
+    3 "Meshtasticd" \
+    4 "Misc" \
+    5 "Software" \
+    6 "Help" \
+    7 "Exit" 3>&1 1>&2 2>&3)
   
   exit_status=$? # This line checks the exit status of the dialog command
   
@@ -441,13 +470,13 @@ while true; do
   fi
   
   case $choice in
-    1) networking_settings ;;
-    2) meshtasticd_settings ;;
-    3) misc_settings ;;
-    4) software_settings ;;
-    5) help_menu ;;
-    6) break ;;
+    1) femto-install-wizard.sh ;;
+    2) networking_settings ;;
+    3) meshtasticd_settings ;;
+    4) misc_settings ;;
+    5) software_settings ;;
+    6) help_menu ;;
+    7) break ;;
     *) dialog --msgbox "Invalid choice, please try again." 8 40 ;;
   esac
 done
-

@@ -36,25 +36,25 @@ fi
 #                               - + D - +"
 
 luckfox="\
-                     ─────────────────                      \n\
-           VBUS 5V ●│●   │ USB-C │   ●│● 1V8 OUT            \n\
-               GND ●│●   │       │   ●│● GND                \n\
-        3V3 IN/OUT ●│●    ───────    ●│● 145 (1.8V)         \n\
-UART2-TX DEBUG, 42 ●│●               ●│● 144 (1.8V)         \n\
-UART2-RX DEBUG, 43 ●│●        [BTN]  ●│● 4                  \n\
-           CS0, 48 ●│●               ●│● 55, IRQ            \n\
-           CLK, 49 ●│●               ●│● 54  BUSY           \n\
-          MOSI, 50 ●│●               ●│● 59, I2C SCL        \n\
-          MISO, 51 ●│●               ●│● 58, I2C SDA        \n\
-      UART4-RX, 52 ●│●               ●│● 57, UART3-RX, NRST \n\
-      UART4-TX, 53 ●│●      ETH      ●│● 56, UART3-TX  RXEN \n\
-                     ──●──●──●──●──●──                      \n\
-                       R  R  G  T  T                        \n\
-                       X  X  N  X  X                        \n\
-                       -  +  D  -  +                        \n\
-GPIO BANK 0: 4                                              \n\
-GPIO BANK 1: 42 43 48 49 50 51 52 53 54 55 56 57 58 59      \n\
-GPIO BANK 4: 144 145                                           "
+                     ─────────────────                       \n\
+           VBUS 5V ●│●   │ USB-C │   ●│● 1V8 OUT             \n\
+               GND ●│●   │       │   ●│● GND                 \n\
+        3V3 IN/OUT ●│●    ───────    ●│● 145 (1.8V)          \n\
+UART2-TX DEBUG, 42 ●│●               ●│● 144 (1.8V)          \n\
+UART2-RX DEBUG, 43 ●│●        [BTN]  ●│● 4                   \n\
+           CS0, 48 ●│●               ●│● 55, IRQ             \n\
+           CLK, 49 ●│●               ●│● 54, BUSY            \n\
+          MOSI, 50 ●│●               ●│● 59, I2C SCL         \n\
+          MISO, 51 ●│●               ●│● 58, I2C SDA         \n\
+      UART4-RX, 52 ●│●               ●│● 57, NRST, UART3-RX  \n\
+      UART4-TX, 53 ●│●      ETH      ●│● 56, RXEN, UART3-TX  \n\
+                     ──●──●──●──●──●──                       \n\
+                       R  R  G  T  T                         \n\
+                       X  X  N  X  X                         \n\
+                       -  +  D  -  +                         \n\
+GPIO BANK 0 (3.3v): 4                                        \n\
+GPIO BANK 1 (3.3v): 42 43 48 49 50 51 52 53 54 55 56 57 58 59\n\
+GPIO BANK 4 (1.8v): 144 145                                  "
 
 femtofox="\
  ──────────────────────────────────────────────────────────────── \n\

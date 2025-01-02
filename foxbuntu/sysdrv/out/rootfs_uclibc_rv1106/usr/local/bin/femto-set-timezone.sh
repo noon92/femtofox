@@ -48,7 +48,7 @@ done
 # Fetch available time zones
 timezones=$(timedatectl list-timezones)
 if [[ -z "$timezones" ]]; then
-    dialog --msgbox "Failed to retrieve time zones. Ensure 'timedatectl' is installed and functional." 8 50
+    dialog --msgbox "\nFailed to retrieve time zones. Ensure 'timedatectl' is installed and functional." 8 40
     return
 fi
 
@@ -61,11 +61,9 @@ done <<< "$timezones"
 options_str=$(printf '%s\n' "${options[@]}")
 
 # Show timezone selection menu
-selected_timezone=$(dialog --title "Select Time Zone" --menu "Choose a time zone:" 20 60 10 $(printf "%s " "${options[@]}") 3>&1 1>&2 2>&3)
+selected_timezone=$(dialog --title "Select Time Zone" --cancel-label "Skip" --menu "Choose a time zone:" 20 60 10 $(printf "%s " "${options[@]}") 3>&1 1>&2 2>&3)
 exit_status=$?
 if [[ $exit_status -eq 0 && -n "$selected_timezone" ]]; then
     # Set the selected time zone
     set_timezone $selected_timezone
-else
-    dialog --msgbox "No time zone selected. Returning to menu." 8 40
 fi
