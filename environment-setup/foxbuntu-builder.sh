@@ -237,6 +237,21 @@ install_rootfs() {
 create_image() {
   echo "Creating final sdcard img..."
   cd /home/${sudoer}/luckfox-pico/output/image
+
+  # File to modify
+  ENVFILE=".env.txt"
+
+  # Check if the file contains '6G(rootfs)'
+  if grep -q '6G(rootfs)' "$ENVFILE"; then
+      # Replace '6G(rootfs)' with '100G(rootfs)'
+      sed -i 's/6G(rootfs)/100G(rootfs)/' "$ENVFILE"
+      echo "Updated rootfs size from stock (6G) to 100G."
+  else
+      echo "No changes made to rootfs size because it has already been modified."
+  fi
+
+  /home/${sudoer}/luckfox-pico/sysdrv/tools/pc/uboot_tools/mkenvimage -s 0x8000 -p 0x0 -o env.img .env.txt
+
   /home/${sudoer}/luckfox-pico/output/image/blkenvflash /home/${sudoer}/luckfox-pico/foxbuntu.img
   if [[ $? -eq 2 ]]; then echo "Error, sdcard img failed to build..."; exit 2; else echo "foxbuntu.img build completed."; fi
   ls -la /home/${sudoer}/luckfox-pico/foxbuntu.img
