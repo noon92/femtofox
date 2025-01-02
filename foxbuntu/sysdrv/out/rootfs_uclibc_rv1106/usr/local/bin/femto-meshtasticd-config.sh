@@ -16,8 +16,11 @@ Options are:
 -c             Clear admin keys
 -e             Enable legacy admin channel
 -d             Disable legacy admin channel
+-o "true"      Set legacy admin channel state (true/false), case sensitive
+-s             Start/restart Meshtasticd Service
+-t             Stop Meshtasticd Service
 -u             Upgrade Meshtasticd
--r             Uninstall Meshtasticd
+-x             Uninstall Meshtasticd
 -m             Meshtastic update tool. Syntax: \`femto-meshtasticd-config.sh -m \"--set security.admin_channel_enabled false\" 10 \"Disable legacy admin\"\`
                Will retry the \`--set security.admin_channel_enabled false\` command until successful or up to 10 times, and tag status reports with \`Disable legacy admin\` via echo and to system log.
 EOF
@@ -40,23 +43,24 @@ meshtastic_update() {
     logger $output
     if echo "$output" | grep -qiE "Abort|invalid|Error|refused|Errno"; then
       if [ "$retries" -lt $attempts ]; then
-        local msg="${ref:+$ref }Meshtastic update failed, retrying ($(($retries + 1))/$attempts)..."
+        local msg="${ref:+$ref}Meshtastic update failed, retrying ($(($retries + 1))/$attempts)..."
         echo "$msg"
         logger "$msg"
         sleep 2 # Add a small delay before retrying
       fi
     else
       local success="true"
-      msg="${ref:+$ref }Meshtastic update successful!"
+      msg="${ref:+$ref}Meshtastic update successful!"
       echo "$msg"
       logger "$msg"
       if [ -n "$external" ]; then
         exit 0
       fi
+      return
     fi
   done
   if [ -z "$success" ]; then
-    msg="${ref:+$ref }Meshtastic update failed."
+    msg="${ref:+$ref}Meshtastic update FAILED."
     echo "$msg"
     logger "$msg"
     if [ -n "$external" ]; then
@@ -66,7 +70,7 @@ meshtastic_update() {
 }
 
 # Parse options
-while getopts ":hgkl:q:va:cedurm" opt; do
+while getopts ":hgkl:q:va:cedo:struxm" opt; do
   case ${opt} in
     h) # Option -h (help)
       echo -e "$help"
@@ -118,11 +122,22 @@ while getopts ":hgkl:q:va:cedurm" opt; do
     d) # Option -d (disable legacy admin)
       meshtastic_update "--set security.admin_channel_enabled false" 10 "Disable legacy admin"
       ;;
+    o) # Option -o (set legacy admin true/false)
+      meshtastic_update "--set security.admin_channel_enabled $OPTARG" 10 "Disable legacy admin"
+      ;;
+    s) # Option -s (start/restart Meshtasticd service)
+      systemctl restart meshtasticd
+      echo "Meshtasticd service started/restarted."
+      ;;
+    t) # Option -t (stop Meshtasticd service)
+      systemctl stop meshtasticd
+      echo "Meshtasticd service stopped."
+      ;;
     u) # Option -u (upgrade meshtasticd)
       apt update
       apt install --only-upgrade meshtasticd
       ;;
-    r) # Option -r (uninstall meshtasticd)
+    x) # Option -x (uninstall meshtasticd)
       apt remove meshtasticd
       ;;
     m)
