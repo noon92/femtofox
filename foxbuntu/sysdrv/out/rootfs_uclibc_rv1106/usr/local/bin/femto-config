@@ -379,13 +379,13 @@ help_menu() {
         dialog --msgbox "$(femto-license.sh -a)" 0 0
       ;;
       2)
-        femto_pinouts
+        femto_pinouts #local function
       ;;
       3)
         dialog --msgbox "$(femto-license.sh -f)" 28 60
       ;;
       4)
-        femto-license.sh -F
+        femto-license.sh -F #echoed outside of dialog, as it's just too much for dialog to handle
         pause
       ;;
       5)
