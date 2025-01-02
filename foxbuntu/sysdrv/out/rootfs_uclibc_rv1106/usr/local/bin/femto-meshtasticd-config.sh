@@ -1,6 +1,6 @@
 #!/bin/bash
 if [[ $EUID -ne 0 ]]; then
-   echo "This script must be run as root. Try \`sudo femto-wifi-config\`."
+   echo "This script must be run as root. Try \`sudo femto-meshtasticd-config\`."
    exit 1
 fi
 
