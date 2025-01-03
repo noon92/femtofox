@@ -404,7 +404,7 @@ software_settings() {
     
     case $option in
       1) #About Femtofox)
-        dialog --title "$software" --yesno "Meshing Around is a feature-rich bot is designed to enhance your Meshtastic network experience with a variety of powerful tools and fun features, connectivity and utility through text-based message delivery. Whether you're looking to perform network tests, send messages, or even play games, mesh_bot.py has you covered.\nInstallation requires internet connection.\n\nLearn more at https://github.com/SpudGunMan/meshing-around\n\nInstall?" 0 0
+        dialog --title "$software" --yesno "Meshing Around is a feature-rich bot designed to enhance your Meshtastic network experience with a variety of powerful tools and fun features, connectivity and utility through text-based message delivery. Whether you're looking to perform network tests, send messages, or even play games, mesh_bot.py has you covered.\nInstallation requires internet connection.\n\nLearn more at https://github.com/SpudGunMan/meshing-around\n\nInstall?" 0 0
           if [ $? -eq 0 ]; then #unless cancel/no
             if git clone https://github.com/spudgunman/meshing-around /opt/meshing-around; then
               /opt/meshing-around/install.sh #install script
