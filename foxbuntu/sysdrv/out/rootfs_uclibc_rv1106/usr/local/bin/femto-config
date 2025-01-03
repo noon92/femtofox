@@ -27,24 +27,24 @@ wifi_config() {
   [ -n "$wifi_country" ] && cmd="$cmd -c \"$wifi_country\""
   cmd="$cmd -r"
   if [ -z "$wifi_ssid" ]; then
-    dialog --title "$title2" --msgbox "\nSSID is required." 8 40
+    dialog --title "$title2" --msgbox "\nSSID is required to configure Wi-Fi." 8 40
     return
   fi
   eval $cmd
-  dialog --title "$title2" --msgbox "Wi-Fi Settings Saved:\nSSID: $wifi_ssid\nPassword: $wifi_psk\nCountry: $wifi_country\nMeshtastic wifi setting set to ON" 9 40
+  dialog --title "$title2" --msgbox "Wi-Fi Settings Saved:\nSSID: $wifi_ssid\nPassword: $wifi_psk\nCountry: $wifi_country\nMeshtastic Wi-Fi setting set to ON" 9 40
 }
 
 # Function to handle Wi-Fi settings
 networking_settings() {
   local title="Networking"
-  local title2="Wifi Settings"
+  local title2="Wi-Fi Settings"
   wpa_supplicant_conf="/etc/wpa_supplicant/wpa_supplicant.conf"
   while true; do
     local option=""
     option=$(dialog --menu "$title" 15 40 4 \
-      1 "View wifi settings" \
-      2 "Change wifi settings" \
-      3 "Restart wifi" \
+      1 "View Wi-Fi settings" \
+      2 "Change Wi-Fi settings" \
+      3 "Restart Wi-Fi" \
       4 "View ethernet settings" \
       5 "Set hostname" \
       6 "Test internet connection" \
@@ -57,14 +57,14 @@ networking_settings() {
     
     case $option in
       1)
-        echo "Getting wifi configuration..."
+        echo "Getting Wi-Fi configuration..."
         dialog --msgbox "$(femto-network-config.sh -w)" 0 0
       ;;
       2)
         wifi_config
       ;;
       3)
-        dialog --title "$title2" --yesno "Wifi and Ethernet will be restarted.\nMeshtastic wifi setting will be set to ON." 7 50
+        dialog --title "$title2" --yesno "Wi-Fi and Ethernet will be restarted.\nMeshtastic Wi-Fi setting will be set to ON." 7 50
         if [ $? -eq 0 ]; then #unless cancel/no
           femto-network-config.sh -r
         fi
@@ -183,7 +183,7 @@ then \`depmod\` will be run. To remove support, those modules will be deleted.\n
       ;;
       3)
         dialog --title "$title" --yesno "Rerunning the first-boot script will add support for RTC (real time clock), \
-set the eth0 MAC address and Meshtastic nodeID to a derivative of the CPU serial number and enable wifi in Meshtastic settings. \
+set the eth0 MAC address and Meshtastic nodeID to a derivative of the CPU serial number and enable Wi-Fi in Meshtastic settings. \
 Rerunning the script will not cause any issues if these things are already in place. Femtofox will reboot after execution.\n\nConfirm?" 12 60
          if [ $? -eq 0 ]; then #unless cancel/no
           runonce.sh
@@ -442,7 +442,7 @@ while getopts ":lw" opt; do
     l) # Option -l (set lora radio)
       set_lora_radio
     ;;
-    w) # Option -w (wifi config)
+    w) # Option -w (Wi-Fi config)
       wifi_config
     ;;
   esac

@@ -27,7 +27,7 @@ wizard() {
     dialog --title "$title" --msgbox "\nFemtofox is now reachable at\n$new_hostname.local" 8 40
   fi
 
-  dialog --title "$title" --cancel-label "Skip" --yesno "\nConfigure wifi settings?" 8 40
+  dialog --title "$title" --cancel-label "Skip" --yesno "\nConfigure Wi-Fi settings?" 8 40
   if [ $? -eq 0 ]; then #unless cancel/no
     femto-config -w
   fi
@@ -52,9 +52,10 @@ wizard() {
     fi
     
     while true; do
-      choice=$(dialog --title "$title" --cancel-label "Skip" --menu "Enable/disable Meshtastic Legacy admin channel?" 11 40 5 \
+      choice=$(dialog --title "$title" --cancel-label "Skip" --menu "Enable/disable Meshtastic Legacy admin channel?" 12 40 5 \
         1 "Enable" \
         2 "Disable (default)" \
+        "" "" \
         3 "Skip" 3>&1 1>&2 2>&3)
       
       exit_status=$? # This line checks the exit status of the dialog command
@@ -64,9 +65,9 @@ wizard() {
       fi
       
       case $choice in
-        1) femto-meshtasticd-config.sh -o "true" ;;
-        2) femto-meshtasticd-config.sh -o "false" ;;
-        3) return ;;
+        1) femto-meshtasticd-config.sh -o "true" && break ;;
+        2) femto-meshtasticd-config.sh -o "false" && break ;;
+        3) break ;;
         *) dialog --msgbox "Invalid choice, please try again." 8 40 ;;
       esac
     done

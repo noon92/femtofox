@@ -8,16 +8,16 @@ wpa_supplicant_conf="/etc/wpa_supplicant/wpa_supplicant.conf"
 help=$(cat <<EOF
 Options are:
 -h             This message
--s "SSID"      Set wifi SSID
--p "PSK"       Set wifi PSK (password)
--c "COUNTRY"   Set wifi 2-letter country code (such as US, DE)
--r             Restart wifi
+-s "SSID"      Set Wi-Fi SSID
+-p "PSK"       Set Wi-Fi PSK (password)
+-c "COUNTRY"   Set Wi-Fi 2-letter country code (such as US, DE)
+-r             Restart Wi-Fi
 -e             Get ethernet settings
--w             Get wifi settings
+-w             Get Wi-Fi settings
 -n "HOSTNAME"  Change hostname
 -t             Test internet connection
 
-To set wifi settings, use -r as last argument to trigger reset after wpa_supplicant.conf is modified.
+To set Wi-Fi settings, use -r as last argument to trigger reset after wpa_supplicant.conf is modified.
 EOF
 )
 
@@ -72,16 +72,16 @@ MAC Address:  $(ifconfig eth0 | grep 'ether ' | awk '{print $2}')\n\
         mesh_wifi_status="disabled"
       fi
       echo "\
-SSID:            $wifi_ssid\n\
-Password:        $wifi_psk\n\
-Country:         $wifi_country\n\
-Meshtastic wifi: $mesh_wifi_status\n\
+SSID:             $wifi_ssid\n\
+Password:         $wifi_psk\n\
+Country:          $wifi_country\n\
+Meshtastic Wi-Fi: $mesh_wifi_status\n\
 \n\
-Connected to:    $(iwconfig 2>/dev/null | grep -i 'ESSID' | awk -F 'ESSID:"' '{print $2}' | awk -F '"' '{print $1}')\n\
-Signal Strength: $(iwconfig 2>/dev/null | grep -i 'Signal level' | awk -F 'Signal level=' '{print $2}' | awk '{print $1}')\n\
-MAC address:     $(ifconfig wlan0 | grep ether | awk '{print $2}')\n\
-Current IP:      $(hostname -I | awk '{print $1}')\n\
-Hostname:        $(hostname).local\n\
+Connected to:     $(iwconfig 2>/dev/null | grep -i 'ESSID' | awk -F 'ESSID:"' '{print $2}' | awk -F '"' '{print $1}')\n\
+Signal Strength:  $(iwconfig 2>/dev/null | grep -i 'Signal level' | awk -F 'Signal level=' '{print $2}' | awk '{print $1}')\n\
+MAC address:      $(ifconfig wlan0 | grep ether | awk '{print $2}')\n\
+Current IP:       $(hostname -I | awk '{print $1}')\n\
+Hostname:         $(hostname).local\n\
 For more details, enter \`iwconfig\`."
       ;;
     t) # Option -t (test internet connection)
@@ -103,7 +103,7 @@ For more details, enter \`iwconfig\`."
         echo "Internet connection is up.\n\nPinged $(echo "${targets[*]}" | sed 's/ /, /g').\nReceived $successful/$total responses."
       fi
       ;;
-    r) # Option -r (restart wifi)
+    r) # Option -r (restart Wi-Fi)
       updated_wifi="true"
       ;;
     n) # Option -n (set hostname)
@@ -128,7 +128,7 @@ if [ "$updated_wifi" = true ]; then
   systemctl restart wpa_supplicant
   wpa_cli -i wlan0 reconfigure # <-------- add watch for FAIL response, error out
   timeout 30s dhclient -v
-  echo "    Wifi restarted. Enabling Meshtastic wifi setting."
+  echo "    Wi-Fi restarted. Enabling Meshtastic Wi-Fi setting."
   femto-meshtasticd-config.sh -m "--set network.wifi_enabled true" 10 "USB config" #| tee -a /tmp/femtofox-config.log
   # if [ $? -eq 1 ]; then
   #   echo "Update of Meshtastic FAILED."
