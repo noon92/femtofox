@@ -37,7 +37,7 @@ wifi_config() {
 # Function to handle Wi-Fi settings
 networking_settings() {
   local title="Networking"
-  local title2="Wi-Fi Settings"
+  local title2="Wi-Fi (wlan0) Settings"
   wpa_supplicant_conf="/etc/wpa_supplicant/wpa_supplicant.conf"
   while true; do
     local option=""
@@ -58,7 +58,7 @@ networking_settings() {
     case $option in
       1)
         echo "Getting Wi-Fi configuration..."
-        dialog --msgbox "$(femto-network-config.sh -w)" 0 0
+        dialog --title "$title2" --msgbox "$(femto-network-config.sh -w)" 0 0
       ;;
       2)
         wifi_config
@@ -349,7 +349,7 @@ meshtasticd_settings() {
         fi
       ;;
       10) #check meshtasticd service status)
-        dialog --msgbox "$(systemctl status meshtasticd)" 0 0
+        dialog --title "Meshtasticd service status" --msgbox "$(systemctl status meshtasticd)" 0 0
       ;;
       11) #start/restart meshtasticd)
         dialog --title "$title" --yesno "Start/restart Meshtasticd service?" 0 0
@@ -386,6 +386,49 @@ meshtasticd_settings() {
   done
 }
 
+#Software menu
+software_settings() {
+  while true; do
+  local title="Software"
+    local option=""
+    option=$(dialog --menu "$title" 0 0 6 \
+      1 "Meshing Around by Spudgudman" \
+      2 "The Comms Channel BBS (TC2BBS)" \
+      "" ""\
+    3 "Back to Main Menu" 3>&1 1>&2 2>&3)
+    
+    exit_status=$? # This line checks the exit status of the dialog command
+    if [ $exit_status -ne 0 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
+      break
+    fi
+    
+    case $option in
+      1) #About Femtofox)
+        dialog --title "$software" --yesno "Meshing Around is a feature-rich bot is designed to enhance your Meshtastic network experience with a variety of powerful tools and fun features, connectivity and utility through text-based message delivery. Whether you're looking to perform network tests, send messages, or even play games, mesh_bot.py has you covered.\nInstallation requires internet connection.\n\nLearn more at https://github.com/SpudGunMan/meshing-around\n\nInstall?" 0 0
+          if [ $? -eq 0 ]; then #unless cancel/no
+            if git clone https://github.com/spudgunman/meshing-around /opt/meshing-around; then
+              /opt/meshing-around/install.sh #install script
+              dialog --title "$software" --cancel-label "Skip" --yesno "Installation complete!\n\nAdd Meshing Around as a system service?\nSystem services are run automatically on boot, and relaunched if they crash." 0 0
+              if [ $? -eq 0 ]; then #unless cancel/no
+                echo "this is where we'd put the service stuff."
+                pause
+              fi
+              dialog --title "$software" --msgbox "\nInstallation complete.\n\nRun \`sudo nano /opt/meshing-around/config.ini\` to configure, then relaunch the service with" 10 60
+            else
+              dialog --title "$software" --msgbox "\nCloning of Meshing Around git repo failed.\nCheck internet connectivity." 10 60
+            fi
+          fi
+      ;;
+      2) #Display pinout)
+        femto_pinouts
+      ;;
+      3)
+        return
+      ;;
+    esac
+  done
+}
+
 #Help menu
 help_menu() {
   while true; do
@@ -407,27 +450,28 @@ help_menu() {
     fi
     
     case $option in
-      1)
-        dialog --msgbox "$(femto-license.sh -a)" 0 0
+      1) #About Femtofox)
+        dialog --title "About Femtofox" --msgbox "$(femto-license.sh -a)" 0 0
       ;;
-      2)
+      2) #Display pinout)
         femto_pinouts
       ;;
-      3)
-        dialog --msgbox "$(femto-license.sh -f)" 28 60
+      3) #Femtofox licensing info - short)
+        dialog --title "Femtofox license" --msgbox "$(femto-license.sh -f)" 28 60
       ;;
-      4)
+      4) #Femtofox licensing info - long)
+        clear
         femto-license.sh -F
         pause
       ;;
-      5)
-        dialog --msgbox "$(femto-license.sh -m)" 0 0
+      5) #Meshtastic licensing info)
+        dialog --title "Meshtastic license" --msgbox "$(femto-license.sh -m)" 0 0
       ;;
-      6)
-        dialog --msgbox "$(femto-license.sh -l)" 0 0
+      6) #About Luckfox)
+        dialog --title "About Luckfox" --msgbox "$(femto-license.sh -l)" 0 0
       ;;
-      7)
-        dialog --msgbox "$(femto-license.sh -u)" 0 0
+      7) #About Ubuntu)
+        dialog --title "About Ubuntu" --msgbox "$(femto-license.sh -u)" 0 0
       ;;
       8)
         return
