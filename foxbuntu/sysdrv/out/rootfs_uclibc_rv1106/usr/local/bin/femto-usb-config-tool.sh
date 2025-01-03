@@ -221,12 +221,12 @@ if [ -f "$mount_point/femtofox-config.txt" ]; then
       log_message "wpa_supplicant.conf updated and wifi restarted. Enabling Meshtastic wifi setting."
     fi
     
-    if [ "$meshtastic_url" != "femto-meshtasticd-config.sh" ]; then
+    if [ "$meshtastic_url" != "" ]; then
       log_message "Connecting to Meshtastic radio and submitting $meshtastic_url"
       femto-meshtasticd-config.sh -q "$meshtastic_url" 2>&1 | tee -a /tmp/femtofox-config.log
     fi
     
-    if [ "$meshtastic_security_command" != "" ]; then
+    if [ "$meshtastic_security_command" != "femto-meshtasticd-config.sh" ]; then
       log_message "Connecting to Meshtastic radio and submitting $meshtastic_security_command
   "
       eval "$meshtastic_security_command" 2>&1 | tee -a /tmp/femtofox-config.log
