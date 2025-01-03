@@ -227,8 +227,7 @@ if [ -f "$mount_point/femtofox-config.txt" ]; then
     fi
     
     if [ "$meshtastic_security_command" != "femto-meshtasticd-config.sh" ]; then
-      log_message "Connecting to Meshtastic radio and submitting $meshtastic_security_command
-  "
+      log_message "Connecting to Meshtastic radio and submitting $meshtastic_security_command"
       eval "$meshtastic_security_command" 2>&1 | tee -a /tmp/femtofox-config.log
     fi
     
