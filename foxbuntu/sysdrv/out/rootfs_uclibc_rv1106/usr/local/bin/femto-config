@@ -1,7 +1,7 @@
 #!/bin/bash
 # prevents weirdness over tty
 export NCURSES_NO_UTF8_ACS=1
-export TERM=xterm-256color
+export TERM=xterm-8color
 export LANG=C.UTF-8
 
 if [[ $EUID -ne 0 ]]; then
@@ -20,9 +20,9 @@ wifi_config() {
   local wifi_ssid=""
   local wifi_psk=""
   local wifi_country=""
-  wifi_ssid=$(dialog --title "$title2" --cancel-label "Skip" --inputbox "Enter Wi-Fi SSID:" 8 40 3>&1 1>&2 2>&3)
-  wifi_psk=$(dialog --title "$title2" --cancel-label "Skip" --inputbox "Enter Wi-Fi Password:" 8 40 3>&1 1>&2 2>&3)
-  wifi_country=$(dialog --title "$title2" --cancel-label "Skip" --inputbox "Enter Country Code (e.g., US, DE) - optional:" 9 40 3>&1 1>&2 2>&3)
+  wifi_ssid=$(dialog --title "$title2" --cancel-label "Skip" --inputbox "Enter Wi-Fi SSID:" 8 40 "$(grep -oP '^ *ssid="\K[^"]+' /etc/wpa_supplicant/wpa_supplicant.conf)" 3>&1 1>&2 2>&3) # display current SSID
+  wifi_psk=$(dialog --title "$title2" --cancel-label "Skip" --passwordbox "Enter Wi-Fi Password:" 8 40 3>&1 1>&2 2>&3)
+  wifi_country=$(dialog --title "$title2" --cancel-label "Skip" --inputbox "Enter Country Code (US, DE...):" 9 40 "$(grep -oP '^ *country=\K[^ ]+' /etc/wpa_supplicant/wpa_supplicant.conf)" 3>&1 1>&2 2>&3) # display current country
   cmd="femto-network-config.sh -s \"$wifi_ssid\" -p \"$wifi_psk\""
   [ -n "$wifi_country" ] && cmd="$cmd -c \"$wifi_country\""
   cmd="$cmd -r"
@@ -31,7 +31,10 @@ wifi_config() {
     return
   fi
   eval $cmd
-  dialog --title "$title2" --msgbox "Wi-Fi Settings Saved:\nSSID: $wifi_ssid\nPassword: $wifi_psk\nCountry: $wifi_country\nMeshtastic Wi-Fi setting set to ON" 9 40
+  dialog --title "$title2" --msgbox "Wi-Fi Settings Saved:\nSSID: $wifi_ssid\nPassword: (hidden)\nCountry: $wifi_country\nMeshtastic Wi-Fi setting set to ON" 9 40
+  if [ "$1" = "-w" ]; then # if script was run with an argument that called this function, exit after completion
+    exit 0
+  fi
 }
 
 # Function to handle Wi-Fi settings
@@ -182,12 +185,7 @@ then \`depmod\` will be run. To remove support, those modules will be deleted.\n
         depmod -a 5.10.160
       ;;
       3)
-        dialog --title "$title" --yesno "Rerunning the first-boot script will add support for RTC (real time clock), \
-set the eth0 MAC address and Meshtastic nodeID to a derivative of the CPU serial number and enable Wi-Fi in Meshtastic settings. \
-Rerunning the script will not cause any issues if these things are already in place. Femtofox will reboot after execution.\n\nConfirm?" 12 60
-         if [ $? -eq 0 ]; then #unless cancel/no
-          runonce.sh
-        fi
+        femto-runonce.sh
       ;;
       4)
         luckfox-config
@@ -266,6 +264,9 @@ set_lora_radio() {
       return
     fi
   done
+  if [ "$1" = "-l" ]; then # if script was run with an argument that called this function, exit after completion
+    exit 0
+  fi
 }
 
 # Function to handle Meshtasticd settings
@@ -376,7 +377,7 @@ meshtasticd_settings() {
         dialog --title "$title" --yesno "Uninstall Meshtasticd?\n\nFoxbuntu was designed with Meshtasticd integration in mind, and may behave unexpectedly if Meshtasticd is removed." 0 0
         if [ $? -eq 0 ]; then
           femto-meshtasticd-config.sh -x
-          dialog --msgbox "Meshtasticd uninstalled. To purge all remnants, run \`sudo apt purge\`.\nAfter reinstallation but before first launch, run \`sudo runonce.sh\`." 8 40
+          dialog --msgbox "Meshtasticd uninstalled. To purge all remnants, run \`sudo apt purge\`.\nAfter reinstallation but before first launch, run the \"first boot script\" from the misc menu." 8 40
         fi
       ;;
       15)
@@ -492,11 +493,9 @@ while getopts ":lw" opt; do
     ;;
   esac
 done
-
 if [ -n "$1" ]; then
   exit
 fi
-
 # Main menu
 while true; do
   choice=$(dialog --title "$(date)" --menu "Femtofox Config" 15 40 5 \

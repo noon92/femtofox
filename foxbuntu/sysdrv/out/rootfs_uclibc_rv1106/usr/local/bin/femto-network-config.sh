@@ -45,9 +45,9 @@ while getopts ":hs:p:c:ewn:tr" opt; do
       echo "Setting SSID to $OPTARG."
       updated_wifi="true"
       ;;
-    p)  # Option -p (psk)
-      sed -i "/psk=/s/\".*\"/\"$OPTARG\"/" "$wpa_supplicant_conf"
-      echo "Setting PSK to $OPTARG."
+p)  # Option -p (psk)
+      sed -i "/psk=/s/\".*\"/\"$(echo "$OPTARG" | sed 's/&/\\&/g')\"/" "$wpa_supplicant_conf"
+      echo "Setting PSK to (hidden)."
       updated_wifi="true"
       ;;
     c) # Option -c (country)
@@ -73,7 +73,7 @@ MAC Address:  $(ifconfig eth0 | grep 'ether ' | awk '{print $2}')\n\
       fi
       echo "\
 SSID:             $wifi_ssid\n\
-Password:         $wifi_psk\n\
+Password:         (hidden)\n\
 Country:          $wifi_country\n\
 Meshtastic Wi-Fi: $mesh_wifi_status\n\
 \n\
