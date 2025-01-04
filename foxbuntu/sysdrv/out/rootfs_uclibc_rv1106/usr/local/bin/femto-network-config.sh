@@ -8,6 +8,7 @@ wpa_supplicant_conf="/etc/wpa_supplicant/wpa_supplicant.conf"
 help=$(cat <<EOF
 Options are:
 -h             This message
+-x "up"        Set wifi status (options are "up" or "down")
 -s "SSID"      Set Wi-Fi SSID
 -p "PSK"       Set Wi-Fi PSK (password)
 -c "COUNTRY"   Set Wi-Fi 2-letter country code (such as US, DE)
@@ -35,17 +36,24 @@ if [ $# -eq 0 ]; then
 fi
 
 # Parse options
-while getopts ":hs:p:c:ewn:tr" opt; do
+while getopts ":hx:s:p:c:ewn:tr" opt; do
   case ${opt} in
     h) # Option -h (help)
       echo -e "$help"
       ;;
-    s)  # Option -s (ssid)
+    x) # Option -x (set wifi status)
+      if [ $OPTARG = "up" ]; then
+        ip link set wlan0 up
+      elif [ $OPTARG = "down" ]; then
+        ip link set wlan0 down
+      fi
+      ;;
+    s) # Option -s (ssid)
       sed -i "/ssid=/s/\".*\"/\"$OPTARG\"/" "$wpa_supplicant_conf"
       echo "Setting SSID to $OPTARG."
       updated_wifi="true"
       ;;
-p)  # Option -p (psk)
+    p)  # Option -p (psk)
       sed -i "/psk=/s/\".*\"/\"$(echo "$OPTARG" | sed 's/&/\\&/g')\"/" "$wpa_supplicant_conf"
       echo "Setting PSK to (hidden)."
       updated_wifi="true"
@@ -92,15 +100,15 @@ For more details, enter \`iwconfig\`."
       total=0
       # Ping each target 5 times and count successful pings
       for target in "${targets[@]}"; do
-        count=$(ping -c 5 -W 1 "$target" | grep -c 'bytes from') # Count lines with successful pings
+        count=$(ping -c 5 -W 1 "$target" | grep -c 'time') # Count lines with successful pings
         successful=$((successful + count))
         ((total+=5))
       done
       # Use dialog to display message based on successful pings count
       if [ "$successful" -eq 0 ]; then
-        echo "No internet connection detected."
+        echo -e "\033[0;31mNo internet connection detected.\033[0m"
       else
-        echo "Internet connection is up.\n\nPinged $(echo "${targets[*]}" | sed 's/ /, /g').\nReceived $successful/$total responses."
+        echo -e "Internet connection is \033[4m\033[0;32mup\033[0m.\n\nPinged $(echo "${targets[*]}" | sed 's/ /, /g').\nReceived $successful/$total responses."
       fi
       ;;
     r) # Option -r (restart Wi-Fi)
