@@ -44,18 +44,18 @@ wifi_config() {
   local wifi_ssid=""
   local wifi_psk=""
   local wifi_country=""
-  wifi_ssid=$(dialog --title "$title2" --cancel-label "Skip" --inputbox "Enter Wi-Fi SSID:" 8 40 "$(grep -oP '^ *ssid="\K[^"]+' /etc/wpa_supplicant/wpa_supplicant.conf)" 3>&1 1>&2 2>&3) # display current SSID
-  wifi_psk=$(dialog --title "$title2" --cancel-label "Skip" --passwordbox "Enter Wi-Fi Password:" 8 40 3>&1 1>&2 2>&3)
-  wifi_country=$(dialog --title "$title2" --cancel-label "Skip" --inputbox "Enter Country Code (US, DE...):" 9 40 "$(grep -oP '^ *country=\K[^ ]+' /etc/wpa_supplicant/wpa_supplicant.conf)" 3>&1 1>&2 2>&3) # display current country
+  wifi_ssid=$(dialog --title "$title2" --cancel-label "Skip" --inputbox "Enter Wi-Fi SSID:" 8 50 "$(grep -oP '^ *ssid="\K[^"]+' /etc/wpa_supplicant/wpa_supplicant.conf)" 3>&1 1>&2 2>&3) # display current SSID
+  wifi_psk=$(dialog --title "$title2" --cancel-label "Skip" --inputbox "Enter Wi-Fi Password:" 8 50 3>&1 1>&2 2>&3)
+  wifi_country=$(dialog --title "$title2" --cancel-label "Skip" --inputbox "Enter Country Code (US, DE...):" 9 50 "$(grep -oP '^ *country=\K[^ ]+' /etc/wpa_supplicant/wpa_supplicant.conf)" 3>&1 1>&2 2>&3) # display current country
   cmd="femto-network-config.sh -s \"$wifi_ssid\" -p \"$wifi_psk\""
   [ -n "$wifi_country" ] && cmd="$cmd -c \"$wifi_country\""
   cmd="$cmd -r"
   if [ -z "$wifi_ssid" ]; then
-    dialog --title "$title2" --msgbox "\nSSID is required to configure Wi-Fi." 8 40
+    dialog --title "$title2" --msgbox "\nSSID is required to configure Wi-Fi." 8 50
     return
   fi
   eval $cmd
-  dialog --title "$title2" --msgbox "Wi-Fi Settings Saved:\nSSID: $wifi_ssid\nPassword: (hidden)\nCountry: $wifi_country\nMeshtastic Wi-Fi setting set to ON" 9 40
+  dialog --title "$title2" --msgbox "Wi-Fi Settings Saved:\nSSID: $wifi_ssid\nPassword: (hidden)\nCountry: $wifi_country\nMeshtastic Wi-Fi setting set to ON" 9 50
   if [ "$1" = "-w" ]; then
     exit 0
   fi
@@ -68,12 +68,12 @@ networking_settings() {
   wpa_supplicant_conf="/etc/wpa_supplicant/wpa_supplicant.conf"
   while true; do
     local option=""
-    option=$(dialog --menu "$title" 15 40 4 \
+    option=$(dialog --menu "$title" 15 50 4 \
       1 "Turn Wi-Fi on/off" \
       2 "View Wi-Fi settings" \
       3 "Change Wi-Fi settings" \
-      4 "Restart Wi-Fi" \
-      5 "View ethernet settings" \
+      4 "View ethernet settings" \
+      5 "Restart networking" \
       6 "Set hostname" \
       7 "Test internet connection" \
     8 "Back to Main Menu" 3>&1 1>&2 2>&3)
@@ -86,7 +86,7 @@ networking_settings() {
     case $option in
       1) # Turn Wi-Fi on/off)
         while true; do
-          choice=$(dialog --title "Wi-Fi Status" --menu "text" 9 40 5 \
+          choice=$(dialog --title "Wi-Fi Status" --menu "text" 9 50 5 \
             1 "Turn Wi-Fi on" \
             2 "Turn Wi-Fi off" 3>&1 1>&2 2>&3)
           exit_status=$? # This line checks the exit status of the dialog command
@@ -96,37 +96,37 @@ networking_settings() {
           case $choice in
             1) femto-network-config.sh -x "up" && break ;;
             2) femto-network-config.sh -x "down" && break ;;
-            *) dialog --msgbox "Invalid choice, please try again." 8 40 ;;
+            *) dialog --msgbox "Invalid choice, please try again." 8 50 ;;
           esac
         done
       ;;
       2) # View Wi-Fi settings)
         echo "Getting Wi-Fi configuration..."
-        dialog --title "$title2" --msgbox "$(femto-network-config.sh -w)" 0 0
+        dialog --title "$title2" --colors --msgbox "$(replace_colors "$(femto-network-config.sh -w)")" 0 0
       ;;
       3) # Change Wi-Fi settings)
         wifi_config
       ;;
-      4) # Restart Wi-Fi)
-        dialog --title "$title2" --yesno "Wi-Fi and Ethernet will be restarted.\nMeshtastic Wi-Fi setting will be set to ON." 7 50
+      4) # View ethernet settings)
+        echo "Getting ethernet configuration..."
+        dialog --title "Ethernet (eth0) settings" --colors --msgbox "$(replace_colors "$(femto-network-config.sh -e)")" 0 0
+      ;;
+      5) # Restart networking)
+        dialog --title "$title2" --yesno "Wi-Fi and Ethernet will be restarted.\nMeshtastic Wi-Fi setting will be set to ON.\n\nProceed?" 8 50
         if [ $? -eq 0 ]; then #unless cancel/no
           femto-network-config.sh -r
         fi
       ;;
-      5) # View ethernet settings)
-        echo "Getting ethernet configuration..."
-        dialog --title "Ethernet (eth0) settings" --colors --msgbox "$(replace_colors ($femto-network-config.sh -e))" 0 0
-      ;;
       6) # set hostname)
-        new_hostname=$(dialog --title "$title" --cancel-label "Skip" --inputbox "Enter new hostname:" 8 40 $(hostname) 3>&1 1>&2 2>&3)
+        new_hostname=$(dialog --title "$title" --cancel-label "Skip" --inputbox "Enter new hostname:" 8 50 $(hostname) 3>&1 1>&2 2>&3)
         if [ $? -eq 0 ]; then #unless cancel/no
           femto-network-config.sh -n "$new_hostname"
-          dialog --title "$title" --msgbox "Femtofox is now reachable at\n$new_hostname.local" 8 40
+          dialog --title "$title" --msgbox "Femtofox is now reachable at\n$new_hostname.local" 8 50
         fi
       ;;
       7) # Test internet connection)
         echo "Testing internet connection..."
-        dialog --title "Internet connection test" --colors --msgbox "$(replace_colors "$(femto-network-config.sh -t)")" 8 40
+        dialog --title "Internet connectivity test" --colors --msgbox "$(replace_colors "$(femto-network-config.sh -t)")" 8 50
       ;;
       8)
         return
@@ -139,7 +139,7 @@ networking_settings() {
 femto_pinouts() {
   while true; do
     local option=""
-    option=$(dialog --menu "Pinouts" 15 40 5 \
+    option=$(dialog --menu "Pinouts" 15 50 5 \
       1 "Femtofox" \
       2 "Femtofox Zero" \
       3 "Femtofox Tiny" \
@@ -168,7 +168,7 @@ misc_settings() {
   local title="Misc Settings"
   while true; do
     local option=""
-    option=$(dialog --menu "Misc Settings" 15 40 4 \
+    option=$(dialog --menu "Misc Settings" 15 50 4 \
       1 "Set system timezone" \
       2 "Ham radio support" \
       3 "Re-run first-boot script" \
@@ -350,7 +350,7 @@ meshtasticd_settings() {
         fi
       ;;
       3)
-        dialog --title "LoRa radio" --msgbox "Currently configured LoRa radio: $(femto-meshtasticd-config.sh -k)" 6 40
+        dialog --title "LoRa radio" --msgbox "Currently configured LoRa radio: $(femto-meshtasticd-config.sh -k)" 6 50
       ;;
       4)
         set_lora_radio
@@ -415,7 +415,7 @@ meshtasticd_settings() {
         dialog --title "$title" --yesno "Uninstall Meshtasticd?\n\nFoxbuntu was designed with Meshtasticd integration in mind, and may behave unexpectedly if Meshtasticd is removed." 0 0
         if [ $? -eq 0 ]; then
           femto-meshtasticd-config.sh -x
-          dialog --msgbox "Meshtasticd uninstalled. To purge all remnants, run \`sudo apt purge\`.\nAfter reinstallation but before first launch, run the \"first boot script\" from the misc menu." 8 40
+          dialog --msgbox "Meshtasticd uninstalled. To purge all remnants, run \`sudo apt purge\`.\nAfter reinstallation but before first launch, run the \"first boot script\" from the misc menu." 8 50
         fi
       ;;
       15)
@@ -536,7 +536,7 @@ if [ -n "$1" ]; then
 fi
 # Main menu
 while true; do
-  choice=$(dialog --title "$(date)" --menu "Femtofox Config" 15 40 5 \
+  choice=$(dialog --title "$(date)" --menu "Femtofox Config" 15 50 5 \
     1 "Settings wizard" \
     2 "Networking" \
     3 "Meshtasticd" \
@@ -559,6 +559,6 @@ while true; do
     5) software_settings ;;
     6) help_menu ;;
     7) break ;;
-    *) dialog --msgbox "Invalid choice, please try again." 8 40 ;;
+    *) dialog --msgbox "Invalid choice, please try again." 8 50 ;;
   esac
 done
