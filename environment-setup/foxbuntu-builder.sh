@@ -200,7 +200,7 @@ modify_chroot() {
 }
 
 inject_chroot() {
-  chroot_script=${CHROOT_SCRIPT:-/home/${sudoer}/femtofox.chroot}
+  chroot_script=${CHROOT_SCRIPT:-/home/${sudoer}/femtofox/environment-setup/femtofox.chroot}
   if [[ ! -f $chroot_script ]]; then
     echo "Error: Chroot script $chroot_script not found."
     exit 1
@@ -250,7 +250,7 @@ install_rootfs() {
   cp /home/${sudoer}/luckfox-pico/sysdrv/out/kernel_drv_ko/* /home/${sudoer}/luckfox-pico/sysdrv/out/rootfs_uclibc_rv1106/lib/modules/5.10.160/
   which qemu-arm-static
 
-  chroot_script=${CHROOT_SCRIPT:-/home/${sudoer}/femtofox.chroot}
+  chroot_script=${CHROOT_SCRIPT:-/home/${sudoer}/femtofox/environment-setup/femtofox.chroot}
   if [[ ! -f $chroot_script ]]; then
     echo "Error: Chroot script $chroot_script not found."
     exit 1
