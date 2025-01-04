@@ -8,6 +8,7 @@ wpa_supplicant_conf="/etc/wpa_supplicant/wpa_supplicant.conf"
 help=$(cat <<EOF
 Options are:
 -h             This message
+-x "up"        Set wifi status (options are "up" or "down")
 -s "SSID"      Set Wi-Fi SSID
 -p "PSK"       Set Wi-Fi PSK (password)
 -c "COUNTRY"   Set Wi-Fi 2-letter country code (such as US, DE)
@@ -35,19 +36,26 @@ if [ $# -eq 0 ]; then
 fi
 
 # Parse options
-while getopts ":hs:p:c:ewn:tr" opt; do
+while getopts ":hx:s:p:c:ewn:tr" opt; do
   case ${opt} in
     h) # Option -h (help)
       echo -e "$help"
       ;;
-    s)  # Option -s (ssid)
+    x) # Option -x (set wifi status)
+      if [ $OPTARG = "up" ]; then
+        ip link set wlan0 up
+      elif [ $OPTARG = "down" ]; then
+        ip link set wlan0 down
+      fi
+      ;;
+    s) # Option -s (ssid)
       sed -i "/ssid=/s/\".*\"/\"$OPTARG\"/" "$wpa_supplicant_conf"
       echo "Setting SSID to $OPTARG."
       updated_wifi="true"
       ;;
     p)  # Option -p (psk)
-      sed -i "/psk=/s/\".*\"/\"$OPTARG\"/" "$wpa_supplicant_conf"
-      echo "Setting PSK to $OPTARG."
+      sed -i "/psk=/s/\".*\"/\"$(echo "$OPTARG" | sed 's/&/\\&/g')\"/" "$wpa_supplicant_conf"
+      echo "Setting PSK to (hidden)."
       updated_wifi="true"
       ;;
     c) # Option -c (country)
@@ -56,32 +64,40 @@ while getopts ":hs:p:c:ewn:tr" opt; do
       updated_wifi="true"
       ;;
     e) # Option -e (ethernet settings)
-      echo "Hostname:     $(hostname).local\n\
-IPv4 Address: $(ifconfig eth0 | grep 'inet ' | awk '{print $2}')\n
-IPv6 Address: $(ifconfig eth0 | grep 'inet6 ' | awk '{print $2}')\n\
-MAC Address:  $(ifconfig eth0 | grep 'ether ' | awk '{print $2}')\n\
-"
+status=$(ip link show eth0 | grep -o 'state [A-Za-z]*' | awk '{print $2}')
+echo -e "Ethernet status: $([ "$status" == "UP" ] && echo -e "\033[4m\033[0;32mconnected\033[0m" || echo -e "\033[0;31mdisconnected\033[0m")"
+if [ "$status" == "UP" ]; then
+  echo "\nIPv4 Address:    $(ifconfig eth0 | grep 'inet ' | awk '{print $2}')\n\
+IPv6 Address:    $(ifconfig eth0 | grep 'inet6 ' | awk '{print $2}')"
+fi
+echo "\nMAC Address:     $(ifconfig eth0 | grep 'ether ' | awk '{print $2}')\n\
+Hostname:        $(hostname).local"
       ;;
     w) # Option -w (wifi settings)
-      wifi_country=$(grep -m 1 "^country=" "$wpa_supplicant_conf" | cut -d '=' -f 2)
-      wifi_ssid=$(grep -m 1 '^\s*ssid=' "$wpa_supplicant_conf" | cut -d '"' -f 2)
-      wifi_psk=$(grep -m 1 '^\s*psk=' "$wpa_supplicant_conf" | cut -d '"' -f 2)
-      if [ "$(cat /root/.portduino/default/prefs/config.proto | protoc --decode_raw | awk '/4 {/, /}/ {if ($1 == "1:") print $2}')" -eq 1 ]; then
-        mesh_wifi_status="enabled"
+      if [ "$(cat /etc/wifi_state.txt)" = "up" ]; then
+          wifi_status="\033[4m\033[0;32menabled\033[0m"
       else
-        mesh_wifi_status="disabled"
+        if ip link show wlan0 &>/dev/null; then # if wlan0 exists
+          wifi_status="\033[0;31mdisabled\033[0m"
+          mac_address_line="MAC address:      $(ifconfig wlan0 | grep ether | awk '{print $2}')\n\n"
+        else
+          wifi_status="\033[0;31mwlan0 not detected\033[0m"
+        fi
       fi
-      echo "\
-SSID:             $wifi_ssid\n\
-Password:         $wifi_psk\n\
-Country:          $wifi_country\n\
-Meshtastic Wi-Fi: $mesh_wifi_status\n\
+      echo -e "\
+$(echo -e "\
+SSID:             $(grep -m 1 '^\s*ssid=' "$wpa_supplicant_conf" | cut -d '"' -f 2)\n\
+Password:         (hidden)\n\
+Country:          $(grep -m 1 "^country=" "$wpa_supplicant_conf" | cut -d '=' -f 2)\n\
+WiFi status:      $wifi_status\
 \n\
-Connected to:     $(iwconfig 2>/dev/null | grep -i 'ESSID' | awk -F 'ESSID:"' '{print $2}' | awk -F '"' '{print $1}')\n\
+$(if [[ "$wifi_status" == *"enabled"* ]]; then
+      echo -e "\nConnected to:     $(iwconfig 2>/dev/null | grep -i 'ESSID' | awk -F 'ESSID:\"' '{print $2}' | awk -F '\"' '{print $1}')\n\
 Signal Strength:  $(iwconfig 2>/dev/null | grep -i 'Signal level' | awk -F 'Signal level=' '{print $2}' | awk '{print $1}')\n\
-MAC address:      $(ifconfig wlan0 | grep ether | awk '{print $2}')\n\
-Current IP:       $(hostname -I | awk '{print $1}')\n\
+Current IP:       $(hostname -I | awk '{print $1}')\n"
+fi)")\n\
 Hostname:         $(hostname).local\n\
+$mac_address_line
 For more details, enter \`iwconfig\`."
       ;;
     t) # Option -t (test internet connection)
@@ -92,15 +108,15 @@ For more details, enter \`iwconfig\`."
       total=0
       # Ping each target 5 times and count successful pings
       for target in "${targets[@]}"; do
-        count=$(ping -c 5 -W 1 "$target" | grep -c 'bytes from') # Count lines with successful pings
+        count=$(ping -c 5 -W 1 "$target" | grep -c 'time') # Count lines with successful pings
         successful=$((successful + count))
         ((total+=5))
       done
       # Use dialog to display message based on successful pings count
       if [ "$successful" -eq 0 ]; then
-        echo "No internet connection detected."
+        echo -e "\033[0;31mNo internet connection detected.\033[0m"
       else
-        echo "Internet connection is up.\n\nPinged $(echo "${targets[*]}" | sed 's/ /, /g').\nReceived $successful/$total responses."
+        echo -e "Internet connection is \033[4m\033[0;32mup\033[0m.\n\nPinged $(echo "${targets[*]}" | sed 's/ /, /g').\nReceived $successful/$total responses."
       fi
       ;;
     r) # Option -r (restart Wi-Fi)
@@ -125,16 +141,10 @@ For more details, enter \`iwconfig\`."
 done
 
 if [ "$updated_wifi" = true ]; then
+  ip link set wlan0 up
   systemctl restart wpa_supplicant
   wpa_cli -i wlan0 reconfigure # <-------- add watch for FAIL response, error out
   timeout 30s dhclient -v
-  echo "    Wi-Fi restarted. Enabling Meshtastic Wi-Fi setting."
-  femto-meshtasticd-config.sh -m "--set network.wifi_enabled true" 10 "USB config" #| tee -a /tmp/femtofox-config.log
-  # if [ $? -eq 1 ]; then
-  #   echo "Update of Meshtastic FAILED."
-  #   exit 1
-  # else
-  #   echo "Updated Meshtastic successfully."
-  #   exit 0
-  # fi
+  echo "    Wi-Fi enabled and restarted. Enabling Meshtastic Wi-Fi setting."
+  #femto-meshtasticd-config.sh -m "--set network.wifi_enabled true" 10 "USB config" #| tee -a /tmp/femtofox-config.log
 fi
