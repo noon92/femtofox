@@ -1,52 +1,95 @@
 #!/bin/bash
-ip link set wlan0 up
-sleep 60 #wait 60 seconds so networking will be available during boot
 
-# Initial value for comparison (start with an impossible value so it'll always implement the current value after boot)
-previous_value=2
+LOG_FILE="/var/log/meshtastic_wifi.log"
+WIFI_STATE_FILE="/etc/wifi_state.txt"
+PROTO_FILE="/root/.portduino/default/prefs/config.proto"
 
-while true; do
-  if systemctl is-active --quiet meshtasticd; then
-    # Run the command to fetch the value
-    current_value=$(cat /root/.portduino/default/prefs/config.proto | protoc --decode_raw | awk '/4 {/, /}/ {if ($1 == "1:") print $2}')
+log() {
+    echo "$(date) - $1" | tee -a "$LOG_FILE"
+}
 
-    # Check if the value has changed
-    if [ "$current_value" != "$previous_value" ]; then
+get_mobile_wifi_state() {
+    local proto_output
+    proto_output=$(cat "$PROTO_FILE" | protoc --decode_raw | awk '/4 {/, /}/ {if ($1 == "1:") print $2}')
+    [[ "$proto_output" == "1" ]] && echo "up" || echo "down"
+}
 
-	if [ "$previous_value" -eq 1 ]; then
-	    prev_text="Wifi on"
-	elif [ "$previous_value" -eq 2 ]; then
-	    prev_text="Startup"
-	else
-	    prev_text="Wifi off"
-	fi
-	if [ "$current_value" -eq 1 ]; then
-	    cur_text="Wifi on"
-	else
-	    cur_text="Wifi off"
-	fi
-
-        # Log the change
-        logger "Wifi mesh control: wifi setting changed: $prev_text -> $cur_text"
-
-        # Update the previous value for next comparison
-        previous_value="$current_value"
-    fi
-
-    # Take action based on the new value
-    if [ "$current_value" == "1" ]; then
-        ip link set wlan0 up
+set_mobile_wifi_state() {
+    local state="$1"
+    local meshtastic_output
+    if [[ "$state" == "up" ]]; then
+        meshtastic_output=$(meshtastic --host 127.0.0.1 --set network.wifi_enabled true 2>&1)
     else
-        ip link set wlan0 down
+        meshtastic_output=$(meshtastic --host 127.0.0.1 --set network.wifi_enabled false 2>&1)
+    fi
+    log "Set Meshtastic Wi-Fi state to $state. Output: $meshtastic_output"
+}
+
+set_wlan_state() {
+    local state="$1"
+    if [[ "$state" == "up" ]]; then
+        ip link set wlan0 up && log "Set wlan0 UP."
+    else
+        ip link set wlan0 down && log "Set wlan0 DOWN."
+    fi
+}
+
+validate_wifi_state_file() {
+    local state
+    state=$(cat "$WIFI_STATE_FILE" 2>/dev/null)
+    if [[ "$state" != "up" && "$state" != "down" ]]; then
+        echo "up" > "$WIFI_STATE_FILE"
+        log "Invalid wifi_state.txt content. Defaulting to up."
+    fi
+}
+
+sync_states() {
+    local text_state mobile_state
+    text_state=$(cat "$WIFI_STATE_FILE")
+    mobile_state=$(get_mobile_wifi_state)
+
+    if [[ "$text_state" != "$mobile_state" ]]; then
+        set_mobile_wifi_state "$text_state"
+        log "Synced mobile Wi-Fi state to $text_state."
     fi
 
-  else
-    if ip link show wlan0 | grep -q 'state DOWN'; then
-      ip link set wlan0 up
-      logger "Wifi mesh control: Meshtasticd service is offline, turning wifi on."
+    current_wlan_state=$(ip link show wlan0 | grep -q 'state UP' && echo "up" || echo "down")
+    if [[ "$text_state" != "$current_wlan_state" ]]; then
+        set_wlan_state "$text_state"
+        log "Synced wlan0 state to $text_state."
     fi
-  fi
+}
 
-  # wait 30 secs before checking again
-  sleep 30
-done
+monitor_changes() {
+    local previous_mobile_state previous_wlan_state
+    previous_mobile_state=$(get_mobile_wifi_state)
+    previous_wlan_state=$(ip link show wlan0 | grep -q 'state UP' && echo "up" || echo "down")
+
+    while true; do
+        local current_mobile_state current_wlan_state
+        current_mobile_state=$(get_mobile_wifi_state)
+        current_wlan_state=$(ip link show wlan0 | grep -q 'state UP' && echo "up" || echo "down")
+
+        if [[ "$current_mobile_state" != "$previous_mobile_state" ]]; then
+            log "Detected mobile Wi-Fi state change: $previous_mobile_state -> $current_mobile_state"
+            echo "$current_mobile_state" > "$WIFI_STATE_FILE"
+            set_wlan_state "$current_mobile_state"
+            previous_mobile_state="$current_mobile_state"
+        fi
+
+        if [[ "$current_wlan_state" != "$previous_wlan_state" ]]; then
+            log "Detected wlan0 state change: $previous_wlan_state -> $current_wlan_state"
+            echo "$current_wlan_state" > "$WIFI_STATE_FILE"
+            set_mobile_wifi_state "$current_wlan_state"
+            previous_wlan_state="$current_wlan_state"
+        fi
+
+        sleep 5
+    done
+}
+
+# Main Execution
+validate_wifi_state_file
+sync_states
+monitor_changes
+
