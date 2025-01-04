@@ -6,11 +6,6 @@
 
 The Luckfox Pico Mini is the postage stamp sized heart of the Femtofox - a compact and power efficient Linux board, running a customized version of Ubuntu. Femtofox is an expansion of the Luckfox's capabilities, utilizing a custom PCB with a 30db LoRa radio (over 6x the transmit power of a RAK Wisblock or Heltec V3) to create a power efficient, tiny and highly capable Meshtastic Linux node.
 
-
-**Project goals:**
-* A solar-deployable Meshtastic node running Linux, without needing a giant solar panel / battery
-* Wifi capabilities (with ability to disable/enable wifi via mesh for power savings)
-
 - [Features](#features)
 - Specifications - coming soon
 - [Supported hardware](supported_hardware.md)
