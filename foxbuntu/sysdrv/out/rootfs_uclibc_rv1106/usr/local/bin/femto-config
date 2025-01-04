@@ -392,7 +392,7 @@ software_settings() {
   local title="Software"
     local option=""
     option=$(dialog --menu "$title" 0 0 6 \
-      1 "Meshing Around by Spudgudman" \
+      1 "Meshing Around by SpudGudMan" \
       2 "The Comms Channel BBS (TC2BBS)" \
       "" ""\
     3 "Back to Main Menu" 3>&1 1>&2 2>&3)
@@ -403,24 +403,25 @@ software_settings() {
     fi
     
     case $option in
-      1) #About Femtofox)
+      1) #Install Meshing Around)
         dialog --title "$software" --yesno "Meshing Around is a feature-rich bot designed to enhance your Meshtastic network experience with a variety of powerful tools and fun features, connectivity and utility through text-based message delivery. Whether you're looking to perform network tests, send messages, or even play games, mesh_bot.py has you covered.\nInstallation requires internet connection.\n\nLearn more at https://github.com/SpudGunMan/meshing-around\n\nInstall?" 0 0
-          if [ $? -eq 0 ]; then #unless cancel/no
-            if git clone https://github.com/spudgunman/meshing-around /opt/meshing-around; then
-              /opt/meshing-around/install.sh #install script
-              dialog --title "$software" --cancel-label "Skip" --yesno "Installation complete!\n\nAdd Meshing Around as a system service?\nSystem services are run automatically on boot, and relaunched if they crash." 0 0
-              if [ $? -eq 0 ]; then #unless cancel/no
-                echo "this is where we'd put the service stuff."
-                pause
+          #check if /opt/meshing-around exists if not git clone
+          if [ ! -d /opt/meshing-around ]; then
+            if [ $? -eq 0 ]; then #unless cancel/no
+              if git clone https://github.com/spudgunman/meshing-around /opt/meshing-around; then
+                /opt/meshing-around/install.sh #install script
+                dialog --title "$software" --msgbox "\nInstallation complete.\n\nRun \`sudo nano /opt/meshing-around/config.ini\` to configure, then relaunch the service with" 10 60
+              else
+                dialog --title "$software" --msgbox "\nCloning of Meshing Around git repo failed.\nCheck internet connectivity." 10 60
               fi
-              dialog --title "$software" --msgbox "\nInstallation complete.\n\nRun \`sudo nano /opt/meshing-around/config.ini\` to configure, then relaunch the service with" 10 60
-            else
-              dialog --title "$software" --msgbox "\nCloning of Meshing Around git repo failed.\nCheck internet connectivity." 10 60
             fi
+          else
+            /opt/meshing-around/install.sh #install script
+            dialog --title "$software" --msgbox "\nInstallation complete.\n\nRun \`sudo nano /opt/meshing-around/config.ini\` to configure, then relaunch the service with" 10 60
           fi
       ;;
-      2) #Display pinout)
-        femto_pinouts
+      2) #Install TC2BBS)
+        echo "coming soon"
       ;;
       3)
         return
