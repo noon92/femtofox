@@ -68,7 +68,7 @@ networking_settings() {
   wpa_supplicant_conf="/etc/wpa_supplicant/wpa_supplicant.conf"
   while true; do
     local option=""
-    option=$(dialog --cancel-label "Back" --menu "$title" 15 40 4 \
+    option=$(dialog --cancel-label "Back" --menu "$title" 16 40 4 \
       1 "Turn Wi-Fi on/off" \
       2 "View Wi-Fi settings" \
       3 "Change Wi-Fi settings" \
@@ -76,6 +76,7 @@ networking_settings() {
       5 "Restart networking" \
       6 "Set hostname" \
       7 "Test internet connection" \
+      "" "" \
     8 "Back to Main Menu" 3>&1 1>&2 2>&3)
     
     exit_status=$? # This line checks the exit status of the dialog command
@@ -99,7 +100,6 @@ networking_settings() {
             case $choice in
               1) femto-network-config.sh -x "up" && break ;;
               2) femto-network-config.sh -x "down" && break ;;
-              *) dialog --msgbox "Invalid choice, please try again." 8 40 ;;
             esac
           done
         fi
@@ -148,6 +148,7 @@ femto_pinouts() {
       2 "Femtofox Zero" \
       3 "Femtofox Tiny" \
       4 "Luckfox Pico Mini" \
+      "" "" \
       5 "Back to Help Menu" 3>&1 1>&2 2>&3)
     
     exit_status=$? # This line checks the exit status of the dialog command
@@ -162,7 +163,6 @@ femto_pinouts() {
       3) dialog --title "Femtofox Tiny" --msgbox "$(femto-pinout.sh -t)" 38 70 ;;
       4) dialog --title "Luckfox Pico Mini" --msgbox "$(femto-pinout.sh -l)" 23 63 ;;
       5) return ;;
-      *) echo "Invalid option selected!" ;;
     esac
   done
 }
@@ -177,6 +177,7 @@ misc_settings() {
       2 "Ham radio support" \
       3 "Re-run first-boot script" \
       4 "Run OEM luckfox-config" \
+      "" "" \
       5 "Back to Main Menu" 3>&1 1>&2 2>&3)
     
     exit_status=$? # This line checks the exit status of the dialog command
@@ -258,7 +259,8 @@ set_lora_radio() {
       9 "sx1262_xtal" \
       10 "lr1121_tcxo" \
       11 "none (simulated radio)" \
-    12 "Skip radio selection" 3>&1 1>&2 2>&3)
+      "" "" \
+    12 "Skip" 3>&1 1>&2 2>&3)
     
     exit_status=$? # This line checks the exit status of the dialog command
     if [ $exit_status -ne 0 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
@@ -316,7 +318,7 @@ meshtasticd_settings() {
   local title="Meshtasticd Settings"
   while true; do
     local option=""
-    option=$(dialog --cancel-label "Back" --menu "$title" 22 50 4 \
+    option=$(dialog --cancel-label "Back" --menu "$title" 23 50 4 \
       1 "View current configuration URL & QR code" \
       2 "Set new configuration URL" \
       3 "View current lora radio selection" \
@@ -331,6 +333,7 @@ meshtasticd_settings() {
       12 "Stop Meshtasticd service" \
       13 "Upgrade/install Meshtasticd" \
       14 "Uninstall Meshtasticd" \
+      "" "" \
     15 "Back to Main Menu" 3>&1 1>&2 2>&3)
     
     exit_status=$? # This line checks the exit status of the dialog command
@@ -392,6 +395,7 @@ meshtasticd_settings() {
         fi
       ;;
       10) #check meshtasticd service status)
+        echo "Getting Meshtasticd service status..."
         dialog --title "Meshtasticd service status" --msgbox "$(systemctl status meshtasticd)" 0 0
       ;;
       11) #start/restart meshtasticd)
@@ -465,6 +469,7 @@ software_settings() {
       ;;
       2) #Install TC2BBS)
         echo "coming soon"
+        pause
       ;;
       3)
         return
@@ -478,7 +483,7 @@ help_menu() {
   while true; do
   local title="Help / About"
     local option=""
-    option=$(dialog --cancel-label "Back" --menu "$title" 0 0 6 \
+    option=$(dialog --cancel-label "Back" --menu "$title" 0 0 7 \
       1 "About Femtofox" \
       2 "Display pinout" \
       3 "Femtofox licensing info - short" \
@@ -486,6 +491,7 @@ help_menu() {
       5 "Meshtastic licensing info" \
       6 "About Luckfox" \
       7 "About Ubuntu" \
+      "" "" \
     8 "Back to Main Menu" 3>&1 1>&2 2>&3)
     
     exit_status=$? # This line checks the exit status of the dialog command
@@ -495,7 +501,7 @@ help_menu() {
     
     case $option in
       1) #About Femtofox)
-        dialog --title "About Femtofox" --msgbox "$(femto-license.sh -a)" 0 0
+        dialog --title "About Femtofox" --backtitle "Foxbuntu $(grep -oP 'major=\K[0-9]+' /etc/foxbuntu-release).$(grep -oP 'minor=\K[0-9]+' /etc/foxbuntu-release).$(grep -oP 'patch=\K[0-9]+' /etc/foxbuntu-release)$(grep -oP 'hotfix=\K[a-z]+' /etc/foxbuntu-release)" --msgbox "$(femto-license.sh -a)" 18 65
       ;;
       2) #Display pinout)
         femto_pinouts
@@ -547,6 +553,7 @@ while true; do
     4 "Misc" \
     5 "Software" \
     6 "Help" \
+    "" "" \
     7 "Exit" 3>&1 1>&2 2>&3)
   
   exit_status=$? # This line checks the exit status of the dialog command
@@ -563,6 +570,5 @@ while true; do
     5) software_settings ;;
     6) help_menu ;;
     7) break ;;
-    *) dialog --msgbox "Invalid choice, please try again." 8 40 ;;
   esac
 done

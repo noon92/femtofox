@@ -78,6 +78,7 @@ while getopts ":hgkl:q:va:cedo:struxm" opt; do
     g) # Option -g (get config URL)
       echo "Getting current Meshtastic QR code and URL..."
       url=$(meshtastic --host --qr-all | grep -oP '(?<=Complete URL \(includes all channels\): )https://[^ ]+')
+      clear
       echo "$url" | qrencode -o - -t UTF8 -s 1
       echo "Meshtastic configuration URL:"
       echo $url
