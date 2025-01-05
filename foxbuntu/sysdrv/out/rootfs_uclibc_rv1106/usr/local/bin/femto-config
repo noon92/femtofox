@@ -44,9 +44,9 @@ wifi_config() {
   local wifi_ssid=""
   local wifi_psk=""
   local wifi_country=""
-  wifi_ssid=$(dialog --title "$title2" --cancel-label "Skip" --inputbox "Enter Wi-Fi SSID:" 8 40 "$(grep -oP '^ *ssid="\K[^"]+' /etc/wpa_supplicant/wpa_supplicant.conf)" 3>&1 1>&2 2>&3) # display current SSID
-  wifi_psk=$(dialog --title "$title2" --cancel-label "Skip" --inputbox "Enter Wi-Fi Password:" 8 40 3>&1 1>&2 2>&3)
-  wifi_country=$(dialog --title "$title2" --cancel-label "Skip" --inputbox "Enter Country Code (US, DE...):" 9 40 "$(grep -oP '^ *country=\K[^ ]+' /etc/wpa_supplicant/wpa_supplicant.conf)" 3>&1 1>&2 2>&3) # display current country
+  wifi_ssid=$(dialog --title "$title2" --inputbox "Enter Wi-Fi SSID:" 8 40 "$(grep -oP '^ *ssid="\K[^"]+' /etc/wpa_supplicant/wpa_supplicant.conf)" 3>&1 1>&2 2>&3) # display current SSID
+  wifi_psk=$(dialog --title "$title2" --inputbox "Enter Wi-Fi Password:" 8 40 3>&1 1>&2 2>&3)
+  wifi_country=$(dialog --title "$title2" --inputbox "Enter Country Code (US, DE...):" 9 40 "$(grep -oP '^ *country=\K[^ ]+' /etc/wpa_supplicant/wpa_supplicant.conf)" 3>&1 1>&2 2>&3) # display current country
   cmd="femto-network-config.sh -s \"$wifi_ssid\" -p \"$wifi_psk\""
   [ -n "$wifi_country" ] && cmd="$cmd -c \"$wifi_country\""
   cmd="$cmd -r"
@@ -122,14 +122,14 @@ networking_settings() {
         fi
       ;;
       6) # set hostname)
-        new_hostname=$(dialog --title "$title" --cancel-label "Skip" --inputbox "Enter new hostname:" 8 40 $(hostname) 3>&1 1>&2 2>&3)
+        new_hostname=$(dialog --title "$title" --inputbox "Enter new hostname:" 8 40 $(hostname) 3>&1 1>&2 2>&3)
         if [ $? -eq 0 ]; then #unless cancel/no
           femto-network-config.sh -n "$new_hostname"
           dialog --title "$title" --msgbox "Femtofox is now reachable at\n$new_hostname.local" 8 40
         fi
       ;;
       7) # Test internet connection)
-        echo "Testing internet connection..."
+        dialog --infobox "Testing internet connection..." 0 0
         dialog --title "Internet connectivity test" --colors --msgbox "$(replace_colors "$(femto-network-config.sh -t)")" 8 40
       ;;
       8)
@@ -247,7 +247,7 @@ then \`depmod\` will be run. To remove support, those modules will be deleted.\n
 set_lora_radio() {
   while true; do
     local option=""
-    option=$(dialog --cancel-label "Skip" --menu "Select your installed Meshtastic LoRa radio." 0 0 10 \
+    option=$(dialog --menu "Select your installed Meshtastic LoRa radio." 0 0 10 \
       1 "ebyte-e22-900m30s (Femtofox Pro)" \
       2 "ebyte-e22-900m22s" \
       3 "ebyte-e80-900m22s" \
@@ -315,26 +315,32 @@ set_lora_radio() {
 
 # Function to handle Meshtasticd settings
 meshtasticd_settings() {
-  local title="Meshtasticd Settings"
+  local title="Meshtastic Settings"
   while true; do
+    if echo "$(systemctl status meshtasticd)" | grep -q "active (running)"; then
+      local service_state="\Z2\Zuonline\Zn"
+    elif echo "$(systemctl status meshtasticd)" | grep -q "inactive (dead)"; then
+      local service_state="\Z1\Zuoffline\Zn"
+    else
+      local service_state="unknown"
+    fi
     local option=""
-    option=$(dialog --cancel-label "Back" --menu "$title" 23 50 4 \
-      1 "View current configuration URL & QR code" \
+    option=$(dialog --colors --title "$title" --cancel-label "Back" --menu "Meshtasticd service is $service_state" 23 50 4 \
+      1 "View configuration URL & QR code" \
       2 "Set new configuration URL" \
-      3 "View current lora radio selection" \
+      3 "View lora radio selection" \
       4 "Set LoRa radio" \
-      5 "View current admin keys" \
+      5 "View admin keys" \
       6 "Set admin key" \
       7 "Clear admin keys" \
-      8 "Enable legacy admin channel" \
-      9 "Disable legacy admin channel" \
-      10 "Meshtasticd service status" \
-      11 "Start/restart Meshtasticd service" \
-      12 "Stop Meshtasticd service" \
-      13 "Upgrade/install Meshtasticd" \
-      14 "Uninstall Meshtasticd" \
+      8 "Legacy admin channel" \
+      9 "Detailed Meshtasticd service status" \
+      10 "Start/restart Meshtasticd service" \
+      11 "Stop Meshtasticd service" \
+      12 "Upgrade/install Meshtasticd" \
+      13 "Uninstall Meshtasticd" \
       "" "" \
-    15 "Back to Main Menu" 3>&1 1>&2 2>&3)
+    14 "Back to Main Menu" 3>&1 1>&2 2>&3)
     
     exit_status=$? # This line checks the exit status of the dialog command
     if [ $exit_status -ne 0 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
@@ -343,11 +349,12 @@ meshtasticd_settings() {
     
     case $option in
       1) #Get current configuration URL & QR code)
+        dialog --infobox "Getting Meshtastic QR code and URL..." 5 45
         femto-meshtasticd-config.sh -g
         pause
       ;;
       2)
-        newurl=$(dialog --title "Meshtastic URL" --cancel-label "Skip" --inputbox "New Meshtasticd URL (SHIFT+INS to paste):" 8 40 3>&1 1>&2 2>&3)
+        newurl=$(dialog --title "Meshtastic URL" --inputbox "New Meshtasticd URL (SHIFT+INS to paste):" 8 60 3>&1 1>&2 2>&3)
         if [ -n "$newurl" ]; then #if a URL was entered
           dialog --title "$title" --yesno "New Meshtasticd URL:\n$newurl\n\nConfirm?" 15 60
           if [ $? -eq 0 ]; then #unless cancel/no
@@ -363,11 +370,11 @@ meshtasticd_settings() {
         set_lora_radio
       ;;
       5)
-        echo "Getting admin keys..."
+        dialog --infobox "Getting admin keys..." 0 0
         dialog --title "Admin keys" --msgbox "Up to 3 admin keys are permitted, more will be ignored.\n\nKeys:$(femto-meshtasticd-config.sh -v | tail -n 1 | sed 's/|n/\\n/g')" 0 0
       ;;
       6) #set admin key)
-        key=$(dialog --title "Meshtastic Admin Key" --cancel-label "Skip" --inputbox "Meshtastic admin key - up to 3, more will be ignored.\n\n(SHIFT+INS to paste):" 8 40 3>&1 1>&2 2>&3)
+        key=$(dialog --title "Meshtastic Admin Key" --inputbox "Meshtastic admin key - up to 3, more will be ignored.\n\n(SHIFT+INS to paste):" 11 40 3>&1 1>&2 2>&3)
         if [ -n "$key" ]; then #if a URL was entered
           femto-meshtasticd-config.sh -a "$key"
           pause
@@ -380,53 +387,63 @@ meshtasticd_settings() {
           pause
         fi
       ;;
-      8) #enable legacy)
-        dialog --title "$title" --yesno "Enable legacy admin channel?" 0 0
-        if [ $? -eq 0 ]; then #unless cancel/no
-          femto-meshtasticd-config.sh -e
-          pause
+      8) #legacy admin)
+        dialog --infobox "Getting current legacy admin state..." 5 45
+        state=$(sudo femto-meshtasticd-config.sh -p)
+        if echo "$state" | grep -q "True"; then
+          state="Enabled"
+        elif echo "$state" | grep -q "False"; then
+          state="Disabled"
+        elif echo "$state" | grep -q "Error"; then
+          state="Error"
         fi
+        while true; do
+          choice=$(dialog --title "Meshtasticd Legacy Admin" --menu "Current state: $state" 10 40 5 \
+            1 "Enable" \
+            2 "Disable" 3>&1 1>&2 2>&3)
+          exit_status=$? # This line checks the exit status of the dialog command
+          if [ $exit_status -ne 0 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
+            break
+          fi
+          case $choice in
+            1) femto-meshtasticd-config.sh -o "true" && break ;;
+            2) femto-meshtasticd-config.sh -o "false" && break ;;
+          esac
+        done
       ;;
-      9) #disable legacy)
-        dialog --title "$title" --yesno "Disable legacy admin channel?" 0 0
-        if [ $? -eq 0 ]; then #unless cancel/no
-          femto-meshtasticd-config.sh -d
-          pause
-        fi
-      ;;
-      10) #check meshtasticd service status)
-        echo "Getting Meshtasticd service status..."
+      9) #check meshtasticd service status)
+        dialog --infobox "Getting Meshtasticd service status..." 5 45
         dialog --title "Meshtasticd service status" --msgbox "$(systemctl status meshtasticd)" 0 0
       ;;
-      11) #start/restart meshtasticd)
-        dialog --title "$title" --yesno "Start/restart Meshtasticd service?" 0 0
+      10) #start/restart meshtasticd)
+        dialog --title "$title" --yesno "Start/restart Meshtasticd service?" 5 45
         if [ $? -eq 0 ]; then #unless cancel/no
           femto-meshtasticd-config.sh -s
-          dialog --msgbox "Meshtasticd service started/restarted." 0 0
+          dialog --msgbox "Meshtasticd service started/restarted." 5 45
         fi
       ;;
-      12) #stop meshtasticd)
-        dialog --title "$title" --yesno "Stop Meshtasticd service?" 0 0
+      11) #stop meshtasticd)
+        dialog --title "$title" --yesno "Stop Meshtasticd service?" 5 45
         if [ $? -eq 0 ]; then #unless cancel/no
           femto-meshtasticd-config.sh -t
-          dialog --msgbox "Meshtasticd service stopped." 0 0
+          dialog --msgbox "Meshtasticd service stopped." 5 45
         fi
       ;;
-      13) #Upgrade meshtasticd)
+      12) #Upgrade meshtasticd)
         dialog --title "$title" --yesno "Upgrade Meshtasticd?\nRequires internet connection." 0 0
         if [ $? -eq 0 ]; then #unless cancel/no
           femto-meshtasticd-config.sh -u
           pause
         fi
       ;;
-      14) #uninstall meshtasticd)
+      13) #uninstall meshtasticd)
         dialog --title "$title" --yesno "Uninstall Meshtasticd?\n\nFoxbuntu was designed with Meshtasticd integration in mind, and may behave unexpectedly if Meshtasticd is removed." 0 0
         if [ $? -eq 0 ]; then
           femto-meshtasticd-config.sh -x
           dialog --msgbox "Meshtasticd uninstalled. To purge all remnants, run \`sudo apt purge\`.\nAfter reinstallation but before first launch, run the \"first boot script\" from the misc menu." 8 40
         fi
       ;;
-      15)
+      14)
         return
       ;;
     esac
