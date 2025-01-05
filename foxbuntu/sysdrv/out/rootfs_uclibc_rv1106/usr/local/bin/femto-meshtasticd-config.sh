@@ -14,9 +14,8 @@ Options are:
 -v             View current admin keys
 -a "KEY"       Set admin key
 -c             Clear admin keys
--e             Enable legacy admin channel
--d             Disable legacy admin channel
--o "true"      Set legacy admin channel state (true/false), case sensitive
+-p             Get legacy admin channel state
+-o "true"      Set legacy admin channel state (true/false = enabled/disabled), case sensitive
 -s             Start/restart Meshtasticd Service
 -t             Stop Meshtasticd Service
 -u             Upgrade Meshtasticd
@@ -43,41 +42,39 @@ meshtastic_update() {
     logger $output
     if echo "$output" | grep -qiE "Abort|invalid|Error|refused|Errno"; then
       if [ "$retries" -lt $attempts ]; then
-        local msg="${ref:+$ref}Meshtastic update failed, retrying ($(($retries + 1))/$attempts)..."
+        local msg="${ref:+$ref}Meshtastic command failed, retrying ($(($retries + 1))/$attempts)..."
         echo "$msg"
         logger "$msg"
         sleep 2 # Add a small delay before retrying
       fi
     else
       local success="true"
-      msg="${ref:+$ref}Meshtastic update successful!"
+      msg="${ref:+$ref}Meshtastic command successful!"
       echo "$msg"
       logger "$msg"
-      if [ -n "$external" ]; then
+      if [ -n "$external" ]; then # exit script only if meshtastic_update was called directly via argument
         exit 0
       fi
-      return
+      return 0
     fi
   done
   if [ -z "$success" ]; then
-    msg="${ref:+$ref}Meshtastic update FAILED."
+    msg="${ref:+$ref}Meshtastic command FAILED."
     echo "$msg"
     logger "$msg"
-    if [ -n "$external" ]; then
-      exit 1
-    fi
+    exit 1 # always exit script if failed
   fi
 }
 
 # Parse options
-while getopts ":hgkl:q:va:cedo:struxm" opt; do
+while getopts ":hgkl:q:va:cpo:struxm" opt; do
   case ${opt} in
     h) # Option -h (help)
       echo -e "$help"
       ;;
     g) # Option -g (get config URL)
-      echo "Getting current Meshtastic QR code and URL..."
-      url=$(meshtastic --host --qr-all | grep -oP '(?<=Complete URL \(includes all channels\): )https://[^ ]+')
+      url=$(meshtastic --host --qr-all | grep -oP '(?<=Complete URL \(includes all channels\): )https://[^ ]+') #add look for errors
+      clear
       echo "$url" | qrencode -o - -t UTF8 -s 1
       echo "Meshtastic configuration URL:"
       echo $url
@@ -107,7 +104,7 @@ while getopts ":hgkl:q:va:cedo:struxm" opt; do
       ;;
     v) # Option -v (view admin keys)
       echo "Getting admin keys..."
-      keys=$(meshtastic --host --get security.admin_key | grep -oP '(?<=base64:)[^,"]+' | sed "s/'//g" | sed "s/]//g" | nl -w1 -s'. ' | sed 's/^/|n/' | tr '\n' ' ')
+      keys=$(meshtastic --host --get security.admin_key | grep -oP '(?<=base64:)[^,"]+' | sed "s/'//g" | sed "s/]//g" | nl -w1 -s'. ' | sed 's/^/|n/' | tr '\n' ' ')  #add look for errors
       echo "${keys:-none}"
       ;;
     a) # Option -a (add admin key)
@@ -116,14 +113,11 @@ while getopts ":hgkl:q:va:cedo:struxm" opt; do
     c) # Option -c (clear admin key list)
       meshtastic_update "--set security.admin_key 0" 10 "Set admin key"
       ;;
-    e) # Option -e (enable legacy admin)
-      meshtastic_update "--set security.admin_channel_enabled true" 10 "Enable legacy admin"
-      ;;
-    d) # Option -d (disable legacy admin)
-      meshtastic_update "--set security.admin_channel_enabled false" 10 "Disable legacy admin"
+    p) # Option -p (view current legacy admin state)
+      meshtastic_update "--get security.admin_channel_enabled" 3 "Get legacy admin state"
       ;;
     o) # Option -o (set legacy admin true/false)
-      meshtastic_update "--set security.admin_channel_enabled $OPTARG" 10 "Disable legacy admin"
+      meshtastic_update "--set security.admin_channel_enabled $OPTARG" 10 "Set legacy admin state"
       ;;
     s) # Option -s (start/restart Meshtasticd service)
       systemctl restart meshtasticd

@@ -1,7 +1,7 @@
 #!/bin/bash
 # prevents weirdness over tty
 export NCURSES_NO_UTF8_ACS=1
-export TERM=xterm-256color
+export TERM=screen
 export LANG=C.UTF-8
 
 if [[ $EUID -ne 0 ]]; then
@@ -44,9 +44,9 @@ wifi_config() {
   local wifi_ssid=""
   local wifi_psk=""
   local wifi_country=""
-  wifi_ssid=$(dialog --title "$title2" --cancel-label "Skip" --inputbox "Enter Wi-Fi SSID:" 8 40 "$(grep -oP '^ *ssid="\K[^"]+' /etc/wpa_supplicant/wpa_supplicant.conf)" 3>&1 1>&2 2>&3) # display current SSID
-  wifi_psk=$(dialog --title "$title2" --cancel-label "Skip" --inputbox "Enter Wi-Fi Password:" 8 40 3>&1 1>&2 2>&3)
-  wifi_country=$(dialog --title "$title2" --cancel-label "Skip" --inputbox "Enter Country Code (US, DE...):" 9 40 "$(grep -oP '^ *country=\K[^ ]+' /etc/wpa_supplicant/wpa_supplicant.conf)" 3>&1 1>&2 2>&3) # display current country
+  wifi_ssid=$(dialog --title "$title2" --inputbox "Enter Wi-Fi SSID:" 8 40 "$(grep -oP '^ *ssid="\K[^"]+' /etc/wpa_supplicant/wpa_supplicant.conf)" 3>&1 1>&2 2>&3) # display current SSID
+  wifi_psk=$(dialog --title "$title2" --inputbox "Enter Wi-Fi Password:" 8 40 3>&1 1>&2 2>&3)
+  wifi_country=$(dialog --title "$title2" --inputbox "Enter Country Code (US, DE...):" 9 40 "$(grep -oP '^ *country=\K[^ ]+' /etc/wpa_supplicant/wpa_supplicant.conf)" 3>&1 1>&2 2>&3) # display current country
   cmd="femto-network-config.sh -s \"$wifi_ssid\" -p \"$wifi_psk\""
   [ -n "$wifi_country" ] && cmd="$cmd -c \"$wifi_country\""
   cmd="$cmd -r"
@@ -68,7 +68,7 @@ networking_settings() {
   wpa_supplicant_conf="/etc/wpa_supplicant/wpa_supplicant.conf"
   while true; do
     local option=""
-    option=$(dialog --cancel-label "Back" --menu "$title" 15 40 4 \
+    option=$(dialog --cancel-label "Back" --menu "$title" 16 40 4 \
       1 "Turn Wi-Fi on/off" \
       2 "View Wi-Fi settings" \
       3 "Change Wi-Fi settings" \
@@ -76,6 +76,7 @@ networking_settings() {
       5 "Restart networking" \
       6 "Set hostname" \
       7 "Test internet connection" \
+      "" "" \
     8 "Back to Main Menu" 3>&1 1>&2 2>&3)
     
     exit_status=$? # This line checks the exit status of the dialog command
@@ -99,7 +100,6 @@ networking_settings() {
             case $choice in
               1) femto-network-config.sh -x "up" && break ;;
               2) femto-network-config.sh -x "down" && break ;;
-              *) dialog --msgbox "Invalid choice, please try again." 8 40 ;;
             esac
           done
         fi
@@ -116,20 +116,20 @@ networking_settings() {
         dialog --title "Ethernet (eth0) settings" --colors --msgbox "$(replace_colors "$(femto-network-config.sh -e)")" 0 0
       ;;
       5) # Restart networking)
-        dialog --title "$title2" --yesno "Wi-Fi and Ethernet will be restarted.\nMeshtastic Wi-Fi setting will be set to ON.\n\nProceed?" 8 40
+        dialog --title "$title2" --yesno "Wi-Fi and Ethernet will be restarted.\nMeshtastic Wi-Fi setting will be set to ON.\n\nProceed?" 10 40
         if [ $? -eq 0 ]; then #unless cancel/no
           femto-network-config.sh -r
         fi
       ;;
       6) # set hostname)
-        new_hostname=$(dialog --title "$title" --cancel-label "Skip" --inputbox "Enter new hostname:" 8 40 $(hostname) 3>&1 1>&2 2>&3)
+        new_hostname=$(dialog --title "$title" --inputbox "Enter new hostname:" 8 40 $(hostname) 3>&1 1>&2 2>&3)
         if [ $? -eq 0 ]; then #unless cancel/no
           femto-network-config.sh -n "$new_hostname"
           dialog --title "$title" --msgbox "Femtofox is now reachable at\n$new_hostname.local" 8 40
         fi
       ;;
       7) # Test internet connection)
-        echo "Testing internet connection..."
+        dialog --infobox "Testing internet connection..." 0 0
         dialog --title "Internet connectivity test" --colors --msgbox "$(replace_colors "$(femto-network-config.sh -t)")" 8 40
       ;;
       8)
@@ -148,6 +148,7 @@ femto_pinouts() {
       2 "Femtofox Zero" \
       3 "Femtofox Tiny" \
       4 "Luckfox Pico Mini" \
+      "" "" \
       5 "Back to Help Menu" 3>&1 1>&2 2>&3)
     
     exit_status=$? # This line checks the exit status of the dialog command
@@ -160,9 +161,8 @@ femto_pinouts() {
       1) dialog --title "Femtofox" --msgbox "$(femto-pinout.sh -f)" 41 70 ;;
       2) dialog --title "Femtofox Zero" --msgbox "$(femto-pinout.sh -z)" 34 48 ;;
       3) dialog --title "Femtofox Tiny" --msgbox "$(femto-pinout.sh -t)" 38 70 ;;
-      4) dialog --title "Luckfox Pico Mini" --msgbox "$(femto-pinout.sh -l)" 23 63 ;;
+      4) dialog --title "Luckfox Pico Mini" --msgbox "$(femto-pinout.sh -l)" 23 65 ;;
       5) return ;;
-      *) echo "Invalid option selected!" ;;
     esac
   done
 }
@@ -177,6 +177,7 @@ misc_settings() {
       2 "Ham radio support" \
       3 "Re-run first-boot script" \
       4 "Run OEM luckfox-config" \
+      "" "" \
       5 "Back to Main Menu" 3>&1 1>&2 2>&3)
     
     exit_status=$? # This line checks the exit status of the dialog command
@@ -246,7 +247,7 @@ then \`depmod\` will be run. To remove support, those modules will be deleted.\n
 set_lora_radio() {
   while true; do
     local option=""
-    option=$(dialog --cancel-label "Skip" --menu "Select your installed Meshtastic LoRa radio." 0 0 10 \
+    option=$(dialog --menu "Select your installed Meshtastic LoRa radio." 0 0 10 \
       1 "ebyte-e22-900m30s (Femtofox Pro)" \
       2 "ebyte-e22-900m22s" \
       3 "ebyte-e80-900m22s" \
@@ -258,7 +259,8 @@ set_lora_radio() {
       9 "sx1262_xtal" \
       10 "lr1121_tcxo" \
       11 "none (simulated radio)" \
-    12 "Skip radio selection" 3>&1 1>&2 2>&3)
+      "" "" \
+    12 "Skip" 3>&1 1>&2 2>&3)
     
     exit_status=$? # This line checks the exit status of the dialog command
     if [ $exit_status -ne 0 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
@@ -313,25 +315,32 @@ set_lora_radio() {
 
 # Function to handle Meshtasticd settings
 meshtasticd_settings() {
-  local title="Meshtasticd Settings"
+  local title="Meshtastic Settings"
   while true; do
+    if echo "$(systemctl status meshtasticd)" | grep -q "active (running)"; then
+      local service_state="\Z2\Zuonline\Zn"
+    elif echo "$(systemctl status meshtasticd)" | grep -q "inactive (dead)"; then
+      local service_state="\Z1\Zuoffline\Zn"
+    else
+      local service_state="unknown"
+    fi
     local option=""
-    option=$(dialog --cancel-label "Back" --menu "$title" 22 50 4 \
-      1 "View current configuration URL & QR code" \
+    option=$(dialog --colors --title "$title" --cancel-label "Back" --menu "Meshtasticd service is $service_state" 23 50 4 \
+      1 "View configuration URL & QR code" \
       2 "Set new configuration URL" \
-      3 "View current lora radio selection" \
+      3 "View lora radio selection" \
       4 "Set LoRa radio" \
-      5 "View current admin keys" \
+      5 "View admin keys" \
       6 "Set admin key" \
       7 "Clear admin keys" \
-      8 "Enable legacy admin channel" \
-      9 "Disable legacy admin channel" \
-      10 "Meshtasticd service status" \
-      11 "Start/restart Meshtasticd service" \
-      12 "Stop Meshtasticd service" \
-      13 "Upgrade/install Meshtasticd" \
-      14 "Uninstall Meshtasticd" \
-    15 "Back to Main Menu" 3>&1 1>&2 2>&3)
+      8 "Legacy admin channel" \
+      9 "Detailed Meshtasticd service status" \
+      10 "Start/restart Meshtasticd service" \
+      11 "Stop Meshtasticd service" \
+      12 "Upgrade/install Meshtasticd" \
+      13 "Uninstall Meshtasticd" \
+      "" "" \
+    14 "Back to Main Menu" 3>&1 1>&2 2>&3)
     
     exit_status=$? # This line checks the exit status of the dialog command
     if [ $exit_status -ne 0 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
@@ -340,11 +349,12 @@ meshtasticd_settings() {
     
     case $option in
       1) #Get current configuration URL & QR code)
+        dialog --infobox "Getting Meshtastic QR code and URL..." 5 45
         femto-meshtasticd-config.sh -g
         pause
       ;;
       2)
-        newurl=$(dialog --title "Meshtastic URL" --cancel-label "Skip" --inputbox "New Meshtasticd URL (SHIFT+INS to paste):" 8 40 3>&1 1>&2 2>&3)
+        newurl=$(dialog --title "Meshtastic URL" --inputbox "New Meshtasticd URL (SHIFT+INS to paste):" 8 60 3>&1 1>&2 2>&3)
         if [ -n "$newurl" ]; then #if a URL was entered
           dialog --title "$title" --yesno "New Meshtasticd URL:\n$newurl\n\nConfirm?" 15 60
           if [ $? -eq 0 ]; then #unless cancel/no
@@ -360,11 +370,11 @@ meshtasticd_settings() {
         set_lora_radio
       ;;
       5)
-        echo "Getting admin keys..."
+        dialog --infobox "Getting admin keys..." 0 0
         dialog --title "Admin keys" --msgbox "Up to 3 admin keys are permitted, more will be ignored.\n\nKeys:$(femto-meshtasticd-config.sh -v | tail -n 1 | sed 's/|n/\\n/g')" 0 0
       ;;
       6) #set admin key)
-        key=$(dialog --title "Meshtastic Admin Key" --cancel-label "Skip" --inputbox "Meshtastic admin key - up to 3, more will be ignored.\n\n(SHIFT+INS to paste):" 8 40 3>&1 1>&2 2>&3)
+        key=$(dialog --title "Meshtastic Admin Key" --inputbox "Meshtastic admin key - up to 3, more will be ignored.\n\n(SHIFT+INS to paste):" 11 40 3>&1 1>&2 2>&3)
         if [ -n "$key" ]; then #if a URL was entered
           femto-meshtasticd-config.sh -a "$key"
           pause
@@ -377,96 +387,63 @@ meshtasticd_settings() {
           pause
         fi
       ;;
-      8) #enable legacy)
-        dialog --title "$title" --yesno "Enable legacy admin channel?" 0 0
-        if [ $? -eq 0 ]; then #unless cancel/no
-          femto-meshtasticd-config.sh -e
-          pause
+      8) #legacy admin)
+        dialog --infobox "Getting current legacy admin state..." 5 45
+        state=$(sudo femto-meshtasticd-config.sh -p)
+        if echo "$state" | grep -q "True"; then
+          state="Enabled"
+        elif echo "$state" | grep -q "False"; then
+          state="Disabled"
+        elif echo "$state" | grep -q "Error"; then
+          state="Error"
         fi
+        while true; do
+          choice=$(dialog --title "Meshtasticd Legacy Admin" --menu "Current state: $state" 10 40 5 \
+            1 "Enable" \
+            2 "Disable" 3>&1 1>&2 2>&3)
+          exit_status=$? # This line checks the exit status of the dialog command
+          if [ $exit_status -ne 0 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
+            break
+          fi
+          case $choice in
+            1) femto-meshtasticd-config.sh -o "true" && break ;;
+            2) femto-meshtasticd-config.sh -o "false" && break ;;
+          esac
+        done
       ;;
-      9) #disable legacy)
-        dialog --title "$title" --yesno "Disable legacy admin channel?" 0 0
-        if [ $? -eq 0 ]; then #unless cancel/no
-          femto-meshtasticd-config.sh -d
-          pause
-        fi
-      ;;
-      10) #check meshtasticd service status)
+      9) #check meshtasticd service status)
+        dialog --infobox "Getting Meshtasticd service status..." 5 45
         dialog --title "Meshtasticd service status" --msgbox "$(systemctl status meshtasticd)" 0 0
       ;;
-      11) #start/restart meshtasticd)
-        dialog --title "$title" --yesno "Start/restart Meshtasticd service?" 0 0
+      10) #start/restart meshtasticd)
+        dialog --title "$title" --yesno "Start/restart Meshtasticd service?" 5 45
         if [ $? -eq 0 ]; then #unless cancel/no
           femto-meshtasticd-config.sh -s
-          dialog --msgbox "Meshtasticd service started/restarted." 0 0
+          dialog --msgbox "Meshtasticd service started/restarted." 5 45
         fi
       ;;
-      12) #stop meshtasticd)
-        dialog --title "$title" --yesno "Stop Meshtasticd service?" 0 0
+      11) #stop meshtasticd)
+        dialog --title "$title" --yesno "Stop Meshtasticd service?" 5 45
         if [ $? -eq 0 ]; then #unless cancel/no
           femto-meshtasticd-config.sh -t
-          dialog --msgbox "Meshtasticd service stopped." 0 0
+          dialog --msgbox "Meshtasticd service stopped." 5 45
         fi
       ;;
-      13) #Upgrade meshtasticd)
+      12) #Upgrade meshtasticd)
         dialog --title "$title" --yesno "Upgrade Meshtasticd?\nRequires internet connection." 0 0
         if [ $? -eq 0 ]; then #unless cancel/no
           femto-meshtasticd-config.sh -u
           pause
         fi
       ;;
-      14) #uninstall meshtasticd)
+      13) #uninstall meshtasticd)
         dialog --title "$title" --yesno "Uninstall Meshtasticd?\n\nFoxbuntu was designed with Meshtasticd integration in mind, and may behave unexpectedly if Meshtasticd is removed." 0 0
         if [ $? -eq 0 ]; then
           femto-meshtasticd-config.sh -x
           dialog --msgbox "Meshtasticd uninstalled. To purge all remnants, run \`sudo apt purge\`.\nAfter reinstallation but before first launch, run the \"first boot script\" from the misc menu." 8 40
         fi
       ;;
-      15)
-        return
-      ;;
-    esac
-  done
-}
-
-#Software menu
-software_settings() {
-  while true; do
-  local title="Software"
-    local option=""
-    option=$(dialog --cancel-label "Back" --menu "$title" 0 0 6 \
-      1 "Meshing Around by SpudGudMan" \
-      2 "The Comms Channel BBS (TC2BBS)" \
-      "" ""\
-    3 "Back to Main Menu" 3>&1 1>&2 2>&3)
-    
-    exit_status=$? # This line checks the exit status of the dialog command
-    if [ $exit_status -ne 0 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
-      break
-    fi
-    
-    case $option in
-      1) #Install Meshing Around)
-        dialog --title "$software" --yesno "Meshing Around is a feature-rich bot designed to enhance your Meshtastic network experience with a variety of powerful tools and fun features, connectivity and utility through text-based message delivery. Whether you're looking to perform network tests, send messages, or even play games, mesh_bot.py has you covered.\nInstallation requires internet connection.\n\nLearn more at https://github.com/SpudGunMan/meshing-around\n\nInstall?" 0 0
-          #check if /opt/meshing-around exists if not git clone
-          if [ ! -d /opt/meshing-around ]; then
-            if [ $? -eq 0 ]; then #unless cancel/no
-              if git clone https://github.com/spudgunman/meshing-around /opt/meshing-around; then
-                /opt/meshing-around/install.sh #install script
-                dialog --title "$software" --msgbox "\nInstallation complete.\n\nRun \`sudo nano /opt/meshing-around/config.ini\` to configure, then relaunch the service with" 10 60
-              else
-                dialog --title "$software" --msgbox "\nCloning of Meshing Around git repo failed.\nCheck internet connectivity." 10 60
-              fi
-            fi
-          else
-            /opt/meshing-around/install.sh #install script
-            dialog --title "$software" --msgbox "\nInstallation complete.\n\nRun \`sudo nano /opt/meshing-around/config.ini\` to configure, then relaunch the service with" 10 60
-          fi
-      ;;
-      2) #Install TC2BBS)
-        echo "coming soon"
-      ;;
-      3)
+      14)
         return
       ;;
     esac
@@ -478,7 +455,7 @@ help_menu() {
   while true; do
   local title="Help / About"
     local option=""
-    option=$(dialog --cancel-label "Back" --menu "$title" 0 0 6 \
+    option=$(dialog --cancel-label "Back" --menu "$title" 0 0 7 \
       1 "About Femtofox" \
       2 "Display pinout" \
       3 "Femtofox licensing info - short" \
@@ -486,6 +463,7 @@ help_menu() {
       5 "Meshtastic licensing info" \
       6 "About Luckfox" \
       7 "About Ubuntu" \
+      "" "" \
     8 "Back to Main Menu" 3>&1 1>&2 2>&3)
     
     exit_status=$? # This line checks the exit status of the dialog command
@@ -495,7 +473,7 @@ help_menu() {
     
     case $option in
       1) #About Femtofox)
-        dialog --title "About Femtofox" --msgbox "$(femto-license.sh -a)" 0 0
+        dialog --title "About Femtofox" --backtitle "Foxbuntu $(grep -oP 'major=\K[0-9]+' /etc/foxbuntu-release).$(grep -oP 'minor=\K[0-9]+' /etc/foxbuntu-release).$(grep -oP 'patch=\K[0-9]+' /etc/foxbuntu-release)$(grep -oP 'hotfix=\K[a-z]+' /etc/foxbuntu-release)" --msgbox "$(femto-license.sh -a)" 18 65
       ;;
       2) #Display pinout)
         femto_pinouts
@@ -547,6 +525,7 @@ while true; do
     4 "Misc" \
     5 "Software" \
     6 "Help" \
+    "" "" \
     7 "Exit" 3>&1 1>&2 2>&3)
   
   exit_status=$? # This line checks the exit status of the dialog command
@@ -560,9 +539,8 @@ while true; do
     2) networking_settings ;;
     3) meshtasticd_settings ;;
     4) misc_settings ;;
-    5) software_settings ;;
+    5) femto-software.sh ;;
     6) help_menu ;;
     7) break ;;
-    *) dialog --msgbox "Invalid choice, please try again." 8 40 ;;
   esac
 done
