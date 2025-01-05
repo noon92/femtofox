@@ -539,7 +539,7 @@ while true; do
     2) networking_settings ;;
     3) meshtasticd_settings ;;
     4) misc_settings ;;
-    5) femto-software.sh ;;
+    5) femto-software-menu.sh ;;
     6) help_menu ;;
     7) break ;;
   esac
