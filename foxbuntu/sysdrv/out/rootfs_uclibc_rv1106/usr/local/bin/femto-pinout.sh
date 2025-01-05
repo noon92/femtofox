@@ -94,8 +94,6 @@ femtofox="\
 ꙩ︎ pins available on Femtofox Pro. Unused on Femtofox community.   \n\
   KILL pins available on Femtofox Pro only. Add power switch or   \n\
   thermal fuse/cutoff here and remove resistor.                   "
-┌ ┐
-└ ┘
 
 femtofox_zero="\
          ┌────┐               ┌────┐         \n\
