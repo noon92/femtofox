@@ -1,7 +1,7 @@
 #!/bin/bash
 # prevents weirdness over tty
 export NCURSES_NO_UTF8_ACS=1
-export TERM=xterm-256color
+export TERM=screen
 export LANG=C.UTF-8
 
 if [[ $EUID -ne 0 ]]; then
@@ -116,7 +116,7 @@ networking_settings() {
         dialog --title "Ethernet (eth0) settings" --colors --msgbox "$(replace_colors "$(femto-network-config.sh -e)")" 0 0
       ;;
       5) # Restart networking)
-        dialog --title "$title2" --yesno "Wi-Fi and Ethernet will be restarted.\nMeshtastic Wi-Fi setting will be set to ON.\n\nProceed?" 8 40
+        dialog --title "$title2" --yesno "Wi-Fi and Ethernet will be restarted.\nMeshtastic Wi-Fi setting will be set to ON.\n\nProceed?" 10 40
         if [ $? -eq 0 ]; then #unless cancel/no
           femto-network-config.sh -r
         fi
@@ -161,7 +161,7 @@ femto_pinouts() {
       1) dialog --title "Femtofox" --msgbox "$(femto-pinout.sh -f)" 41 70 ;;
       2) dialog --title "Femtofox Zero" --msgbox "$(femto-pinout.sh -z)" 34 48 ;;
       3) dialog --title "Femtofox Tiny" --msgbox "$(femto-pinout.sh -t)" 38 70 ;;
-      4) dialog --title "Luckfox Pico Mini" --msgbox "$(femto-pinout.sh -l)" 23 63 ;;
+      4) dialog --title "Luckfox Pico Mini" --msgbox "$(femto-pinout.sh -l)" 23 65 ;;
       5) return ;;
     esac
   done
@@ -433,51 +433,6 @@ meshtasticd_settings() {
   done
 }
 
-#Software menu
-software_settings() {
-  while true; do
-  local title="Software"
-    local option=""
-    option=$(dialog --cancel-label "Back" --menu "$title" 0 0 6 \
-      1 "Meshing Around by SpudGudMan" \
-      2 "The Comms Channel BBS (TC2BBS)" \
-      "" ""\
-    3 "Back to Main Menu" 3>&1 1>&2 2>&3)
-    
-    exit_status=$? # This line checks the exit status of the dialog command
-    if [ $exit_status -ne 0 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
-      break
-    fi
-    
-    case $option in
-      1) #Install Meshing Around)
-        dialog --title "$software" --yesno "Meshing Around is a feature-rich bot designed to enhance your Meshtastic network experience with a variety of powerful tools and fun features, connectivity and utility through text-based message delivery. Whether you're looking to perform network tests, send messages, or even play games, mesh_bot.py has you covered.\nInstallation requires internet connection.\n\nLearn more at https://github.com/SpudGunMan/meshing-around\n\nInstall?" 0 0
-          #check if /opt/meshing-around exists if not git clone
-          if [ ! -d /opt/meshing-around ]; then
-            if [ $? -eq 0 ]; then #unless cancel/no
-              if git clone https://github.com/spudgunman/meshing-around /opt/meshing-around; then
-                /opt/meshing-around/install.sh #install script
-                dialog --title "$software" --msgbox "\nInstallation complete.\n\nRun \`sudo nano /opt/meshing-around/config.ini\` to configure, then relaunch the service with" 10 60
-              else
-                dialog --title "$software" --msgbox "\nCloning of Meshing Around git repo failed.\nCheck internet connectivity." 10 60
-              fi
-            fi
-          else
-            /opt/meshing-around/install.sh #install script
-            dialog --title "$software" --msgbox "\nInstallation complete.\n\nRun \`sudo nano /opt/meshing-around/config.ini\` to configure, then relaunch the service with" 10 60
-          fi
-      ;;
-      2) #Install TC2BBS)
-        echo "coming soon"
-        pause
-      ;;
-      3)
-        return
-      ;;
-    esac
-  done
-}
-
 #Help menu
 help_menu() {
   while true; do
@@ -567,7 +522,7 @@ while true; do
     2) networking_settings ;;
     3) meshtasticd_settings ;;
     4) misc_settings ;;
-    5) software_settings ;;
+    5) femto-software.sh ;;
     6) help_menu ;;
     7) break ;;
   esac
