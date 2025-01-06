@@ -64,11 +64,9 @@ When the Femtofox is finished booting, it will blink its User LED (see below) in
 | LED blink pattern | Meaning | Possible causes | Solutions |
 |--|--|--|--|
 |<center>⚠️<br>________________<br>1 very long blink, lasting 5 seconds| Failed to mount USB drive. Ignoring.| <li>Invalid filesystem<li>Corrupted partition table<li>Defective USB drive<li>Defective USB OTG adapter | <li>Use a supported partition (FAT32, exFAT, NTFS, ext4)<li>Repair partition table<li>Try another USB drive<li>Try another USB OTG adapter |
-|<center>⚠️<br>\_\_\_\_\_&nbsp;&nbsp;\_\_\_\_\_&nbsp;&nbsp;\_\_\_\_\_<br>3 long blinks, each lasting 1.5 seconds | USB drive mounted successfully but femtofox-config.txt was not found. Ignoring.| Config file missing. | Create configuration file as described above. |
-|
-<center>⚠️<br>\_\_\_\_\_&nbsp;&nbsp;\_\_\_\_\_&nbsp;&nbsp;\_\_\_\_\_&nbsp;&nbsp;\_\_\_\_\_&nbsp;&nbsp;\_\_\_\_\_<br>5 long blinks, each lasting 1.5 seconds | USB drive mounted successfully and femtofox-config.txt was found but did not contain readable configuration data. Ignoring.| Configuration file improperly formatted or contains no data. | Check configuration file contents as described above. |
-|
-<center>⚠️<br>\_\_\_\_\_&nbsp;&nbsp;\_\_\_\_\_&nbsp;&nbsp;\_\_\_\_\_&nbsp;&nbsp;\_\_\_\_\_&nbsp;&nbsp;\_\_\_\_\_<br>5 long blinks, each lasting 1.5 seconds | USB drive mounted successfully and femtofox-config.txt was found but did not contain readable configuration data. Ignoring.| Configuration file improperly formatted or contains no data. | Check configuration file contents as described above. |
+|<center>⚠️<br>\_\_\_\_\_&nbsp;&nbsp;\_\_\_\_\_<br>3 long blinks, each lasting 1.5 seconds | USB drive mounted successfully but femtofox-config.txt was not found. Ignoring.| Config file missing. | Create configuration file as described above. |
+|<center>⚠️<br>\_\_\_\_\_&nbsp;&nbsp;\_\_\_\_\_&nbsp;&nbsp;\_\_\_\_\_<br>2 long blinks, each lasting 1.5 seconds | USB drive mounted successfully but femtofox-config.txt was not found. Ignoring.| Config file missing. | Create configuration file as described above. |
+|<center>⚠️<br>\_\_\_\_\_&nbsp;&nbsp;\_\_\_\_\_&nbsp;&nbsp;\_\_\_\_\_&nbsp;&nbsp;\_\_\_\_\_&nbsp;&nbsp;\_\_\_\_\_<br>5 long blinks, each lasting 1.5 seconds | USB drive mounted successfully and femtofox-config.txt was found but did not contain readable configuration data. Ignoring.| Configuration file improperly formatted or contains no data. | Check configuration file contents as described above. |
 |<center>⚠️<br>\_\_\_&nbsp;&nbsp;\_\_\_&nbsp;&nbsp;\_&nbsp;&nbsp;\_&nbsp;&nbsp;\_\_\_&nbsp;&nbsp;\_\_\_&nbsp;&nbsp;\_&nbsp;&nbsp;\_<br>2 long blinks, each lasting 1 seconds, then 2 short blinks, each lasting 1/4 of a second. Repeats twice | Error while trying to implement a Meshtastic setting after 3 attempts. Some settings may have been implemented successfully.| <li>The error may be transient.<li>Configuration file may contain improper data. | <li>Try again.<li>Check configuration file contents as described above.<li>Check the log.<br><br>This pattern may flash before other patterns. The pattern will repeat once for each failed setting.|
 |<center>✅<br>. . . . . . . . . .<br>10 very fast blinks, each lasting 1/8th of a second | USB drive mounted successfully, and femtofox-config.txt was found and contained configuration data which was sent for deployment. Any affected services will now restart. You can disconnect the USB drive. | This does not mean that the information in the config file is correct - only that it was readable.<br>Note that the "success" boot code will flash if at least one setting is successfully read - even if the setting was not implemented successfully.|
 |<center>✅<br>\_\_&nbsp;&nbsp;\_\_&nbsp;&nbsp;\_\_&nbsp;&nbsp;\_\_&nbsp;&nbsp;\_\_<br>5 medium blinks, each lasting 0.5 seconds | Boot complete. Appears on every successful boot and always appears last.| | |
@@ -76,5 +74,6 @@ When the Femtofox is finished booting, it will blink its User LED (see below) in
 > [!NOTE]
 > Boot codes can appear in sequence - for example: one long (4 second) blink, followed by 5 medium (half second) blinks means the USB drive failed to mount, and that the boot sequence is complete.
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTY0MjMwNjU1NCwtMTcxNDg1NzE1N119
+eyJoaXN0b3J5IjpbLTE1MTIwNzgzNDQsLTE3MTQ4NTcxNTddfQ
+==
 -->
