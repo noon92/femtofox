@@ -27,6 +27,7 @@ meshtastic_lora_radio="ebyte-e22-900m30s"
 meshtastic_url="https://meshtastic.org/e/#CgMSAQESCAgBOAFAA0gB"
 meshtastic_admin_key="T/b8EGvi/Nqi6GyGefJt/jOQr+5uWHHZuBavkNcUwWQ="
 meshtastic_legacy_admin="true"
+dont_run_if_log_exists
 ```
 > [!NOTE]
 > Enter as many or as few settings as you like.
@@ -74,5 +75,5 @@ When the Femtofox is finished booting, it will blink its User LED (see below) in
 > [!NOTE]
 > Boot codes can appear in sequence - for example: one long (4 second) blink, followed by 5 medium (half second) blinks means the USB drive failed to mount, and that the boot sequence is complete.
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMjg4NDE1MjUxLC0xNzE0ODU3MTU3XX0=
+eyJoaXN0b3J5IjpbNDI0ODg4NjY4LC0xNzE0ODU3MTU3XX0=
 -->
