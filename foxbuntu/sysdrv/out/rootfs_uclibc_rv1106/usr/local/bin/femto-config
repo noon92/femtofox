@@ -16,14 +16,7 @@ pause() {
   read -n 1 -s -r
 }
 
-
-
-#│ ^[[0;30m Black^[[0m ^[[0;31m Red^[[0m ^[[0;32m       │
-#│ Green^[[0m ^[[0;33m Yellow^[[0m ^[[0;34m Blue^[[0m   │
-#│ ^[[0;35m Magenta^[[0m ^[[0;36m Cyan^[[0m ^[[0;37m    │
-#│ White^[[0m ^[[4m Underlined^[[0m ^[[7m Inverted^[[0m
-
-
+# Dialog uses a different method to display colors, and is limited to only these 8.
 replace_colors() {
   input="$1"
   input="${input//$(echo -e '\033[0;30m')/\\Z0}"   # black
@@ -168,13 +161,13 @@ femto_pinouts() {
 }
 
 # Function to handle misc settings
-misc_settings() {
-  local title="Misc Settings"
+utilities() {
+  local title="Utilities"
   while true; do
     local option=""
-    option=$(dialog --cancel-label "Back" --menu "Misc Settings" 15 40 4 \
+    option=$(dialog --cancel-label "Back" --menu "$title" 15 40 4 \
       1 "Set system timezone" \
-      2 "Ham radio support" \
+      2 "Kernel modules" \
       3 "Re-run first-boot script" \
       4 "Run OEM luckfox-config" \
       "" "" \
@@ -190,45 +183,8 @@ misc_settings() {
         femto-set-timezone.sh
       ;;
       2) # the contents of this should probably moved to a script)
-        dialog --title "$title" --msgbox "Amateur radio support can be added in kernel for:\n\n\
-Amateur Radio AX.25 Level 2 protocol\n\
-AX.25 DAMA Slave support\n\
-Amateur Radio NET/ROM protocol\n\
-Amateur Radio X.25 PLP (Rose)\n\
-Serial port KISS driver\n\
-Serial port 6PACK driver\n\
-BPQ Ethernet driver\n\
-BAYCOM ser12 fullduplex driver for AX.25\n\
-BAYCOM ser12 halfduplex driver for AX.25\n\
-YAM driver for AX.25\n\
-AM/FM Radio receivers/transmitters\n\
-Software defined radio (SDR)\n\
-Maxim 2175 RF to Bits tuner\n\
-Silicon Labs Si470x FM Radio Receiver support\n\
-Silicon Labs Si470x FM Radio Receiver support with USB\n\
-Silicon Labs Si470x FM Radio Receiver support with I2C\n\
-Silicon Labs Si4713 FM Radio with RDS Transmitter support\n\
-Silicon Labs Si4713 FM Radio Transmitter support with USB\n\
-Silicon Labs Si4713 FM Radio Transmitter support with I2C\n\
-Silicon Labs Si4713 FM Radio Transmitter support\n\
-AverMedia MR 800 USB FM radio support\n\
-D-Link/GemTek USB FM radio support\n\
-Guillemot MAXI Radio FM 2000 radio\n\
-Griffin radioSHARK USB radio receiver\n\
-Griffin radioSHARK2 USB radio receiver\n\
-Keene FM Transmitter USB support\n\
-Thanko's Raremono AM/FM/SW radio support\n\
-Masterkit MA901 USB FM radio support\n\
-TEA5764 I2C FM radio support\n\
-SAA7706H Car Radio DSP\n\
-TEF6862 Car Radio Enhanced Selectivity Tuner\n\
-Texas Instruments WL1273 I2C FM Radio\n\
-Renesas Digital Radio Interface (DRIF)" 20 65
-        dialog --title "$title" --msgbox "To add support, kernel modules for all these will be copied to \`/lib/modules/5.10.160/\`,\
-then \`depmod\` will be run. To remove support, those modules will be deleted.\n\nAfter installation, many redundant network interfaces will appear." 11 40
-        #add code to choose add or remove
-        cp /oem/usr/ko/ham/* /lib/modules/5.10.160/
-        depmod -a 5.10.160
+        dialog --title "$title" --msgbox "Kernel modules are loadable pieces of code that extend a Linux kernel's functionality without requiring a reboot. Common examples include device drivers, file systems, or system calls.\n\nThis tool will allow you to add pre-compiled modules to the Foxbuntu kernel.\n\nModules currently autostarting at boot:\n$(sed -n '6,$p' /etc/modules | sed ':a;N;$!ba;s/\n/, /g;s/, $//')" 16 65
+        femto-kernel-modules.sh
       ;;
       3)
         femto-runonce.sh
@@ -522,8 +478,8 @@ while true; do
     1 "Settings wizard" \
     2 "Networking" \
     3 "Meshtasticd" \
-    4 "Misc" \
-    5 "Software" \
+    4 "Software" \
+    5 "Utilities" \
     6 "Help" \
     "" "" \
     7 "Exit" 3>&1 1>&2 2>&3)
@@ -538,9 +494,11 @@ while true; do
     1) femto-install-wizard.sh ;;
     2) networking_settings ;;
     3) meshtasticd_settings ;;
-    4) misc_settings ;;
-    5) femto-software-menu.sh ;;
+    4) femto-software-menu.sh ;;
+    5) utilities ;;
     6) help_menu ;;
     7) break ;;
   esac
 done
+
+exit 0
