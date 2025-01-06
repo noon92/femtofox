@@ -56,6 +56,9 @@ dont_run_if_log_exists
 > [!CAUTION]
 > Attempting to set wifi settings via USB configuration tool without a wifi adapter connected will lead to a 5 minute hang while the configuration tool runs - either disconnect and reconnect power or wait the full 5 minutes to to recover.
 
+> [!NOTE]
+> `dont_run_if_log_exists` will prevent the USB configuration tool from working if there's a log present on the USB drive, indicating it has already been run. There is also an LED boot code for this, descri
+
 **To apply your configuration, reboot the Femtofox with the USB drive plugged in. No other USB drives can be plugged in at the same time.**
 A log (`femtofox-config.log`) is saved to `/home/femto` and the USB drive (except on NTFS, which is read only).
 <br>
@@ -75,5 +78,6 @@ When the Femtofox is finished booting, it will blink its User LED (see below) in
 > [!NOTE]
 > Boot codes can appear in sequence - for example: one long (4 second) blink, followed by 5 medium (half second) blinks means the USB drive failed to mount, and that the boot sequence is complete.
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbNDI0ODg4NjY4LC0xNzE0ODU3MTU3XX0=
+eyJoaXN0b3J5IjpbLTE0MjYxNzM1NTYsNDI0ODg4NjY4LC0xNz
+E0ODU3MTU3XX0=
 -->
