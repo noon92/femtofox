@@ -71,6 +71,12 @@ fi
 wpa_supplicant_conf="/etc/wpa_supplicant/wpa_supplicant.conf"
 usb_config="/tmp/femtofox-config.txt"
 
+  # Check if the mounted USB drive contains a file femtofox-config.log
+if [ -f "$mount_point/femtofox-config.log" ]; then
+  log_message "femtofox-config.log found on USB drive."
+  log_exists=true
+fi  
+
 # Check if the mounted USB drive contains a file femtofox-config.txt
 if [ -f "$mount_point/femtofox-config.txt" ]; then
   log_message "femtofox-config.txt found on USB drive."
@@ -87,6 +93,15 @@ if [ -f "$mount_point/femtofox-config.txt" ]; then
   update_wifi="false"
   wifi_command="femto-network-config.sh"
   meshtastic_security_command="femto-meshtasticd-config.sh"
+  
+  # Check if the log exits and if the dont_run_config_if_log_exists line is set in the script
+  if [[ log_exists && -n "$dont_run_config_if_log_exists" ]]; then
+	log_message "log exists and script is set to exit"
+    for _ in {1..5}; do #boot code
+      blink "1.5" && sleep 0.5
+    done
+    exit_script 0
+  fi
   
   # Escape and read the fields from the USB config file if they exist
   while IFS='=' read -r key value; do
