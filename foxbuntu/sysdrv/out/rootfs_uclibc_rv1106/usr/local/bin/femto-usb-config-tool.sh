@@ -75,6 +75,8 @@ usb_config="/tmp/femtofox-config.txt"
 if [ -f "$mount_point/femtofox-config.log" ]; then
   log_message "femtofox-config.log found on USB drive."
   log_exists=true
+else
+  log_exists=false
 fi  
 
 # Check if the mounted USB drive contains a file femtofox-config.txt
@@ -109,12 +111,12 @@ if [ -f "$mount_point/femtofox-config.txt" ]; then
       meshtastic_admin_key) meshtastic_admin_key=$(escape_sed "$value") ;;
       dont_run_config_if_log_exists)  dont_run_config_if_log_exists=$(escape_sed "$value") ;;
     esac
-  done < <(grep -E '^(wifi_ssid|wifi_psk|wifi_country|meshtastic_lora_radio|timezone|meshtastic_url|meshtastic_legacy_admin|meshtastic_admin_key)=' "$usb_config")
+  done < <(grep -E '^(wifi_ssid|wifi_psk|wifi_country|meshtastic_lora_radio|timezone|meshtastic_url|meshtastic_legacy_admin|meshtastic_admin_key|dont_run_if_log_exists)=' "$usb_config")
   
-  # Check if the log exits and if the dont_run_config_if_log_exists line is set in the script
-  if [[ $log_exists="true" && $dont_run_config_if_log_exists="true" ]]; then
+  # Check if the log exits and if the dont_run_if_log_exists line is set in the script
+  if $log_exists && [[ $dont_run_if_log_exists="true" ]]; then
 	log_message "log exists and script is set to exit"
-    for _ in {1..5}; do #boot code
+    for _ in {1..2}; do #boot code
       blink "1.5" && sleep 0.5
     done
     exit_script 1
