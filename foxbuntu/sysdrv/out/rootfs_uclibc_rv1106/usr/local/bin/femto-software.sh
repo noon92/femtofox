@@ -71,6 +71,8 @@ tc2_bbs() { # Install TC²BBS
         dialog --title "$software" --msgbox "\nCloning of TC²-BBS git repo failed.\nCheck internet connectivity." 10 60
         return
       fi
+      chown -R femto /opt/TC2-BBS-mesh
+      git config --global --add safe.directory /opt/TC2-BBS-mesh # prevents git error when updating
     else
       return
     fi
@@ -84,8 +86,6 @@ tc2_bbs() { # Install TC²BBS
   fi
   if [ ! -f /opt/TC2-BBS-mesh/config.ini ]; then # if the config file doesn't exist but the clone was successful, then we need to do some configuring and rejiggering
 		cd /opt/TC2-BBS-mesh
-		chown -R femto /opt/TC2-BBS-mesh
-		git config --global --add safe.directory /opt/TC2-BBS-mesh # prevents git error when updating
 		echo "Creating virtual environment. This can take a couple minutes."
 		python3 -m venv venv
 		source venv/bin/activate
