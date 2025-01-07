@@ -6,7 +6,7 @@
 luckfox-config load
 
 #run only on first boot
-if [ -e "/usr/local/bin/.firstboot" ]; then
+if [ -e "/etc/.firstboot" ]; then
   /usr/local/bin/femto-runonce.sh
 fi
 
