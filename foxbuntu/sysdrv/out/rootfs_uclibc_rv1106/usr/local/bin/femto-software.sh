@@ -65,24 +65,24 @@ meshing_around() { # Install Meshing Around
 
 tc2_bbs() { # Install TC²BBS
   dialog --title "$software" --yesno "The TC²-BBS system integrates with Meshtastic devices. The system allows for message handling, bulletin boards, mail systems, and a channel directory.\nInstallation requires internet connection.\n\nLearn more at https://github.com/TheCommsChannel/TC2-BBS-mesh\nIf software is already present, will attempt to update.\n\nInstall?" 0 0
-  if [ ! -d /opt/TC2-BBS-mesh ]; then
-    if [ $? -eq 0 ]; then #unless cancel/no
-      if ! git clone https://github.com/TheCommsChannel/TC2-BBS-mesh.git /opt/TC2-BBS-mesh; then
-        dialog --title "$software" --msgbox "\nCloning of TC²-BBS git repo failed.\nCheck internet connectivity." 10 60
+  if [ $? -eq 0 ]; then #unless cancel/no
+    if [ ! -d /opt/TC2-BBS-mesh ]; then
+        if ! git clone https://github.com/TheCommsChannel/TC2-BBS-mesh.git /opt/TC2-BBS-mesh; then
+          dialog --title "$software" --msgbox "\nCloning of TC²-BBS git repo failed.\nCheck internet connectivity." 10 60
+          return
+        fi
+        chown -R femto /opt/TC2-BBS-mesh
+        git config --global --add safe.directory /opt/TC2-BBS-mesh # prevents git error when updating
+    else
+      # /opt/meshing-around exists, check for updates
+      cd /opt/TC2-BBS-mesh
+      if ! sudo git pull; then
+        dialog --title "$software" --msgbox "\nFailed to update TC²-BBS.\nCheck internet connectivity." 10 60
         return
       fi
-      chown -R femto /opt/TC2-BBS-mesh
-      git config --global --add safe.directory /opt/TC2-BBS-mesh # prevents git error when updating
-    else
-      return
     fi
   else
-    # /opt/meshing-around exists, check for updates
-    cd /opt/TC2-BBS-mesh
-    if ! sudo git pull; then
-      dialog --title "$software" --msgbox "\nFailed to update TC²-BBS.\nCheck internet connectivity." 10 60
-      return
-    fi
+    return
   fi
   if [ ! -f /opt/TC2-BBS-mesh/config.ini ]; then # if the config file doesn't exist but the clone was successful, then we need to do some configuring and rejiggering
 		cd /opt/TC2-BBS-mesh
@@ -94,21 +94,15 @@ tc2_bbs() { # Install TC²BBS
 		sed -i 's/type = serial/type = tcp/' config.ini
 		sed -i 's/^# hostname = 192.168.x.x/hostname = 127.0.0.1/' config.ini
   fi
-  dialog --title "$software" --yesno "Installation/upgrade successful! \n\nInstall service?\n\nIn Linux, services automatically start on boot and restart if the software stops for any reason." 0 0
-	if [ $? -eq 0 ]; then #unless cancel/no
-		cd /opt/TC2-BBS-mesh
-		source venv/bin/activate
-		sed -i "s/pi/${SUDO_USER:-$(whoami)}/g" mesh-bbs.service
-		sed -i "s|/home/femto/|/opt/|g" mesh-bbs.service
-		cp mesh-bbs.service /etc/systemd/system/
-		sudo systemctl enable mesh-bbs.service
-		sudo systemctl restart mesh-bbs.service
-		echo -e "Waiting for service to start...\n"
-		sleep 7
-		systemctl status mesh-bbs.service
-		echo "\nPress any key to continue..."
-		read -n 1 -s -r
-	fi
+  echo "Installation/upgrade successful! Adding/recreating service."
+  cd /opt/TC2-BBS-mesh
+  source venv/bin/activate
+  sed -i "s/pi/${SUDO_USER:-$(whoami)}/g" mesh-bbs.service
+  sed -i "s|/home/femto/|/opt/|g" mesh-bbs.service
+  cp mesh-bbs.service /etc/systemd/system/
+  sudo systemctl enable mesh-bbs.service
+  sudo systemctl restart mesh-bbs.service
+  dialog --title "$software" --msgbox "\nInstallation complete." 8 50
 }
 
 
