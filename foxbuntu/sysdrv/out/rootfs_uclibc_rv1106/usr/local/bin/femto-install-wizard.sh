@@ -36,11 +36,8 @@ wizard() {
   if [ $? -eq 0 ]; then #unless cancel/no
     newurl=$(dialog --title "Meshtastic URL" --cancel-label "Skip" --inputbox "New Meshtasticd URL (SHIFT+INS to paste):" 8 50 3>&1 1>&2 2>&3)
     if [ -n "$newurl" ]; then #if a URL was entered
-      dialog --title "$title" --yesno "New Meshtasticd URL:\n$newurl\n\nConfirm?" 15 60
-      if [ $? -eq 0 ]; then #unless cancel/no
-        femto-meshtasticd-config.sh -q "$newurl"
-        pause
-      fi
+      femto-meshtasticd-config.sh -q "$newurl"
+      pause
     fi
 
     femto-config -l
