@@ -3,7 +3,6 @@
 ## To set a setting, uncomment a line by removing its preceeding `#`
 ## All settings are optional - remove any you don't want to set.
 
-
 ### Foxbuntu settings
 
 ## Localization settings. CaSe SeNsItIvE
@@ -41,3 +40,7 @@
 ## To clear the admin key list, enter `meshtastic_admin_key="clear"`
 #meshtastic_admin_key="XX="
 #meshtastic_legacy_admin="false"
+
+
+### If the following line is uncommented, USB config will be skipped if a log file is present on the USB drive, indicating the tool has already been run on this system
+#dont_run_if_log_exists

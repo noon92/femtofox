@@ -39,7 +39,7 @@ wifi_config() {
   local wifi_country=""
   wifi_ssid=$(dialog --title "$title2" --inputbox "Enter Wi-Fi SSID:" 8 40 "$(grep -oP '^ *ssid="\K[^"]+' /etc/wpa_supplicant/wpa_supplicant.conf)" 3>&1 1>&2 2>&3) # display current SSID
   wifi_psk=$(dialog --title "$title2" --inputbox "Enter Wi-Fi Password:" 8 40 3>&1 1>&2 2>&3)
-  wifi_country=$(dialog --title "$title2" --inputbox "Enter Country Code (US, DE...):" 9 40 "$(grep -oP '^ *country=\K[^ ]+' /etc/wpa_supplicant/wpa_supplicant.conf)" 3>&1 1>&2 2>&3) # display current country
+  wifi_country=$(dialog --title "$title2" --inputbox "Enter Country Code (US, DE...):" 8 40 "$(grep -oP '^ *country=\K[^ ]+' /etc/wpa_supplicant/wpa_supplicant.conf)" 3>&1 1>&2 2>&3) # display current country
   cmd="femto-network-config.sh -s \"$wifi_ssid\" -p \"$wifi_psk\""
   [ -n "$wifi_country" ] && cmd="$cmd -c \"$wifi_country\""
   cmd="$cmd -r"
@@ -459,8 +459,15 @@ help_menu() {
 }
 
 # Parse options
-while getopts ":lw" opt; do
+while getopts ":hlw" opt; do
   case ${opt} in
+    h)
+      echo -e "If script is run without arguments, the main femto-config UI will load.\n\
+Options are:\n\
+-h          This message\n\
+-l          Set LoRa radio model menu\n\
+-w          Set Wi-Fi config menu"
+      ;;
     l) # Option -l (set lora radio)
       set_lora_radio
     ;;
@@ -494,7 +501,7 @@ while true; do
     1) femto-install-wizard.sh ;;
     2) networking_settings ;;
     3) meshtasticd_settings ;;
-    4) femto-software-menu.sh ;;
+    4) femto-software.sh ;;
     5) utilities ;;
     6) help_menu ;;
     7) break ;;

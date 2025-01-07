@@ -45,7 +45,7 @@ wizard() {
 
     femto-config -l
 
-    key=$(dialog --title "$title" --cancel-label "Skip" --inputbox "Enter Meshtastic admin key (optional). If 3 admin keys are already in Meshtastic, more will be ignored.\n(SHIFT+INS to paste):" 8 50 3>&1 1>&2 2>&3)
+    key=$(dialog --title "$title" --cancel-label "Skip" --inputbox "Enter Meshtastic admin key (optional). If 3 admin keys are already in Meshtastic, more will be ignored.\n(SHIFT+INS to paste):" 11 50 3>&1 1>&2 2>&3)
     if [ -n "$key" ]; then #if a URL was entered
       femto-meshtasticd-config.sh -a "$key"
       pause
