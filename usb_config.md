@@ -32,7 +32,7 @@ dont_run_if_log_exists
 > [!NOTE]
 > Enter as many or as few settings as you like.
 > 
-> For `wifi_country`, insert your country's two letter code (such as US or IN) in capital letters.
+> For `wifi_country`, insert your country's ISO/IEC alpha2 two letter country code (such as US, GB, DE, IN, etc.) in capital letters.
 > 
 > Use a timezone as it appears in [the tz database](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones).
 >
@@ -78,6 +78,6 @@ When the Femtofox is finished booting, it will blink its User LED (see below) in
 > [!NOTE]
 > Boot codes can appear in sequence - for example: one long (4 second) blink, followed by 5 medium (half second) blinks means the USB drive failed to mount, and that the boot sequence is complete.
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTc5MjkwNTg5Niw0MjQ4ODg2NjgsLTE3MT
-Q4NTcxNTddfQ==
+eyJoaXN0b3J5IjpbMTExMDQ4MTQ1MiwxNzkyOTA1ODk2LDQyND
+g4ODY2OCwtMTcxNDg1NzE1N119
 -->
