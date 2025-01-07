@@ -20,7 +20,6 @@ Proceed?" 14 60
     exit 1
   fi
 fi
-    
 
 # resize filesystem to fill partition
 /usr/bin/filesystem_resize.sh
