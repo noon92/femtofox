@@ -64,7 +64,6 @@ meshing_around() { # Install Meshing Around
 
 
 tc2_bbs() { # Install TC²BBS
-  failedInstall=false
   dialog --title "$software" --yesno "The TC²-BBS system integrates with Meshtastic devices. The system allows for message handling, bulletin boards, mail systems, and a channel directory.\nInstallation requires internet connection.\n\nLearn more at https://github.com/TheCommsChannel/TC2-BBS-mesh\nIf software is already present, will attempt to update.\n\nInstall?" 0 0
   if [ ! -d /opt/TC2-BBS-mesh ]; then
     if [ $? -eq 0 ]; then #unless cancel/no
@@ -72,6 +71,8 @@ tc2_bbs() { # Install TC²BBS
         dialog --title "$software" --msgbox "\nCloning of TC²-BBS git repo failed.\nCheck internet connectivity." 10 60
         return
       fi
+      chown -R femto /opt/TC2-BBS-mesh
+      git config --global --add safe.directory /opt/TC2-BBS-mesh # prevents git error when updating
     else
       return
     fi
@@ -95,6 +96,7 @@ tc2_bbs() { # Install TC²BBS
   fi
   dialog --title "$software" --yesno "Installation/upgrade successful! \n\nInstall service?\n\nIn Linux, services automatically start on boot and restart if the software stops for any reason." 0 0
 	if [ $? -eq 0 ]; then #unless cancel/no
+		cd /opt/TC2-BBS-mesh
 		source venv/bin/activate
 		sed -i "s/pi/${SUDO_USER:-$(whoami)}/g" mesh-bbs.service
 		sed -i "s|/home/femto/|/opt/|g" mesh-bbs.service
