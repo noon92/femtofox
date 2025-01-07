@@ -102,6 +102,13 @@ tc2_bbs() { # Install TC²BBS
   cp mesh-bbs.service /etc/systemd/system/
   sudo systemctl enable mesh-bbs.service
   sudo systemctl restart mesh-bbs.service
+
+  # for whatever reason, this is necessary
+  sleep 5
+  sudo systemctl restart mesh-bbs
+  
+  echo -e "\nPress any key to continue..."
+  read -n 1 -s -r
   dialog --title "$software" --msgbox "\nInstallation complete." 8 50
 }
 
