@@ -291,12 +291,13 @@ meshtasticd_settings() {
       7 "Clear admin keys" \
       8 "Legacy admin channel" \
       9 "Detailed Meshtasticd service status" \
-      10 "Start/restart Meshtasticd service" \
-      11 "Stop Meshtasticd service" \
-      12 "Upgrade/install Meshtasticd" \
-      13 "Uninstall Meshtasticd" \
+      10 "Mesh connectivity test" \
+      11 "Start/restart Meshtasticd service" \
+      12 "Stop Meshtasticd service" \
+      13 "Upgrade/install Meshtasticd" \
+      14 "Uninstall Meshtasticd" \
       "" "" \
-    14 "Back to Main Menu" 3>&1 1>&2 2>&3)
+    15 "Back to Main Menu" 3>&1 1>&2 2>&3)
     
     exit_status=$? # This line checks the exit status of the dialog command
     if [ $exit_status -ne 0 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
@@ -371,35 +372,42 @@ meshtasticd_settings() {
         dialog --infobox "Getting Meshtasticd service status..." 5 45
         dialog --title "Meshtasticd service status" --msgbox "$(systemctl status meshtasticd)" 0 0
       ;;
-      10) #start/restart meshtasticd)
+      10) #test mesh connectivity)
+        dialog --title "Meshtastic connectivity test" --yesno "Will send \"test\" to channel 0 and wait for acknowledgement. Will try up to 3 times.\n\nPerform test?" 10 45
+        if [ $? -eq 0 ]; then #unless cancel/no
+          dialog --infobox "Performing mesh connectivity test.\n\nThis may take a while..." 6 45
+          dialog --title "Meshtasticd service status" --msgbox "$(femto-meshtasticd-config.sh -r)" 0 0
+        fi
+      ;;
+      11) #start/restart meshtasticd)
         dialog --title "$title" --yesno "Start/restart Meshtasticd service?" 5 45
         if [ $? -eq 0 ]; then #unless cancel/no
           femto-meshtasticd-config.sh -s
           dialog --msgbox "Meshtasticd service started/restarted." 5 45
         fi
       ;;
-      11) #stop meshtasticd)
+      12) #stop meshtasticd)
         dialog --title "$title" --yesno "Stop Meshtasticd service?" 5 45
         if [ $? -eq 0 ]; then #unless cancel/no
           femto-meshtasticd-config.sh -t
           dialog --msgbox "Meshtasticd service stopped." 5 45
         fi
       ;;
-      12) #Upgrade meshtasticd)
+      13) #Upgrade meshtasticd)
         dialog --title "$title" --yesno "Upgrade Meshtasticd?\nRequires internet connection." 0 0
         if [ $? -eq 0 ]; then #unless cancel/no
           femto-meshtasticd-config.sh -u
           pause
         fi
       ;;
-      13) #uninstall meshtasticd)
+      14) #uninstall meshtasticd)
         dialog --title "$title" --yesno "Uninstall Meshtasticd?\n\nFoxbuntu was designed with Meshtasticd integration in mind, and may behave unexpectedly if Meshtasticd is removed." 0 0
         if [ $? -eq 0 ]; then
           femto-meshtasticd-config.sh -x
           dialog --msgbox "Meshtasticd uninstalled. To purge all remnants, run \`sudo apt purge\`.\nAfter reinstallation but before first launch, run the \"first boot script\" from the misc menu." 8 40
         fi
       ;;
-      14)
+      15)
         return
       ;;
     esac
