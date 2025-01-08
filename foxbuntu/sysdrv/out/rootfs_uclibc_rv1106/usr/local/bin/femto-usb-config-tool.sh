@@ -119,7 +119,7 @@ if [ -f "$mount_point/femtofox-config.txt" ]; then
   
   # Check if the log exits and if the dont_run_if_log_exists line is set in the script
   if $log_exists && [[ $dont_run_if_log_exists = "true" ]]; then
-	log_message "log exists and script is set to exit"
+	log_message "\`dont_run_if_log_exists\` is set to \"true\" and log exists, ignoring..."
     for _ in {1..2}; do #boot code
       blink "1.5" && sleep 0.5
     done
