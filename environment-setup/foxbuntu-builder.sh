@@ -227,10 +227,11 @@ inject_chroot() {
   build_rootfs
   build_firmware
   create_image
+
 }
 
-
 update_image() {
+  build_env
   echo "Updating repo..."
   cd /home/${sudoer}/femtofox
   git pull
