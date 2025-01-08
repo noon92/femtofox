@@ -37,7 +37,7 @@ DEBIAN_FRONTEND=noninteractive apt install -y --option Dpkg::Options::="--force-
 
 
 echo "Installing dependencies for meshing-around and meshtastic cli..."
-
+#pip config set global.extra-index-url https://www.piwheels.org/simple
 pip3 install requests pyephem pytap2 meshtastic pypubsub geopy maidenhead beautifulsoup4 dadjokes schedule wikipedia googlesearch-python
 if [[ $? -eq 2 ]]; then echo "Error, step failed..."; fi
 

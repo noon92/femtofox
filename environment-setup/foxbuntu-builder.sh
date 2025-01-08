@@ -349,12 +349,22 @@ usage() {
   echo "To install the development environment use the arg 'sdk_install' and is intended to be run ONCE only."
   echo "To modify the chroot and build an updated image use the arg 'modify_chroot'."
   echo "To modify the kernel and build an updated image use the arg 'modify_kernel'."
+  echo "To specify a custom chroot script use the arg '--chroot-script /full/path/to/custom.chroot'"
   echo "other args: build_env sync_foxbuntu_changes build_kernelconfig install_rootfs build_rootfs build_uboot build_firmware create_image"
   echo "Example:  sudo ~/foxbunto_env_setup.sh sdk_install"
   echo "Example:  sudo ~/foxbunto_env_setup.sh modify_chroot"
+  echo "Example:  sudo ~/foxbunto_env_setup.sh --chroot-script /home/user/custom.chroot"
   exit 0
 }
 ################### MENU SYSTEM ###################
+
+if [[ "${1}" == "--chroot-script" ]]; then
+  CHROOT_SCRIPT=${2}
+  echo "CHROOT_SCRIPT is set to '${CHROOT_SCRIPT}'"
+  echo "Press any key to continue..."
+  read -n 1 -s -r
+  shift 2  # Remove --chroot-script and its argument from the arguments list
+fi
 
 if [[ "${1}" =~ ^(-h|--help|h|help)$ ]]; then
   usage
@@ -405,9 +415,6 @@ elif [[ -z ${1} ]]; then
     read -n 1 -s -r
   done
 else
-  if [[ "${1}" == "--chroot-script" ]]; then
-    CHROOT_SCRIPT=${2}
-  fi
   if declare -f "${1}" > /dev/null; then
     "${1}"
   else
