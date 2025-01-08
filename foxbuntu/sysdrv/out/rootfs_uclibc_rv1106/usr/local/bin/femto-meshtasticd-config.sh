@@ -16,6 +16,7 @@ Options are:
 -c             Clear admin keys
 -p             Get legacy admin channel state
 -o "true"      Set legacy admin channel state (true/false = enabled/disabled), case sensitive
+-r             Test mesh connectivity by sending "test" to channel 0 and waiting for. Will attempt 3 times
 -s             Start/restart Meshtasticd Service
 -t             Stop Meshtasticd Service
 -u             Upgrade Meshtasticd
@@ -118,6 +119,17 @@ while getopts ":hgkl:q:va:cpo:struxm" opt; do
       ;;
     o) # Option -o (set legacy admin true/false)
       meshtastic_update "--set security.admin_channel_enabled $OPTARG" 10 "Set legacy admin state"
+      ;;
+    r) # Option -r (mesh connectivity test)
+      for ((i=0; i<=2; i++)); do
+        if meshtastic --host --ch-index 0 --sendtext "test" --ack 2>/dev/null | grep -q "ACK"; then
+          echo "Received acknowledgement!"
+          exit 0
+        else
+          echo "Retrying... ($((i + 1)))"
+        fi
+      done
+      echo "Failed after 3 attempts."
       ;;
     s) # Option -s (start/restart Meshtasticd service)
       systemctl restart meshtasticd
