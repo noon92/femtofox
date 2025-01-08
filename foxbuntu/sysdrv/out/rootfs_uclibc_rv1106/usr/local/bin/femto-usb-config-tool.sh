@@ -71,6 +71,14 @@ fi
 wpa_supplicant_conf="/etc/wpa_supplicant/wpa_supplicant.conf"
 usb_config="/tmp/femtofox-config.txt"
 
+  # Check if the mounted USB drive contains a file femtofox-config.log
+if [ -f "$mount_point/femtofox-config.log" ]; then
+  log_message "femtofox-config.log found on USB drive."
+  log_exists=true
+else
+  log_exists=false
+fi  
+
 # Check if the mounted USB drive contains a file femtofox-config.txt
 if [ -f "$mount_point/femtofox-config.txt" ]; then
   log_message "femtofox-config.txt found on USB drive."
@@ -87,9 +95,14 @@ if [ -f "$mount_point/femtofox-config.txt" ]; then
   update_wifi="false"
   wifi_command="femto-network-config.sh"
   meshtastic_security_command="femto-meshtasticd-config.sh"
-  
+  dont_run_if_log_exists=""
+    
   # Escape and read the fields from the USB config file if they exist
   while IFS='=' read -r key value; do
+    # Skip lines starting with #
+    if [[ "$key" =~ ^# ]]; then
+      continue
+    fi
     value=$(echo "$value" | tr -d '"')
     case "$key" in
       wifi_ssid) wifi_ssid=$(escape_sed "$value") ;;
@@ -100,9 +113,18 @@ if [ -f "$mount_point/femtofox-config.txt" ]; then
       meshtastic_url) meshtastic_url=$(escape_sed "$value") ;;
       meshtastic_legacy_admin) meshtastic_legacy_admin=$(escape_sed "$value") ;;
       meshtastic_admin_key) meshtastic_admin_key=$(escape_sed "$value") ;;
+      dont_run_if_log_exists) dont_run_if_log_exists=$(escape_sed "$value") ;;
     esac
-  done < <(grep -E '^(wifi_ssid|wifi_psk|wifi_country|meshtastic_lora_radio|timezone|meshtastic_url|meshtastic_legacy_admin|meshtastic_admin_key)=' "$usb_config")
+  done < <(grep -E '^(wifi_ssid|wifi_psk|wifi_country|meshtastic_lora_radio|timezone|meshtastic_url|meshtastic_legacy_admin|meshtastic_admin_key|dont_run_if_log_exists)=' "$usb_config")
   
+  # Check if the log exits and if the dont_run_if_log_exists line is set in the script
+  if $log_exists && [[ $dont_run_if_log_exists = "true" ]]; then
+	log_message "\`dont_run_if_log_exists\` is set to \"true\" and log exists, ignoring."
+    for _ in {1..2}; do #boot code
+      blink "1.5" && sleep 0.5
+    done
+    exit_script 1
+  fi
   
   # Update wpa_supplicant.conf with the new values, if specified
   if [[ -n "$wifi_country" ]]; then
