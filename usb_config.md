@@ -27,7 +27,7 @@ meshtastic_lora_radio="ebyte-e22-900m30s"
 meshtastic_url="https://meshtastic.org/e/#CgMSAQESCAgBOAFAA0gB"
 meshtastic_admin_key="T/b8EGvi/Nqi6GyGefJt/jOQr+5uWHHZuBavkNcUwWQ="
 meshtastic_legacy_admin="true"
-dont_run_if_log_exists
+dont_run_if_log_exists="true"
 ```
 > [!NOTE]
 > Enter as many or as few settings as you like.
@@ -53,11 +53,8 @@ dont_run_if_log_exists
 >
 > Clearing the `meshtastic_admin_key` list: The admin key list can contain up to three keys - *if more are added they will be ignored*. The USB configuration tool supports clearing the admin key list, after which you will need to re-add your admin key/s in a second operation. To clear the admin key list, enter `meshtastic_admin_key="clear"`.
 
-> [!CAUTION]
-> Attempting to set wifi settings via USB configuration tool without a wifi adapter connected will lead to a 5 minute hang while the configuration tool runs - either disconnect and reconnect power or wait the full 5 minutes to to recover.
-
 > [!NOTE]
-> `dont_run_if_log_exists` will prevent the USB configuration tool from working if there's a log present on the USB drive, indicating it has already been run. There is also an LED boot code for this, described below.
+> `dont_run_if_log_exists="true"` will prevent the USB configuration tool from working if there's a log present on the USB drive, indicating it has already been run. There is also an LED boot code for this, described below.
 
 **To apply your configuration, reboot the Femtofox with the USB drive plugged in. No other USB drives can be plugged in at the same time.**
 A log (`femtofox-config.log`) is saved to `/home/femto` and the USB drive (except on NTFS, which is read only).
@@ -77,7 +74,3 @@ When the Femtofox is finished booting, it will blink its User LED (see below) in
  
 > [!NOTE]
 > Boot codes can appear in sequence - for example: one long (4 second) blink, followed by 5 medium (half second) blinks means the USB drive failed to mount, and that the boot sequence is complete.
-<!--stackedit_data:
-eyJoaXN0b3J5IjpbODQ3MjY1NTM5LDE4MTY4MzMwMTIsMTc5Mj
-kwNTg5Niw0MjQ4ODg2NjgsLTE3MTQ4NTcxNTddfQ==
--->
