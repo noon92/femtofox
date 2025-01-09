@@ -84,40 +84,30 @@ tc2_bbs() { # Install TC²BBS
   else
     return
   fi
-  if [ ! -f /opt/TC2-BBS-mesh/config.ini ]; then # if the config file doesn't exist but the clone was successful, then we need to do some configuring and rejiggering
+  if [ -f /opt/TC2-BBS-mesh/config.ini ]; then # if the config file doesn't exist but the clone was successful, then we need to do some configuring and rejiggering
 		cd /opt/TC2-BBS-mesh
-		echo "Creating virtual environment. This can take a couple minutes."
-		python3 -m venv venv
-		source venv/bin/activate
-		pip install -r requirements.txt
 		mv example_config.ini config.ini
 		sed -i 's/type = serial/type = tcp/' config.ini
 		sed -i 's/^# hostname = 192.168.x.x/hostname = 127.0.0.1/' config.ini
+    echo "Installation/upgrade successful! Adding/recreating service."
+    sed -i "s/pi/${SUDO_USER:-$(whoami)}/g" mesh-bbs.service
+    sed -i "s|/home/femto/|/opt/|g" mesh-bbs.service
+    cp mesh-bbs.service /etc/systemd/system/
+    sudo systemctl enable mesh-bbs.service
+    sudo systemctl restart mesh-bbs.service
+  else
+    dialog --title "$software" --msgbox "\nConfig file not found. Error." 10 60
+    return
   fi
-  echo "Installation/upgrade successful! Adding/recreating service."
-  cd /opt/TC2-BBS-mesh
-  source venv/bin/activate
-  sed -i "s/pi/${SUDO_USER:-$(whoami)}/g" mesh-bbs.service
-  sed -i "s|/home/femto/|/opt/|g" mesh-bbs.service
-  cp mesh-bbs.service /etc/systemd/system/
-  sudo systemctl enable mesh-bbs.service
-  sudo systemctl restart mesh-bbs.service
-
-  # for whatever reason, this is necessary
-  sleep 5
-  sudo systemctl restart mesh-bbs
-  
-  echo -e "\nPress any key to continue..."
-  read -n 1 -s -r
   dialog --title "$software" --msgbox "\nInstallation complete." 8 50
 }
-
 
 curses_client() { # Install curses client
   git clone https://github.com/pdxlocations/curses-client-for-meshtastic.git /opt/curses-client-for-meshtastic
   ln -s /opt/curses-client-for-meshtastic/meshtastic-curses.py ~/meshtastic-curses.py
   # config the curses client to localhost tcp TODO, permissions?
-  dialog --title "$software" --msgbox "\nInstallation complete.\n\nRun \`~/meshtastic-curses.py\` to launch." 10 60
+  dialog --title "$software" --msgbox "\nInstallation complete.\n\nRun \`~/meshtastic-curses.py --host localhost\` to launch." 10 60
+  ln -s /opt/curses-client-for-meshtastic/meshtastic-curses.py ~/meshtastic-curses.py
 }
 
 
