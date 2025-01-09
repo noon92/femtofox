@@ -2,7 +2,6 @@
 
 ################ TODO ################
 # Add more error handling
-# Address potential issues in comments
 # Package selection with curses
 # Switch chroot packages install
 # Modify DTS etc to enable SPI1
@@ -39,18 +38,10 @@ install_prerequisites() {
   apt install -y git ssh make gcc gcc-multilib g++-multilib module-assistant expect g++ gawk texinfo libssl-dev bison flex fakeroot cmake unzip gperf autoconf device-tree-compiler libncurses5-dev pkg-config bc python-is-python3 passwd openssl openssh-server openssh-client vim file cpio rsync qemu-user-static binfmt-support dialog
 }
 
-#clone_repos() {
-#  echo "Cloning repos..."
-#  cd /home/${sudoer}/
-#  git clone https://github.com/LuckfoxTECH/luckfox-pico.git
-#  git clone https://github.com/noon92/femtofox.git
-#}
-
 clone_repos() {
   echo "Cloning repos..."
-  cd /home/${sudoer}/ || return 1  # Ensure we successfully change the directory
+  cd /home/${sudoer}/ || return 1
 
-  # Helper function to retry cloning a repo
   clone_with_retries() {
     local repo_url="$1"
     local retries=3
@@ -70,11 +61,10 @@ clone_repos() {
     fi
   }
 
-  # Clone both repos
   clone_with_retries "https://github.com/LuckfoxTECH/luckfox-pico.git" || return 1
   clone_with_retries "https://github.com/noon92/femtofox.git" || return 1
 
-  return 0  # Indicate success if all repos cloned
+  return 0
 }
 
 build_env() {
@@ -108,20 +98,17 @@ sync_foxbuntu_changes() {
   SOURCE_DIR=/home/${sudoer}/femtofox/foxbuntu
   DEST_DIR=/home/${sudoer}/luckfox-pico
 
-  # Ensure the source is updated
   cd "$SOURCE_DIR" || exit
   git pull
 
-  # Get a list of all Git-tracked files in the source
   cd "$SOURCE_DIR" || exit
   git ls-files > /tmp/source_files.txt
-  
+
   echo "Merging in Foxbuntu modifications..."
   rsync -aHAXv --progress --keep-dirlinks --itemize-changes /home/${sudoer}/femtofox/foxbuntu/sysdrv/ /home/${sudoer}/luckfox-pico/sysdrv/
   rsync -aHAXv --progress --keep-dirlinks --itemize-changes /home/${sudoer}/femtofox/foxbuntu/project/ /home/${sudoer}/luckfox-pico/project/
-  rsync -aHAXv --progress --keep-dirlinks --itemize-changes /home/${sudoer}/femtofox/foxbuntu/output/image/ /home/${sudoer}/luckfox-pico/output/image/   
-  
-  # Remove files in the destination that are no longer in the source repository
+  rsync -aHAXv --progress --keep-dirlinks --itemize-changes /home/${sudoer}/femtofox/foxbuntu/output/image/ /home/${sudoer}/luckfox-pico/output/image/
+
   while read -r file; do
       src_file="$SOURCE_DIR/$file"
       dest_file="$DEST_DIR/$file"
@@ -132,10 +119,9 @@ sync_foxbuntu_changes() {
       fi
   done < /tmp/source_files.txt
 
-  # Clean up
   rm /tmp/source_files.txt
 
-  echo "Synchronization complete."  
+  echo "Synchronization complete."
 }
 
 build_kernelconfig() {
@@ -194,6 +180,29 @@ modify_chroot() {
   umount /home/${sudoer}/luckfox-pico/sysdrv/out/rootfs_uclibc_rv1106/proc
   umount /home/${sudoer}/luckfox-pico/sysdrv/out/rootfs_uclibc_rv1106/sys
   umount /home/${sudoer}/luckfox-pico/sysdrv/out/rootfs_uclibc_rv1106/dev
+  build_rootfs
+  build_firmware
+  create_image
+}
+
+rebuild_chroot() {
+  chroot_script=${CHROOT_SCRIPT:-/home/${sudoer}/femtofox/environment-setup/femtofox.chroot}
+  if [[ ! -f $chroot_script ]]; then
+    echo "Error: Chroot script $chroot_script not found."
+    exit 1
+  fi
+
+  echo "Press any key to wipe and rebuild chroot..."
+  read -n 1 -s -r
+  cd /home/${sudoer}/luckfox-pico
+  ./build.sh clean rootfs
+  cd /home/${sudoer}/
+  rsync -aHAXv --progress --keep-dirlinks --itemize-changes /home/${sudoer}/femtofox/foxbuntu/sysdrv/ /home/${sudoer}/luckfox-pico/sysdrv/
+  rsync -aHAXv --progress --keep-dirlinks --itemize-changes /home/${sudoer}/femtofox/foxbuntu/project/ /home/${sudoer}/luckfox-pico/project/
+  build_rootfs
+  rsync -aHAXv --progress --keep-dirlinks --itemize-changes /home/${sudoer}/femtofox/foxbuntu/sysdrv/out/rootfs_uclibc_rv1106/ /home/${sudoer}/luckfox-pico/sysdrv/out/rootfs_uclibc_rv1106/
+  build_firmware
+  install_rootfs
   build_rootfs
   build_firmware
   create_image
@@ -266,9 +275,7 @@ install_rootfs() {
   mount --bind /sys /home/${sudoer}/luckfox-pico/sysdrv/out/rootfs_uclibc_rv1106/sys
   mount --bind /dev /home/${sudoer}/luckfox-pico/sysdrv/out/rootfs_uclibc_rv1106/dev
   mount --bind /dev/pts /home/${sudoer}/luckfox-pico/sysdrv/out/rootfs_uclibc_rv1106/dev/pts
-
   chroot /home/${sudoer}/luckfox-pico/sysdrv/out/rootfs_uclibc_rv1106 /tmp/chroot_script.sh
-
   umount /home/${sudoer}/luckfox-pico/sysdrv/out/rootfs_uclibc_rv1106/dev/pts
   umount /home/${sudoer}/luckfox-pico/sysdrv/out/rootfs_uclibc_rv1106/proc
   umount /home/${sudoer}/luckfox-pico/sysdrv/out/rootfs_uclibc_rv1106/sys
@@ -303,7 +310,6 @@ create_image() {
 
 sdk_install() {
   echo "Installing Foxbuntu SDK Disk Image Builder..."
-  # get the luckfox build environment
   if [ -d /home/${sudoer}/femtofox ]; then
       echo "WARNING: ~/femtofox exists, this script will DESTROY and recreate it."
       echo "Press Ctrl+C to cancel, or Enter to continue."
@@ -350,12 +356,13 @@ usage() {
   echo "To modify the chroot and build an updated image use the arg 'modify_chroot'."
   echo "To modify the kernel and build an updated image use the arg 'modify_kernel'."
   echo "To specify a custom chroot script use the arg '--chroot-script /full/path/to/custom.chroot'"
-  echo "other args: build_env sync_foxbuntu_changes build_kernelconfig install_rootfs build_rootfs build_uboot build_firmware create_image"
+  echo "other args: rebuild_chroot inject_chroot build_env sync_foxbuntu_changes build_kernelconfig install_rootfs build_rootfs build_uboot build_firmware create_image"
   echo "Example:  sudo ~/foxbunto_env_setup.sh sdk_install"
   echo "Example:  sudo ~/foxbunto_env_setup.sh modify_chroot"
   echo "Example:  sudo ~/foxbunto_env_setup.sh --chroot-script /home/user/custom.chroot"
   exit 0
 }
+
 ################### MENU SYSTEM ###################
 
 if [[ "${1}" == "--chroot-script" ]]; then
@@ -381,16 +388,15 @@ elif [[ -z ${1} ]]; then
       1 "Get Image Updates" \
       2 "Modify Kernel Menu" \
       3 "Enter and Modify Chroot" \
-      4 "Inject Chroot Script" \
-      5 "Manual Build Environment" \
-      6 "Manual Build U-Boot" \
-      7 "Manual Build RootFS" \
-      8 "Manual Build Firmware" \
-      9 "Manual Create Final Image" \
-      "" "" \
-      10 "SDK Install (Run this first.)" \
-      "" "" \
-      11 "Exit" \
+      4 "Rebuild Chroot" \
+      5 "Inject Chroot Script (CAUTION)" \
+      6 "Manual Build Environment" \
+      7 "Manual Build U-Boot" \
+      8 "Manual Build RootFS" \
+      9 "Manual Build Firmware" \
+      10 "Manual Create Final Image" \
+      11 "SDK Install (Run this first.)" \
+      12 "Exit" \
       2>&1 >/dev/tty)
 
     clear
@@ -399,18 +405,18 @@ elif [[ -z ${1} ]]; then
       1) update_image ;;
       2) modify_kernel ;;
       3) modify_chroot ;;
-      4) inject_chroot ;;
-      5) build_env ;;
-      6) build_uboot ;;
-      7) build_rootfs ;;
-      8) build_firmware ;;
-      9) create_image ;;
-      10) sdk_install ;;
-      11) echo "Exiting..."; break ;;
+      4) rebuild_chroot ;;
+      5) inject_chroot ;;
+      6) build_env ;;
+      7) build_uboot ;;
+      8) build_rootfs ;;
+      9) build_firmware ;;
+      10) create_image ;;
+      11) sdk_install ;;
+      12) echo "Exiting..."; break ;;
       *) echo "Invalid option, please try again." ;;
     esac
 
-    # Pause after executing a command
     echo "Menu selection completed. Press any key to return to the menu."
     read -n 1 -s -r
   done
