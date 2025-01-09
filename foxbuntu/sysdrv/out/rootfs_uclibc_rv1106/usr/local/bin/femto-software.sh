@@ -127,7 +127,7 @@ mosquitto() { # Install mosquitto
   # config mosquitto to listen on all interfaces and allow anonymous
   sudo sh -c "echo 'listener 1883 0.0.0.0\nallow_anonymous true' >> /etc/mosquitto/mosquitto.conf"
   sudo systemctl restart mosquitto
-  dialog --title "$software" --msgbox "\nInstallation complete.\n\nMosquitto." 10 60
+  dialog --title "$software" --msgbox "\nInstallation complete.\n\nMosquitto service has been started." 10 60
 }
 
 
