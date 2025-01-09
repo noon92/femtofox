@@ -74,15 +74,17 @@ echo "\nMAC Address:     $(ifconfig eth0 | grep 'ether ' | awk '{print $2}')\n\
 Hostname:        $(hostname).local"
       ;;
     w) # Option -w (wifi settings)
-      if [ "$(cat /etc/wifi_state.txt)" = "up" ]; then
-          wifi_status="\033[4m\033[0;32menabled\033[0m"
-      else
-        if ip link show wlan0 &>/dev/null; then # if wlan0 exists
-          wifi_status="\033[0;31mdisabled\033[0m"
-          mac_address_line="MAC address:      $(ifconfig wlan0 | grep ether | awk '{print $2}')\n\n"
+      if [ "$(ip link show wlan0)" ]; then # if wlan0 exists
+        mac_address_line="MAC address:      $(ifconfig wlan0 | grep ether | awk '{print $2}')\n"
+        if [ "$(cat /etc/wifi_state.txt)" = "up" ]; then
+            wifi_status="\033[4m\033[0;32menabled\033[0m"
         else
-          wifi_status="\033[0;31mwlan0 not detected\033[0m"
+          if ip link show wlan0 &>/dev/null; then # if wlan0 exists
+            wifi_status="\033[0;31mdisabled\033[0m"
+          fi
         fi
+      else
+        wifi_status="\033[0;31mwlan0 not detected\033[0m"
       fi
       echo -e "\
 $(echo -e "\
@@ -92,7 +94,7 @@ Country:          $(grep -m 1 "^country=" "$wpa_supplicant_conf" | cut -d '=' -f
 WiFi status:      $wifi_status\
 \n\
 $(if [[ "$wifi_status" == *"enabled"* ]]; then
-      echo -e "\nConnected to:     $(iwconfig 2>/dev/null | grep -i 'ESSID' | awk -F 'ESSID:\"' '{print $2}' | awk -F '\"' '{print $1}')\n\
+      echo -e "\nConnected to:     $(iwconfig 2>/dev/null | grep -i 'ESSID' | awk -F 'ESSID:"' '{print $2}' | awk -F '"' '{print $1}' | sed 's/^$/none/')\n\
 Signal Strength:  $(iwconfig 2>/dev/null | grep -i 'Signal level' | awk -F 'Signal level=' '{print $2}' | awk '{print $1}')\n\
 Current IP:       $(hostname -I | awk '{print $1}')\n"
 fi)")\n\
