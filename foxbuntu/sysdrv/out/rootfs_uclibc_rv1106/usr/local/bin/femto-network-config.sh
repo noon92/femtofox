@@ -145,6 +145,4 @@ if [ "$updated_wifi" = true ]; then
   systemctl restart wpa_supplicant
   wpa_cli -i wlan0 reconfigure # <-------- add watch for FAIL response, error out
   timeout 30s dhclient -v
-  echo "    Wi-Fi enabled and restarted. Enabling Meshtastic Wi-Fi setting."
-  #femto-meshtasticd-config.sh -m "--set network.wifi_enabled true" 10 "USB config" #| tee -a /tmp/femtofox-config.log
 fi
