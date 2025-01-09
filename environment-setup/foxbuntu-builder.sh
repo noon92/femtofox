@@ -399,7 +399,7 @@ elif [[ -z ${1} ]]; then
     CHOICE=$(dialog --clear --no-cancel --backtitle "Foxbuntu SDK Builder" \
       --title "Main Menu" \
       --menu "Choose an action:" 20 60 12 \
-      1 "Full Image Rebuild" \w
+      1 "Full Image Rebuild" \
       2 "Get Image Updates" \
       3 "Modify Kernel Menu" \
       4 "Enter and Modify Chroot" \
