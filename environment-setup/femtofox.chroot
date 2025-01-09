@@ -35,6 +35,18 @@ DEBIAN_FRONTEND=noninteractive apt upgrade -y --option Dpkg::Options::="--force-
 wget https://github.com/meshtastic/firmware/releases/download/v2.5.11.8e2a3e5/meshtasticd_2.5.11.8e2a3e5_armhf.deb
 DEBIAN_FRONTEND=noninteractive apt install -y --option Dpkg::Options::="--force-confold" ./meshtasticd_2.5.11.8e2a3e5_armhf.deb
 
+#Tempfix for lgcc errors
+mkdir lgcc_fix && cd lgcc_fix
+ln -sf /lib/arm-linux-gnueabihf/libgcc_s.so.1 /usr/lib/libgcc.so
+wget -c http://http.us.debian.org/debian/pool/main/g/glibc/libc6-dev_2.40-4_armhf.deb
+wget -c http://http.us.debian.org/debian/pool/main/g/gcc-11/libgcc-11-dev_11.5.0-2_armhf.deb
+dpkg -x libc6-dev_2.40-4_armhf.deb .
+dpkg -x libgcc-11-dev_11.5.0-2_armhf.deb .
+cp ./usr/lib/arm-linux-gnueabihf/libc_nonshared.a /usr/lib/arm-linux-gnueabihf/
+cp ./usr/lib/arm-linux-gnueabihf/libdl.a /usr/lib/arm-linux-gnueabihf/
+cp ./usr/lib/gcc/arm-linux-gnueabihf/11/libgcc.a /usr/lib/gcc/arm-linux-gnueabihf/11/
+cp ./usr/lib/gcc/arm-linux-gnueabihf/11/libgcc_eh.a /usr/lib/gcc/arm-linux-gnueabihf/11/
+cd .. && rm -rf lgcc_fix
 
 echo "Installing dependencies for meshing-around and meshtastic cli..."
 #pip config set global.extra-index-url https://www.piwheels.org/simple
