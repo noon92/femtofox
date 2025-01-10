@@ -64,12 +64,12 @@ Foxbuntu is ready to operate almost from the first boot. The settings can be con
 
 After first login, run `sudo femto-config` from the command prompt.
 
-3. Web tool via Wifi - if a wifi adaptor is identified at first boot, and no configur
+3. Web tool via Wifi AP mode - if a wifi adaptor is identified at first boot, and no configuration is provided for it, then the Femtofox will automatically generate a wifi hotspot to allow configuration. Connect to the wifi hotspot and access the web config tool using 1
 
 #### USB Config
 See [this page](./usb_config.md) for details on how to configure via a USB drive.
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTg2ODgzMTM3MSwtODM4Njg2NDE3XX0=
+eyJoaXN0b3J5IjpbLTE3MTYxNDg3OTEsLTgzODY4NjQxN119
 -->
