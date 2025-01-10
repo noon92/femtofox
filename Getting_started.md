@@ -33,9 +33,13 @@ If required, upload the BOM and Pick&Place files, and check that the suggested p
 
 Ensure that the components are placed correctly on the PCB, and that the correct radio module is selected, then check and place the order.
 
-Assemble the PCBs according to the BOM and Pick&Place files, or the photo dia
+Assemble the PCBs according to the BOM and Pick&Place files, or the photographs below.
 
-### 
+Solder the Luckfox Pico Mini to the headers as low down as possible, to ensure easy access to the SD card.
+
+#### 2. Buying a Femtofox
+Although the CE 
+There are several licensed 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTExMzg1MzM2NDZdfQ==
+eyJoaXN0b3J5IjpbLTgzMjI0MDYzMV19
 -->
