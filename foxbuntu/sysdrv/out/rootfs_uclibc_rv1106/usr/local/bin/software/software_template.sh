@@ -34,12 +34,12 @@ EOF
 # Arguments to the script are stored in $args
 
 name="" # software name
-author="" # software author OPTIONAL
-description="" # software description OPTIONAL (but strongly recommended!)
-URL="" # software URL OPTIONAL. Can contain multiple URLs
+author="" # software author - OPTIONAL
+description="" # software description - OPTIONAL (but strongly recommended!)
+URL="" # software URL. Can contain multiple URLs - OPTIONAL
 options="iugedsrNADUOSL" # script options in use by software package. For example, for a package with no service, exclude `edsr`
 service_name="" # the name of the service/s, such as `chrony`. REQUIRED if service options are in use. If multiple services, separate by spaces "service1 service2"
-location="" # install location
+location="" # install location REQUIRED if not apt installed. Generally, we use `/opt/software-name`
 
 
 if [ $# -eq 0 ]; then

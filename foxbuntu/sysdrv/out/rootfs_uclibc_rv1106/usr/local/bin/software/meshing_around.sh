@@ -34,12 +34,12 @@ EOF
 # Arguments to the script are stored in $args
 
 name="Meshing Around" # software name
-author="Spud" # software author OPTIONAL
-description="Meshing Around is a feature-rich bot designed to enhance your Meshtastic network experience with a variety of powerful tools and fun features. Connectivity and utility through text-based message delivery. Whether you're looking to perform network tests, send messages, or even play games, mesh_bot.py has you covered." # software description OPTIONAL (but strongly recommended!)
-URL="https://github.com/SpudGunMan/meshing-around" # software URL OPTIONAL. Can contain multiple URLs
+author="Spud" # software author - OPTIONAL
+description="Meshing Around is a feature-rich bot designed to enhance your Meshtastic network experience with a variety of powerful tools and fun features. Connectivity and utility through text-based message delivery. Whether you're looking to perform network tests, send messages, or even play games, mesh_bot.py has you covered." # software description - OPTIONAL (but strongly recommended!)
+URL="https://github.com/SpudGunMan/meshing-around" # software URL. Can contain multiple URLs - OPTIONAL
 options="iugedsrNADUOS" # script options in use by software package. For example, for a package with no service, exclude `edsr`
 service_name="mesh_bot pong_bot" # the name of the service, such as `chrony`. REQUIRED if service options are in use. If multiple services, separate by spaces "service1 service2"
-location="" # install location
+location="/opt/meshing-around" # install location REQUIRED if not apt installed. Generally, we use `/opt/software-name`
 
 
 if [ $# -eq 0 ]; then
