@@ -3,12 +3,12 @@
 # supposedly needed for usb storage, but works anyway
 #/etc/init.d/S50usbdevice start
 
-luckfox-config load
-
 #run only on first boot
 if [ -e "/etc/.firstboot" ]; then
   /usr/local/bin/femto-runonce.sh
 fi
+
+luckfox-config load
 
 # try enable RTC
 echo 'ds1307 0x68' | sudo tee /sys/class/i2c-adapter/i2c-3/new_device > /dev/null 2>&1
