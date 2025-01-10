@@ -1,8 +1,10 @@
 ## Femtofox - Getting Started
-The Femtofox is similar to, and replaces, a 
+This guide assumes a certain level of familiarity with [Meshtastic](meshtastic.org), and [enter link description here](https://meshtastic.org/docs/getting-started/)
+
+The Femtofox is similar to, and can functionally replace, a Raspberry Pi Linux Native Meshtastic node 
 
 ### Hardware
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbNjY4MzMwODA5XX0=
+eyJoaXN0b3J5IjpbLTc5MzI2NTU4XX0=
 -->
