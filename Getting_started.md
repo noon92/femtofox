@@ -58,8 +58,9 @@ The Femtofox Pro has all the same features as the CE, plus a few features that o
 ### Initial Configuration - Suggested Workflow
 Foxbuntu is ready to operate almost from the first boot. The settings can be configured using one of the following methods:
 
- 1. Serial term
+ 1. Serial terminal - connect a serial-USB adaptor to TX/RX/Gnd of UART2 (Femtofox CE) or insert a cable into the power/debug port (Femtofox Pro). After first login, run `sudo femto-config` from the command prompt.
+ 2. Network 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE4NTM1MzMyNTVdfQ==
+eyJoaXN0b3J5IjpbLTgzODY4NjQxN119
 -->
