@@ -2,35 +2,6 @@
 export NCURSES_NO_UTF8_ACS=1
 export TERM=screen
 export LANG=C.UTF-8
-#set -x
-uninstall="false"
-
-curses_client() { # Install curses client
-  git clone https://github.com/pdxlocations/curses-client-for-meshtastic.git /opt/curses-client-for-meshtastic
-  ln -s /opt/curses-client-for-meshtastic/meshtastic-curses.py ~/meshtastic-curses.py
-  # config the curses client to localhost tcp TODO, permissions?
-  dialog --title "$software" --msgbox "\nInstallation complete.\n\nRun \`~/meshtastic-curses.py\` to launch." 10 60
-}
-
-
-mosquitto() { # Install mosquitto
-  apt update
-  DEBIAN_FRONTEND=noninteractive apt install -y --option Dpkg::Options::="--force-confold" mosquitto mosquitto-clients
-  # config mosquitto to listen on all interfaces and allow anonymous
-  sudo sh -c "echo 'listener 1883 0.0.0.0\nallow_anonymous true' >> /etc/mosquitto/mosquitto.conf"
-  sudo systemctl restart mosquitto
-  dialog --title "$software" --msgbox "\nInstallation complete.\n\nMosquitto service has been started." 10 60
-}
-
-
-gpsd() { # Install gpsd 
-  apt update
-  DEBIAN_FRONTEND=noninteractive apt install -y --option Dpkg::Options::="--force-confold" gpsd gpsd-clients python-gps
-  # do stuff TODO config gpsd and chrony
-  # telemetry script
-  sudo systemctl restart gpsd
-  dialog --title "$software" --msgbox "\nInstallation complete.\n\nGPSD." 10 60
-}
 
 # build and display package intro, then load package menu
 package_intro() {
