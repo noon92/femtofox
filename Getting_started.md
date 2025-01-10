@@ -49,7 +49,11 @@ Although the Femtofox CE is only licensed for personal use and not for sale, a F
 The Femtofox Pro has all the same features as the CE, plus a few features that only make sense when ordered at scale [Insert link]. If you require a large quantity of Femtofox boards, please get in touch.
 
 ### Operating System
-Download the latest image of Foxbuntu from the releases [link]. Use an image flashing tool such as [Balena Etcher] to flash the image to a s
+
+ 1. Download the latest image of Foxbuntu from the releases [link] and extract from the zip file.
+ 2. Use an image flashing tool such as [Balena Etcher] to flash the image to a suitable SD card.
+ Note that the image will not appear bootable to Etcher, but will be functional in use.
+ 3. 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTEyOTE1Nzg0MTBdfQ==
+eyJoaXN0b3J5IjpbLTEwNDk2NzQ0MzNdfQ==
 -->
