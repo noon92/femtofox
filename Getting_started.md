@@ -31,9 +31,11 @@ If required, upload the BOM and Pick&Place files, and check that the suggested p
  - Components are the correct rating (see BOM for details)
  - Components are in the `basic` series where possible, especially capacitors, resistors and MOSFETs
 
-Ensure that the components are placed correctly on the PCB, select the quantity 
+Ensure that the components are placed correctly on the PCB, and that the correct radio module is selected, then check and place the order.
+
+Assemble the PCBs according to the BOM and Pick&Place files, or the photo dia
 
 ### 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTEzMTc4NDI1NzJdfQ==
+eyJoaXN0b3J5IjpbLTExMzg1MzM2NDZdfQ==
 -->
