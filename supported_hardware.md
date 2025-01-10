@@ -35,6 +35,7 @@ The following wifi chipsets/devices have their drivers included in the OS images
 |rtl8723ae              |       |            |            |     |
 |rtl8723au              |       |            |            |     |
 |rtl8723be              |       |            |            |     |
+|rtl8812bu				|✔️     |❌          |            |Tested:<br>[TP-LINK Archer T3U](https://techinfodepot.shoutwiki.com/wiki/TP-LINK_Archer_T3U): **NOT** working|
 |rtl8821ae              |       |            |            |     |
 |rtl8821au              |✔️     |❌          |            |Tested:<br>[TP-Link Archer T2U Plus](https://www.tp-link.com/us/home-networking/usb-adapter/archer-t2u-plus/): **NOT** working|
 |rtl8xxx other          |       |            |            |     |

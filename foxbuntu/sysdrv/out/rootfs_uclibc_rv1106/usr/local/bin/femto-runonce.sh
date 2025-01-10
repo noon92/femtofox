@@ -66,10 +66,6 @@ systemctl daemon-reload
 systemctl enable meshtasticd
 systemctl restart meshtasticd
 
-# enable wifi in meshtastic settings. Because this is very important, we'll try 10 times.
-log_message "Enabling wifi setting in Meshtasticd."
-/usr/local/bin/femto-meshtasticd-config.sh -m "--set network.wifi_enabled true" 10 "First boot"
-
 # remove first boot flag
 rm /etc/.firstboot
 log_message "Removing first boot flag and rebooting in 5 seconds..."

@@ -81,21 +81,25 @@ while getopts ":hgkl:q:va:cpo:struxm" opt; do
       echo $url
       ;;
     k) # Option -k (get current lora radio model)
-      ls /etc/meshtasticd/config.d/femtofox* | xargs -n 1 basename | sed 's/^femtofox_//;s/\.yaml$//'
+      ls /etc/meshtasticd/config.d/femtofox* 2>/dev/null | [ -s /dev/stdin ] && xargs -n 1 basename | sed 's/^femtofox_//;s/\.yaml$//' || echo -e "\033[0;31mnone (simulated radio)\033[0m"
       ;;
     l) # Option -l (choose lora radio model)
-      prepare="rm -f /etc/meshtasticd/config.d/femtofox* && echo \"Radio type $OPTARG selected.\" && systemctl restart meshtasticd"
+      prepare="rm -f /etc/meshtasticd/config.d/femtofox* && echo \"Radio type $OPTARG selected.\""
       if [ "$OPTARG" = "lr1121_tcxo" ]; then
         eval $prepare
         cp /etc/meshtasticd/available.d/femtofox/femtofox_LR1121_TCXO.yaml /etc/meshtasticd/config.d
+        systemctl restart meshtasticd
       elif [ "$OPTARG" = "sx1262_tcxo" ]; then
         eval $prepare
         cp /etc/meshtasticd/available.d/femtofox/femtofox_SX1262_TCXO.yaml /etc/meshtasticd/config.d
+        systemctl restart meshtasticd
       elif [ "$OPTARG" = "sx1262_xtal" ]; then
         eval $prepare
         cp /etc/meshtasticd/available.d/femtofox/femtofox_SX1262_XTAL.yaml /etc/meshtasticd/config.d
+        systemctl restart meshtasticd
       elif [ "$OPTARG" = "none" ]; then
         eval $prepare
+        systemctl restart meshtasticd
       else
         echo "$OPTARG is not a valid option. Options are \`lr1121_tcxo\`, \`sx1262_tcxo\`, \`sx1262_xtal\`, \`none\` (simradio)"
       fi
