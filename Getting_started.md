@@ -21,11 +21,11 @@ Upload the Gerber .zip file to a PCB maker of your choice, e.g.:
  - PCBWay
  - OSHPark
 
-Prototypes were made using JLCPCB. We recommend selecting a board thickness of 1.6mm, and a lead-free HASL surface finish. It is also suggested to select "n
+Prototypes were made using JLCPCB. We recommend selecting a board thickness of 1.6mm, and a lead-free HASL surface finish. It is also suggested to select "Remove mark" for order serial numbers, as the Gerbers do not contain a specific location for this marking.
 
-If required, upload 
+If required, upload the BOM and Pick&Place files, and check that the suggested parts are available. JLC regularly changes their stocked items
 
 ### 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTkwMTUxMDgyNF19
+eyJoaXN0b3J5IjpbLTYzNjI5ODQyOV19
 -->
