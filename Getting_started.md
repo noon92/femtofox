@@ -53,7 +53,13 @@ The Femtofox Pro has all the same features as the CE, plus a few features that o
  1. Download the latest image of Foxbuntu from the releases [link] and extract from the zip file.
  2. Use an image flashing tool such as [Balena Etcher] to flash the image to a suitable SD card.
  Note that the image will not appear bootable to Etcher, but will be functional in use.
- 3. 
+ 3. Insert the SD card into the reader of the Femtofox
+
+### Initial Configuration - Suggested Workflow
+Foxbuntu is ready to operate almost from the first boot. The settings can be configured using one of the following methods:
+
+ 1. Serial term
+
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTEwNDk2NzQ0MzNdfQ==
+eyJoaXN0b3J5IjpbLTE4NTM1MzMyNTVdfQ==
 -->
