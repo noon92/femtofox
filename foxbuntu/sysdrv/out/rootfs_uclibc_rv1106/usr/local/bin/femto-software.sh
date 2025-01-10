@@ -84,7 +84,7 @@ tc2_bbs() { # Install TC²BBS
   else
     return
   fi
-  if [ -f /opt/TC2-BBS-mesh/config.ini ]; then # if the config file doesn't exist but the clone was successful, then we need to do some configuring and rejiggering
+  if [ ! -f /opt/TC2-BBS-mesh/config.ini ]; then # if the config file doesn't exist but the clone was successful, then we need to do some configuring and rejiggering
 		cd /opt/TC2-BBS-mesh
 		mv example_config.ini config.ini
 		sed -i 's/type = serial/type = tcp/' config.ini
