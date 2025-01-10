@@ -5,7 +5,7 @@ export LANG=C.UTF-8
 
 # build and display package intro, then load package menu
 package_intro() {
-  dialog --title "$software" --msgbox "\
+  dialog --title "Software Manager" --msgbox "\
     $(/usr/local/bin/software/$1.sh -N)\n\
         $(if /usr/local/bin/software/$1.sh -O | grep -q 'A'; then echo -e "by $(/usr/local/bin/software/$1.sh -A)"; fi)\n\
 \n\
@@ -29,7 +29,7 @@ package_menu() {
       $(if /usr/local/bin/software/$1.sh -O | grep -q 's'; then echo "Stop service x"; fi) \
       $(if /usr/local/bin/software/$1.sh -O | grep -q 'r'; then echo "Start/restart service x"; fi) \
       "" "" \
-      "Exit" "" 3>&1 1>&2 2>&3)
+      "Back" "" 3>&1 1>&2 2>&3)
     
     exit_status=$? # This line checks the exit status of the dialog command
     
@@ -45,14 +45,14 @@ package_menu() {
       "Disable service") eval "/usr/local/bin/software/$1.sh -d" ;;
       "Stop service") eval "/usr/local/bin/software/$1.sh -s" ;;
       "Start/restart service") eval "/usr/local/bin/software/$1.sh -r" ;;
-      "Back") break ;;
+      "Back to software manager") break ;;
     esac
   done
 }
 
 
 while true; do
-title="Software"
+title="Software Manager"
   option=""
   option=$(dialog --cancel-label "Back" --menu "$title" 0 0 6 \
     1 "Meshing Around by Spud" \

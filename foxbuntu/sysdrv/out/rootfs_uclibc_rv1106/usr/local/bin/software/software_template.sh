@@ -4,9 +4,10 @@ if [[ $EUID -ne 0 ]]; then
    exit 1
 fi
 
-args="$@"
+args="$@" # arguments to this script
 help=$(cat <<EOF
-Options are:
+Arguments:
+    Actions:
 -h          This message
 -i          Install
 -u          Uninstall
@@ -15,12 +16,14 @@ Options are:
 -d          Disable service, if applicable
 -s          Stop service
 -r          Start/Restart
+    Information:
 -N          Get name
 -A          Get author
 -D          Get description
 -U          Get URL
 -O          Get options supported by this script
 -S          Get service status
+-L          Install location
 EOF
 )
 
@@ -34,8 +37,9 @@ name="" # software name
 author="" # software author OPTIONAL
 description="" # software description OPTIONAL (but strongly recommended!)
 URL="" # software URL OPTIONAL. Can contain multiple URLs
-options="iugedsrNADUOS" # script options in use by software package. For example, for a package with no service, exclude `edsr`
-service_name="" # the name of the service, such as `chrony`. REQUIRED if service options are in use. If multiple services, separate by spaces "service1 service2"
+options="iugedsrNADUOSL" # script options in use by software package. For example, for a package with no service, exclude `edsr`
+service_name="" # the name of the service/s, such as `chrony`. REQUIRED if service options are in use. If multiple services, separate by spaces "service1 service2"
+location="" # install location
 
 
 if [ $# -eq 0 ]; then
@@ -45,16 +49,19 @@ if [ $# -eq 0 ]; then
 fi
 
 
+# install script
 install() {
   echo placeholder
 }
 
 
+# uninstall script
 uninstall() {
   echo placeholder
 }
 
 
+#upgrade script
 upgrade() {
   echo placeholder
 }
@@ -94,6 +101,7 @@ while getopts ":h$options" opt; do
     S) # Option -S (Get service status)
       systemctl status $service_name
     ;;
+    L) echo -e $location ;;
   esac
 done
 

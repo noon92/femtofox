@@ -6,7 +6,8 @@ fi
 
 args="$@"
 help=$(cat <<EOF
-Options are:
+Arguments:
+    Actions:
 -h          This message
 -i          Install
 -u          Uninstall
@@ -15,12 +16,14 @@ Options are:
 -d          Disable service, if applicable
 -s          Stop service
 -r          Start/Restart
+    Information:
 -N          Get name
 -A          Get author
 -D          Get description
 -U          Get URL
 -O          Get options supported by this script
 -S          Get service status
+-L          Install location
 EOF
 )
 
@@ -36,6 +39,7 @@ description="Meshing Around is a feature-rich bot designed to enhance your Mesht
 URL="https://github.com/SpudGunMan/meshing-around" # software URL OPTIONAL. Can contain multiple URLs
 options="iugedsrNADUOS" # script options in use by software package. For example, for a package with no service, exclude `edsr`
 service_name="mesh_bot pong_bot" # the name of the service, such as `chrony`. REQUIRED if service options are in use. If multiple services, separate by spaces "service1 service2"
+location="" # install location
 
 
 if [ $# -eq 0 ]; then
@@ -150,6 +154,7 @@ while getopts ":h$options" opt; do
     S) # Option -S (Get service status)
       systemctl status $service_name
     ;;
+    L) echo -e $location ;;
   esac
 done
 
