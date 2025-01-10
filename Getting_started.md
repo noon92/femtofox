@@ -46,7 +46,8 @@ Although the Femtofox CE is only licensed for personal use and not for sale, a F
  4. TBC
  5. TBC
 
+The Femtofox Pro has all the same features as the CE, plus a few features that only make sense when ordered at scale [Insert link]. If you require a large quantity of Femtofox 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbNzI0MjQ0MDU5XX0=
+eyJoaXN0b3J5IjpbLTEwMjAxOTkyOTRdfQ==
 -->
