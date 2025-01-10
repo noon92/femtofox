@@ -38,16 +38,16 @@ Assemble the PCBs according to the BOM and Pick&Place files, or the photographs 
 Solder the Luckfox Pico Mini to the headers as low down as possible, to ensure easy access to the SD card.
 
 #### 2. Buying a Femtofox
-Although the Femtofox CE is only licensed for personal use and not for sale, a Femtofox Pro is available through licensed sellers as follows:
+Although the Femtofox CE is only licensed for personal use and not for sale, a Femtofox Pro is available for purchase as a fully assembled node, through the following licensed sellers:
 
- 1. Open Source Country
- 2. NomDeTom
- 3. Noon
+ 1. Open Source Country (USA)
+ 2. NomDeTom (UK)
+ 3. Noon (Central Ko
  4. TBC
  5. TBC
 
-The Femtofox Pro has all the same features as the CE, plus a few features that only make sense when ordered at scale [Insert link]. If you require a large quantity of Femtofox 
+The Femtofox Pro has all the same features as the CE, plus a few features that only make sense when ordered at scale [Insert link]. If you require a large quantity of Femtofox boards, please get in touch.
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTEwMjAxOTkyOTRdfQ==
+eyJoaXN0b3J5IjpbMTE5NTY2NTgxNF19
 -->
