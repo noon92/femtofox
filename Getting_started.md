@@ -73,8 +73,15 @@ See [this page](./usb_config.md) for details on how to configure via a USB drive
 ### Mesh Applications
 Femtofox is supplied with pre-installed copies of many popular applications, such as:
 
- 1. Meshing Around [link] - a popular auto-responder/query handler/BBS/
+ 1. Meshing Around [link] - a popular auto-responder/query handler/BBS/everything else.
+ 2. TheCommsChannel BBS [link] - a popular BBS application
+ 3. Curses Client for Meshtastic - the simplest, most retro client possible
+ 4. Meshtastic Web
+
+Additional applications...
+
+
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbNTQ1NTA2MzEzLC04Mzg2ODY0MTddfQ==
+eyJoaXN0b3J5IjpbLTg4NDgyNzUxNSwtODM4Njg2NDE3XX0=
 -->
