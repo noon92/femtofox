@@ -42,12 +42,14 @@ Although the Femtofox CE is only licensed for personal use and not for sale, a F
 
  1. Open Source Country (USA)
  2. NomDeTom (UK)
- 3. Noon (Central Ko
+ 3. Noon (Central Korea)
  4. TBC
  5. TBC
 
 The Femtofox Pro has all the same features as the CE, plus a few features that only make sense when ordered at scale [Insert link]. If you require a large quantity of Femtofox boards, please get in touch.
 
+### Operating System
+Download the latest image of Foxbuntu from the releases [link]. Use an image flashing tool such as [Balena Etcher] to flash the image to a s
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTE5NTY2NTgxNF19
+eyJoaXN0b3J5IjpbLTEyOTE1Nzg0MTBdfQ==
 -->
