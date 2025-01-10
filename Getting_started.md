@@ -58,9 +58,14 @@ The Femtofox Pro has all the same features as the CE, plus a few features that o
 ### Initial Configuration - Suggested Workflow
 Foxbuntu is ready to operate almost from the first boot. The settings can be configured using one of the following methods:
 
- 1. Serial console - connect a serial-USB adaptor to TX/RX/Gnd of UART2 (Femtofox CE) or insert a cable into the power/debug port (Femtofox Pro). After first login, run `sudo femto-config` from the command prompt.
- 2. SSH via Ethernet - connect a network cable either through the RJ45 port or by soldering directly to the Ethernet headers of the Luckfox (possible but not recommended) and connect it to your network. Identify the IP address via your Router (???) and connect using an SSH  
+#### Command Line
+ 1. Serial console - connect a serial-USB adaptor to TX/RX/Gnd of UART2 (Femtofox CE) or insert a cable into the power/debug port (Femtofox Pro).
+ 2. SSH via Ethernet - connect a network cable either through the RJ45 port or by soldering directly to the Ethernet headers of the Luckfox (possible but not recommended) and connect it to your network. Identify the IP address via your Router (???) and connect using an SSH client of your choice. 
 
+After first login, run `sudo femto-config` from the command prompt.
+
+#### USB Config
+See [this page](.)
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTM4NTQ2NzAxOCwtODM4Njg2NDE3XX0=
+eyJoaXN0b3J5IjpbMzg5ODM0NTY4LC04Mzg2ODY0MTddfQ==
 -->
