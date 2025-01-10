@@ -12,11 +12,19 @@ Download the Gerber files from [here](TBC), selecting the set of files for your 
 
  - Bare PCB - you have all of the necessary components on hand
  - SMD populated PCB - you have a Luckfox Pico Mini and suitable radio module on hand, plus any other headers or connectors desired.
- - Radio and header populated PCB - only a Luckfox Pico Mini is required to complete the build. Two sets of files are provided for this, based on the radio module 
+ - Radio and header populated PCB - only a Luckfox Pico Mini is required to complete the build. Two sets of files are provided for this, based on the radio module required:
+	 - 22db (E22-900M22S)
+	 - 30db (E22-900M30S)
+
+Upload the Gerber .zip file to a PCB maker of your choice, e.g.:
+ - JLCPCB
+ - PCBWay
+ - OSHPark
 
 
+If required, upload 
 
 ### 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTEyNTc2Mzc4NjhdfQ==
+eyJoaXN0b3J5IjpbLTEwNDQzNDI1MDddfQ==
 -->
