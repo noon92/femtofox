@@ -3,8 +3,9 @@ export NCURSES_NO_UTF8_ACS=1
 export TERM=screen
 export LANG=C.UTF-8
 
+title="Software Manager"
 install() {
-  dialog --title "Software Manager" --yesno "\nInstalling $1.\n\nProceed?" 10 40
+  dialog --title "$title" --yesno "\nInstalling $1.\n\nProceed?" 10 40
   if [ $? -eq 1 ]; then #if cancel/no
     return 1
   fi
@@ -14,9 +15,9 @@ install() {
 
   # Check the exit status of the installation command
   if [ $install_status -eq 0 ]; then
-    dialog --colors --title "Software Manager" --msgbox "\n\Z2Installation successful!\Zn\n\nDetailed installation info:\n$output" 0 0
+    dialog --colors --title "$title" --beep --msgbox "\n\Z2Installation successful!\Zn\n\nDetailed installation info:\n$output" 0 0
   else
-    dialog --colors --title "Software Manager" --msgbox "\n\Z1Installation FAILED!\Zn\n\nDetailed installation info:\n$output" 0 0
+    dialog --colors --title "$title" --beep --msgbox "\n\Z1Installation FAILED!\Zn\n\nDetailed installation info:\n$output" 0 0
   fi
 }
 
@@ -24,35 +25,35 @@ install() {
 
 # build and display package intro, then load package menu
 package_intro() {
-  dialog --colors --title "Software Manager" --msgbox "\
+  dialog --colors --title "$title" --msgbox "\
     $(/usr/local/bin/software/$1.sh -N)\n\
         $(if /usr/local/bin/software/$1.sh -O | grep -q 'A'; then echo -e "by $(/usr/local/bin/software/$1.sh -A)"; fi)\n\
 \n\
 $(if /usr/local/bin/software/$1.sh -O | grep -q 'D'; then echo -e "\n$(/usr/local/bin/software/$1.sh -D)"; fi)\n\
 \n\
-$(if /usr/local/bin/software/$1.sh -O | grep -q 'C'; then echo -e "\nDo not install with: \Zu$(/usr/local/bin/software/$1.sh -C)\Zn"; fi)\n\
-$(if /usr/local/bin/software/$1.sh -O | grep -q 'L'; then echo -e "\nInstalls to: \Zu$(/usr/local/bin/software/$1.sh -L)\Zn"; fi)\n\
+$(echo "Currently:      " && /usr/local/bin/software/$1.sh -I && echo "\Zuinstalled\Zn" || echo "\Zunot installed\Zn")\n\
+$(if /usr/local/bin/software/$1.sh -O | grep -q 'L'; then echo -e "\nInstalls to:    \Zu$(/usr/local/bin/software/$1.sh -L)\Zn"; fi)\n\
+$(if /usr/local/bin/software/$1.sh -O | grep -q 'C'; then echo -e "\nConflicts with: \Zu$(/usr/local/bin/software/$1.sh -C)\Zn"; fi)\n\
 
 \n\
 An internet connection is required for installation.\n\
-$(if /usr/local/bin/software/$1.sh -O | grep -q 'U'; then echo -e "\nFor more information, visit $(/usr/local/bin/software/$1.sh -U)"; fi)
-" 0 0
+$(if /usr/local/bin/software/$1.sh -O | grep -q 'U'; then echo -e "\nFor more information, visit $(/usr/local/bin/software/$1.sh -U)"; fi)" 0 0
   echo "Loading software menu..."
   package_menu $1
 }
 
 package_menu() {
   while true; do
-    choice=$(dialog --title "Software" --cancel-label "Back" --menu "$(/usr/local/bin/software/$1.sh -N)" 16 45 5 \
-      $(if /usr/local/bin/software/$1.sh -O | grep -q 'i'; then echo "Install x"; fi) \
-      $(if /usr/local/bin/software/$1.sh -O | grep -q 'u'; then echo "Uninstall x"; fi) \
-      $(if /usr/local/bin/software/$1.sh -O | grep -q 'g'; then echo "Upgrade x"; fi) \
-      $(if /usr/local/bin/software/$1.sh -O | grep -q 'e'; then echo "Enable service x"; fi) \
-      $(if /usr/local/bin/software/$1.sh -O | grep -q 'd'; then echo "Disable service x"; fi) \
-      $(if /usr/local/bin/software/$1.sh -O | grep -q 's'; then echo "Stop service x"; fi) \
-      $(if /usr/local/bin/software/$1.sh -O | grep -q 'r'; then echo "Start/restart service x"; fi) \
+    choice=$(dialog --title "$title" --cancel-label "Back" --menu "$(/usr/local/bin/software/$1.sh -N)" 16 45 5 \
+      $(if /usr/local/bin/software/$1.sh -O | grep -q 'i' && /usr/local/bin/software/$1.sh -I; then echo "Install x"; fi) \
+      $(if /usr/local/bin/software/$1.sh -O | grep -q 'u' && ! /usr/local/bin/software/$1.sh -I; then echo "Uninstall x"; fi) \
+      $(if /usr/local/bin/software/$1.sh -O | grep -q 'g' && ! /usr/local/bin/software/$1.sh -I; then echo "Upgrade x"; fi) \
+      $(if /usr/local/bin/software/$1.sh -O | grep -q 'e' && ! /usr/local/bin/software/$1.sh -I; then echo "Enable service x"; fi) \
+      $(if /usr/local/bin/software/$1.sh -O | grep -q 'd' && ! /usr/local/bin/software/$1.sh -I; then echo "Disable service x"; fi) \
+      $(if /usr/local/bin/software/$1.sh -O | grep -q 's' && ! /usr/local/bin/software/$1.sh -I; then echo "Stop service x"; fi) \
+      $(if /usr/local/bin/software/$1.sh -O | grep -q 'r' && ! /usr/local/bin/software/$1.sh -I; then echo "Start/restart service x"; fi) \
       "" "" \
-      "Back" "" 3>&1 1>&2 2>&3)
+      "Back to software manager" "" 3>&1 1>&2 2>&3)
     
     exit_status=$? # This line checks the exit status of the dialog command
     
@@ -75,7 +76,7 @@ package_menu() {
 
 
 while true; do
-title="Software Manager"
+title="$title"
   option=""
   option=$(dialog --cancel-label "Back" --menu "$title" 0 0 6 \
     1 "Meshing Around by Spud" \

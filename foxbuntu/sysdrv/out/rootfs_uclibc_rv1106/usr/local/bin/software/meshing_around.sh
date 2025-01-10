@@ -25,6 +25,7 @@ Arguments:
 -S          Get service status
 -L          Install location
 -C          Conflicts
+-I          Check if installed. Returns an error if already installed
 EOF
 )
 
@@ -40,11 +41,10 @@ name="Meshing Around" # software name
 author="Spud" # software author - OPTIONAL
 description="Meshing Around is a feature-rich bot designed to enhance your Meshtastic network experience with a variety of powerful tools and fun features. Connectivity and utility through text-based message delivery. Whether you're looking to perform network tests, send messages, or even play games, mesh_bot.py has you covered." # software description - OPTIONAL (but strongly recommended!)
 URL="https://github.com/SpudGunMan/meshing-around" # software URL. Can contain multiple URLs - OPTIONAL
-options="iugedsrNADUOSLC" # script options in use by software package. For example, for a package with no service, exclude `edsr`
+options="iugedsrNADUOSLCI" # script options in use by software package. For example, for a package with no service, exclude `edsr`
 service_name="mesh_bot pong_bot" # the name of the service, such as `chrony`. REQUIRED if service options are in use. If multiple services, separate by spaces "service1 service2"
 location="/opt/meshing-around" # install location REQUIRED if not apt installed. Generally, we use `/opt/software-name`
 conflicts="TC²-BBS, any other \"full control\" style bots" # comma delineated plain-text list of packages with which this package conflicts. Use the name as it appears in the $name field of the other package. Extra plaintext is allowed, such as "packageA, packageB, any other software that uses the Meshtastic CLI"
-
 
 if [ $# -eq 0 ]; then
   echo "No arguments provided."
@@ -123,6 +123,16 @@ upgrade() {
 echo placeholder
 }
 
+# Check if already installed. `exit 1` if yes, `exit 0` if no
+check() {
+  if [ -d "$location" ]; then
+    #echo "Already installed"
+    exit 1
+  else
+    #echo "Not installed"
+    exit 0
+  fi
+}
 
 while getopts ":h$options" opt; do
   case ${opt} in
@@ -160,6 +170,9 @@ while getopts ":h$options" opt; do
     ;;
     L) echo -e $location ;;
     C) echo -e $conflicts ;;
+    I) # Option -I (Check if already installed)
+      check
+    ;;
   esac
 done
 

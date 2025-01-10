@@ -23,8 +23,9 @@ Arguments:
 -U          Get URL
 -O          Get options supported by this script
 -S          Get service status
--L          Install location
--C          Conflicts
+-L          Get Install location
+-C          Get Conflicts
+-I          Check if installed. Returns an error if already installed
 EOF
 )
 
@@ -39,7 +40,7 @@ name="" # software name
 author="" # software author - OPTIONAL
 description="" # software description - OPTIONAL (but strongly recommended!)
 URL="" # software URL. Can contain multiple URLs - OPTIONAL
-options="iugedsrNADUOSLC" # script options in use by software package. For example, for a package with no service, exclude `edsr`
+options="iugedsrNADUOSLCI" # script options in use by software package. For example, for a package with no service, exclude `edsr`
 service_name="" # the name of the service/s, such as `chrony`. REQUIRED if service options are in use. If multiple services, separate by spaces "service1 service2"
 location="" # install location REQUIRED if not apt installed. Generally, we use `/opt/software-name`
 conflicts="" # comma delineated plain-text list of packages with which this package conflicts. Use the name as it appears in the $name field of the other package. Extra plaintext is allowed, such as "packageA, packageB, any other software that uses the Meshtastic CLI"
@@ -69,6 +70,17 @@ upgrade() {
   echo placeholder
 }
 
+# Check if already installed. `exit 1` if yes, `exit 0` if no
+check() {
+        # the following works for cloned repos, but not for apt installs
+        # if [ -d "$location" ]; then
+        #   #echo "Already installed"
+        #   exit 1
+        # else
+        #   #echo "Not installed"
+        #   exit 0
+        # fi
+}
 
 while getopts ":h$options" opt; do
   case ${opt} in
@@ -106,6 +118,9 @@ while getopts ":h$options" opt; do
     ;;
     L) echo -e $location ;;
     C) echo -e $conflicts ;;
+    I) # Option -I (Check if already installed)
+      check
+    ;;
   esac
 done
 
