@@ -4,13 +4,14 @@ export TERM=screen
 export LANG=C.UTF-8
 
 title="Software Manager"
+package_dir="/usr/local/bin/packages"
 install() {
   dialog --title "$title" --yesno "\nInstalling $1.\n\nProceed?" 10 40
   if [ $? -eq 1 ]; then #if cancel/no
     return 1
   fi
   # Run the installation script, capturing the output and displaying it in real time
-  output=$(eval "/usr/local/bin/software/$1.sh -i 2>&1 | tee /dev/tty")
+  output=$(eval "$package_dir/$1.sh -i 2>&1 | tee /dev/tty")
   install_status=$?  # Capture the exit status of the eval command
 
   # Check the exit status of the installation command
@@ -26,32 +27,32 @@ install() {
 # build and display package intro, then load package menu
 package_intro() {
   dialog --colors --title "$title" --msgbox "\
-    $(/usr/local/bin/software/$1.sh -N)\n\
-        $(if /usr/local/bin/software/$1.sh -O | grep -q 'A'; then echo -e "by $(/usr/local/bin/software/$1.sh -A)"; fi)\n\
+    $($package_dir/$1.sh -N)\n\
+        $(if $package_dir/$1.sh -O | grep -q 'A'; then echo -e "by $($package_dir/$1.sh -A)"; fi)\n\
 \n\
-$(if /usr/local/bin/software/$1.sh -O | grep -q 'D'; then echo -e "\n$(/usr/local/bin/software/$1.sh -D)"; fi)\n\
+$(if $package_dir/$1.sh -O | grep -q 'D'; then echo -e "\n$($package_dir/$1.sh -D)"; fi)\n\
 \n\
-$(echo "Currently:      " && /usr/local/bin/software/$1.sh -I && echo "\Zuinstalled\Zn" || echo "\Zunot installed\Zn")\n\
-$(if /usr/local/bin/software/$1.sh -O | grep -q 'L'; then echo -e "\nInstalls to:    \Zu$(/usr/local/bin/software/$1.sh -L)\Zn"; fi)\n\
-$(if /usr/local/bin/software/$1.sh -O | grep -q 'C'; then echo -e "\nConflicts with: \Zu$(/usr/local/bin/software/$1.sh -C)\Zn"; fi)\n\
+$(echo "Currently:      " && $package_dir/$1.sh -I && echo "\Zuinstalled\Zn" || echo "\Zunot installed\Zn")\n\
+$(if $package_dir/$1.sh -O | grep -q 'L'; then echo -e "\nInstalls to:    \Zu$($package_dir/$1.sh -L)\Zn"; fi)\n\
+$(if $package_dir/$1.sh -O | grep -q 'C'; then echo -e "\nConflicts with: \Zu$($package_dir/$1.sh -C)\Zn"; fi)\n\
 
 \n\
 An internet connection is required for installation.\n\
-$(if /usr/local/bin/software/$1.sh -O | grep -q 'U'; then echo -e "\nFor more information, visit $(/usr/local/bin/software/$1.sh -U)"; fi)" 0 0
+$(if $package_dir/$1.sh -O | grep -q 'U'; then echo -e "\nFor more information, visit $($package_dir/$1.sh -U)"; fi)" 0 0
   echo "Loading software menu..."
   package_menu $1
 }
 
 package_menu() {
   while true; do
-    choice=$(dialog --title "$title" --cancel-label "Back" --menu "$(/usr/local/bin/software/$1.sh -N)" 16 45 5 \
-      $(if /usr/local/bin/software/$1.sh -O | grep -q 'i' && /usr/local/bin/software/$1.sh -I; then echo "Install x"; fi) \
-      $(if /usr/local/bin/software/$1.sh -O | grep -q 'u' && ! /usr/local/bin/software/$1.sh -I; then echo "Uninstall x"; fi) \
-      $(if /usr/local/bin/software/$1.sh -O | grep -q 'g' && ! /usr/local/bin/software/$1.sh -I; then echo "Upgrade x"; fi) \
-      $(if /usr/local/bin/software/$1.sh -O | grep -q 'e' && ! /usr/local/bin/software/$1.sh -I; then echo "Enable service x"; fi) \
-      $(if /usr/local/bin/software/$1.sh -O | grep -q 'd' && ! /usr/local/bin/software/$1.sh -I; then echo "Disable service x"; fi) \
-      $(if /usr/local/bin/software/$1.sh -O | grep -q 's' && ! /usr/local/bin/software/$1.sh -I; then echo "Stop service x"; fi) \
-      $(if /usr/local/bin/software/$1.sh -O | grep -q 'r' && ! /usr/local/bin/software/$1.sh -I; then echo "Start/restart service x"; fi) \
+    choice=$(dialog --title "$title" --cancel-label "Back" --menu "$($package_dir/$1.sh -N)" 16 45 5 \
+      $(if $package_dir/$1.sh -O | grep -q 'i' && $package_dir/$1.sh -I; then echo "Install x"; fi) \
+      $(if $package_dir/$1.sh -O | grep -q 'u' && ! $package_dir/$1.sh -I; then echo "Uninstall x"; fi) \
+      $(if $package_dir/$1.sh -O | grep -q 'g' && ! $package_dir/$1.sh -I; then echo "Upgrade x"; fi) \
+      $(if $package_dir/$1.sh -O | grep -q 'e' && ! $package_dir/$1.sh -I; then echo "Enable service x"; fi) \
+      $(if $package_dir/$1.sh -O | grep -q 'd' && ! $package_dir/$1.sh -I; then echo "Disable service x"; fi) \
+      $(if $package_dir/$1.sh -O | grep -q 's' && ! $package_dir/$1.sh -I; then echo "Stop service x"; fi) \
+      $(if $package_dir/$1.sh -O | grep -q 'r' && ! $package_dir/$1.sh -I; then echo "Start/restart service x"; fi) \
       "" "" \
       "Back to software manager" "" 3>&1 1>&2 2>&3)
     
@@ -63,12 +64,12 @@ package_menu() {
     
     case $choice in
       "Install") install $1 ;;
-      "Uninstall") eval "/usr/local/bin/software/$1.sh -u" ;;
-      "Upgrade") eval "/usr/local/bin/software/$1.sh -g" ;;
-      "Enable service") eval "/usr/local/bin/software/$1.sh -e" ;;
-      "Disable service") eval "/usr/local/bin/software/$1.sh -d" ;;
-      "Stop service") eval "/usr/local/bin/software/$1.sh -s" ;;
-      "Start/restart service") eval "/usr/local/bin/software/$1.sh -r" ;;
+      "Uninstall") eval "$package_dir/$1.sh -u" ;;
+      "Upgrade") eval "$package_dir/$1.sh -g" ;;
+      "Enable service") eval "$package_dir/$1.sh -e" ;;
+      "Disable service") eval "$package_dir/$1.sh -d" ;;
+      "Stop service") eval "$package_dir/$1.sh -s" ;;
+      "Start/restart service") eval "$package_dir/$1.sh -r" ;;
       "Back to software manager") break ;;
     esac
   done

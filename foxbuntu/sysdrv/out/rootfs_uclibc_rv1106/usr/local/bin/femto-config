@@ -501,7 +501,7 @@ while true; do
     1 "Settings wizard" \
     2 "Networking" \
     3 "Meshtasticd" \
-    4 "Software" \
+    4 "Software manager" \
     5 "Utilities" \
     6 "Help" \
     "" "" \
