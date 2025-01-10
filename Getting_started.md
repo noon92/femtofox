@@ -11,10 +11,12 @@ Femtofox Community Edition (CE) is provided as standard PCB Gerber files and sui
 Download the Gerber files from [here](TBC), selecting the set of files for your application:
 
  - Bare PCB - you have all of the necessary components on hand
- - SMD populated PCB - you have a Luckfox Pico Mini and suitable radio module on hand
- - Radio
+ - SMD populated PCB - you have a Luckfox Pico Mini and suitable radio module on hand, plus any other headers or connectors desired.
+ - Radio and header populated PCB - only a Luckfox Pico Mini is required to complete the build. Two sets of files are provided for this, based on the radio module 
+
+
 
 ### 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE1NDE2NDk4MjddfQ==
+eyJoaXN0b3J5IjpbLTEyNTc2Mzc4NjhdfQ==
 -->
