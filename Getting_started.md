@@ -7,10 +7,14 @@ The Femtofox is similar to, and can functionally replace, a [Raspberry Pi Linux 
 To get started, you will need a Femtofox. You can either build or buy one.
 
 #### 1. Building a Femtofox
-Femtofox Community Edition (CE) is provided as standard PCB Gerber files and suitable Bills of Materials (BOM) and Pick and Place files
-Simply download the Gerber
+Femtofox Community Edition (CE) is provided as standard PCB Gerber files and suitable Bills of Materials (BOM) and Pick and Place files for the components.
+Download the Gerber files from [here](TBC), selecting the set of files for your application:
+
+ - Bare PCB - you have all of the necessary components on hand
+ - SMD populated PCB - you have a Luckfox Pico Mini and suitable radio module on hand
+ - Radio
 
 ### 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTMzMjc0ODI5NV19
+eyJoaXN0b3J5IjpbLTE1NDE2NDk4MjddfQ==
 -->
