@@ -1,8 +1,8 @@
 ## Femtofox - Getting Started
-The Femtofox is similar to a 
+The Femtofox is similar to, and replaces, a 
 
 ### Hardware
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTg2NDg5MTQzM119
+eyJoaXN0b3J5IjpbNjY4MzMwODA5XX0=
 -->
