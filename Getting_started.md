@@ -70,7 +70,11 @@ After first login, run `sudo femto-config` from the command prompt.
 #### USB Config
 See [this page](./usb_config.md) for details on how to configure via a USB drive.
 
+### Mesh Applications
+Femtofox is supplied with pre-installed copies of many popular applications, such as:
+
+ 1. Meshing Around [link] - a popular auto-responder/query handler/BBS/
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTEzMzkzMjQxNTIsLTgzODY4NjQxN119
+eyJoaXN0b3J5IjpbNTQ1NTA2MzEzLC04Mzg2ODY0MTddfQ==
 -->
