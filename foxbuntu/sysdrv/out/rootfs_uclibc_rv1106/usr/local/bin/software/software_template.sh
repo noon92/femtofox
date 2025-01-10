@@ -24,6 +24,7 @@ Arguments:
 -O          Get options supported by this script
 -S          Get service status
 -L          Install location
+-C          Conflicts
 EOF
 )
 
@@ -32,14 +33,16 @@ EOF
 # Populate the install, uninstall and upgrade functions
 # Remember that this script may be launched in terminal, via web UI or another method, so inputs aren't really possible
 # Arguments to the script are stored in $args
+# For install/uninstall/upgrade, output should be given as echo or printf
 
 name="" # software name
 author="" # software author - OPTIONAL
 description="" # software description - OPTIONAL (but strongly recommended!)
 URL="" # software URL. Can contain multiple URLs - OPTIONAL
-options="iugedsrNADUOSL" # script options in use by software package. For example, for a package with no service, exclude `edsr`
+options="iugedsrNADUOSLC" # script options in use by software package. For example, for a package with no service, exclude `edsr`
 service_name="" # the name of the service/s, such as `chrony`. REQUIRED if service options are in use. If multiple services, separate by spaces "service1 service2"
 location="" # install location REQUIRED if not apt installed. Generally, we use `/opt/software-name`
+conflicts="" # comma delineated plain-text list of packages with which this package conflicts. Use the name as it appears in the $name field of the other package. Extra plaintext is allowed, such as "packageA, packageB, any other software that uses the Meshtastic CLI"
 
 
 if [ $# -eq 0 ]; then
@@ -102,6 +105,7 @@ while getopts ":h$options" opt; do
       systemctl status $service_name
     ;;
     L) echo -e $location ;;
+    C) echo -e $conflicts ;;
   esac
 done
 

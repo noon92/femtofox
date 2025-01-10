@@ -3,13 +3,36 @@ export NCURSES_NO_UTF8_ACS=1
 export TERM=screen
 export LANG=C.UTF-8
 
+install() {
+  dialog --title "Software Manager" --yesno "\nInstalling $1.\n\nProceed?" 10 40
+  if [ $? -eq 1 ]; then #if cancel/no
+    return 1
+  fi
+  # Run the installation script, capturing the output and displaying it in real time
+  output=$(eval "/usr/local/bin/software/$1.sh -i 2>&1 | tee /dev/tty")
+  install_status=$?  # Capture the exit status of the eval command
+
+  # Check the exit status of the installation command
+  if [ $install_status -eq 0 ]; then
+    dialog --colors --title "Software Manager" --msgbox "\n\Z2Installation successful!\Zn\n\nDetailed installation info:\n$output" 0 0
+  else
+    dialog --colors --title "Software Manager" --msgbox "\n\Z1Installation FAILED!\Zn\n\nDetailed installation info:\n$output" 0 0
+  fi
+}
+
+
+
 # build and display package intro, then load package menu
 package_intro() {
-  dialog --title "Software Manager" --msgbox "\
+  dialog --colors --title "Software Manager" --msgbox "\
     $(/usr/local/bin/software/$1.sh -N)\n\
         $(if /usr/local/bin/software/$1.sh -O | grep -q 'A'; then echo -e "by $(/usr/local/bin/software/$1.sh -A)"; fi)\n\
 \n\
 $(if /usr/local/bin/software/$1.sh -O | grep -q 'D'; then echo -e "\n$(/usr/local/bin/software/$1.sh -D)"; fi)\n\
+\n\
+$(if /usr/local/bin/software/$1.sh -O | grep -q 'C'; then echo -e "\nDo not install with: \Zu$(/usr/local/bin/software/$1.sh -C)\Zn"; fi)\n\
+$(if /usr/local/bin/software/$1.sh -O | grep -q 'L'; then echo -e "\nInstalls to: \Zu$(/usr/local/bin/software/$1.sh -L)\Zn"; fi)\n\
+
 \n\
 An internet connection is required for installation.\n\
 $(if /usr/local/bin/software/$1.sh -O | grep -q 'U'; then echo -e "\nFor more information, visit $(/usr/local/bin/software/$1.sh -U)"; fi)
@@ -38,7 +61,7 @@ package_menu() {
     fi
     
     case $choice in
-      "Install") eval "/usr/local/bin/software/$1.sh -i" ;;
+      "Install") install $1 ;;
       "Uninstall") eval "/usr/local/bin/software/$1.sh -u" ;;
       "Upgrade") eval "/usr/local/bin/software/$1.sh -g" ;;
       "Enable service") eval "/usr/local/bin/software/$1.sh -e" ;;

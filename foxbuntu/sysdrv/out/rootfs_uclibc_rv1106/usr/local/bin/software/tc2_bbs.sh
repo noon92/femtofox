@@ -35,7 +35,7 @@ fi
 
 
 install() {
-  dialog --title "$software" --yesno "\nInstallation requires internet connection.\n\nLearn more at \nIf software is already present, will attempt to update.\n\nInstall?" 0 0
+  #dialog --title "$software" --yesno "\nInstallation requires internet connection.\n\nLearn more at \nIf software is already present, will attempt to update.\n\nInstall?" 0 0
   if [ $? -eq 0 ]; then #unless cancel/no
     if [ ! -d /opt/TC2-BBS-mesh ]; then
         if ! git clone https://github.com/TheCommsChannel/TC2-BBS-mesh.git /opt/TC2-BBS-mesh; then
@@ -48,7 +48,7 @@ install() {
       # /opt/meshing-around exists, check for updates
       cd /opt/TC2-BBS-mesh
       if ! sudo git pull; then
-        dialog --title "$software" --msgbox "\nFailed to update TC²-BBS.\nCheck internet connectivity." 10 60
+        #dialog --title "$software" --msgbox "\nFailed to update TC²-BBS.\nCheck internet connectivity." 10 60
         return
       fi
     fi
@@ -58,9 +58,9 @@ install() {
   if [ ! -f /opt/TC2-BBS-mesh/config.ini ]; then # if the config file doesn't exist but the clone was successful, then we need to do some configuring and rejiggering
 		cd /opt/TC2-BBS-mesh
 		echo "Creating virtual environment. This can take a couple minutes."
-		python3 -m venv venv
-		source venv/bin/activate
-		pip install -r requirements.txt
+		#python3 -m venv venv
+		#source venv/bin/activate
+		#pip install -r requirements.txt
 		mv example_config.ini config.ini
 		sed -i 's/type = serial/type = tcp/' config.ini
 		sed -i 's/^# hostname = 192.168.x.x/hostname = 127.0.0.1/' config.ini
@@ -77,10 +77,8 @@ install() {
   # for whatever reason, this is necessary
   sleep 5
   sudo systemctl restart mesh-bbs
-  
-  echo -e "\nPress any key to continue..."
-  read -n 1 -s -r
-  dialog --title "$software" --msgbox "\nInstallation complete." 8 50
+
+  #dialog --title "$software" --msgbox "\nInstallation complete." 8 50
 }
 
 
