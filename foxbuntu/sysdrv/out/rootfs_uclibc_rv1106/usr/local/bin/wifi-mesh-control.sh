@@ -17,12 +17,6 @@ get_mobile_wifi_state() {
 set_mobile_wifi_state() {
     local state="$1"
     local meshtastic_output
-
-    if [[ "$(meshtastic --host 127.0.0.1 --get network.wifi_enabled 2>&1 | grep -i refused)" ]] || [[ ! "$(meshtastic --host 127.0.0.1 --get network.wifi_enabled)" ]]; then
-	log "Error connecting to MeshtasticD. Aborting."
-	exit 2
-    fi
-
     if [[ "$state" == "up" ]]; then
         meshtastic_output=$(meshtastic --host 127.0.0.1 --set network.wifi_enabled true 2>&1)
     else
@@ -98,4 +92,3 @@ monitor_changes() {
 validate_wifi_state_file
 sync_states
 monitor_changes
-
