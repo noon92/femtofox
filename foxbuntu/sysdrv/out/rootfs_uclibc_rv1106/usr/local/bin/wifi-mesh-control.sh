@@ -66,24 +66,27 @@ monitor_changes() {
     previous_wlan_state=$(ip link show wlan0 | grep -q 'state UP' && echo "up" || echo "down")
 
     while true; do
-        local current_mobile_state current_wlan_state
-        current_mobile_state=$(get_mobile_wifi_state)
-        current_wlan_state=$(ip link show wlan0 | grep -q 'state UP' && echo "up" || echo "down")
+        PID=$(ps -C meshtasticd -o pid= | tr -d ' ')
+        if [[ -n "$PID" ]] && sudo lsof /dev/spidev0.0 | grep -q "$PID"; then
+        #if sudo lsof /dev/spidev0.0 | grep -q "meshtasticd"; then
+          local current_mobile_state current_wlan_state
+          current_mobile_state=$(get_mobile_wifi_state)
+          current_wlan_state=$(ip link show wlan0 | grep -q 'state UP' && echo "up" || echo "down")
 
-        if [[ "$current_mobile_state" != "$previous_mobile_state" ]]; then
-            log "Detected mobile Wi-Fi state change: $previous_mobile_state -> $current_mobile_state"
-            echo "$current_mobile_state" > "$WIFI_STATE_FILE"
-            set_wlan_state "$current_mobile_state"
-            previous_mobile_state="$current_mobile_state"
+          if [[ "$current_mobile_state" != "$previous_mobile_state" ]]; then
+              log "Detected mobile Wi-Fi state change: $previous_mobile_state -> $current_mobile_state"
+              echo "$current_mobile_state" > "$WIFI_STATE_FILE"
+              set_wlan_state "$current_mobile_state"
+              previous_mobile_state="$current_mobile_state"
+          fi
+
+          if [[ "$current_wlan_state" != "$previous_wlan_state" ]]; then
+              log "Detected wlan0 state change: $previous_wlan_state -> $current_wlan_state"
+              echo "$current_wlan_state" > "$WIFI_STATE_FILE"
+              set_mobile_wifi_state "$current_wlan_state"
+              previous_wlan_state="$current_wlan_state"
+          fi
         fi
-
-        if [[ "$current_wlan_state" != "$previous_wlan_state" ]]; then
-            log "Detected wlan0 state change: $previous_wlan_state -> $current_wlan_state"
-            echo "$current_wlan_state" > "$WIFI_STATE_FILE"
-            set_mobile_wifi_state "$current_wlan_state"
-            previous_wlan_state="$current_wlan_state"
-        fi
-
         sleep 5
     done
 }
