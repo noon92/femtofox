@@ -8,15 +8,15 @@ The Luckfox Pico Mini is the postage stamp sized heart of the Femtofox - a compa
 
 - [Features](#features)
 - Specifications - coming soon
-- [Supported hardware](supported_hardware.md)
-- [Installation guide](foxbuntu_install.md)
+- [Supported hardware](./supported_hardware.md)
+- [Installation guide](./foxbuntu_install.md)
 - How to order - coming soon
 - DIY instructions - coming soon
 - [Networking](#networking)
-- [USB configuration tool](usb_config.md) 
+- [USB configuration tool](./usb_config.md) 
 
 ### Features
-* Tiny size (63x54mm for the Kitchen Sink Edition, 65x30mm for the Smol Edition). Roughly equivalent to a Raspberry Pi and Pi Zero.
+* Tiny size (63x54mm for the Kitchen Sink Edition, 65x30mm for the Smol Edition). Roughly equivalent to a standard Raspberry Pi hat and Pi Zero respectively.
 * Power efficiency (~0.27-0.4w average, depending on radio and mesh congestion)
 * Full Linux CLI (Ubuntu) via our pre-built Foxbuntu image
 * Meshtastic native client support via SPI
@@ -78,5 +78,5 @@ In Meshtasticd's config.yaml we use GPIO bank 1, and subtract 32 from the pin nu
 > The information on this page is given without warranty or guarantee. Links to vendors of products are for informational purposes only.
 > Meshtastic® is a registered trademark of Meshtastic LLC. Meshtastic software components are released under various licenses, see GitHub for details. No warranty is provided - use at your own risk.
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTgwNzY2MTI2NV19
+eyJoaXN0b3J5IjpbMTAyOTUxODA1MywtODA3NjYxMjY1XX0=
 -->
