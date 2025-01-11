@@ -72,7 +72,7 @@ $(echo "Currently:      " && $package_dir/$1.sh -I && echo "\Zuinstalled\Zn" || 
 $(if $package_dir/$1.sh -O | grep -q 'L'; then echo "Installs to:    \Zu$($package_dir/$1.sh -L)\Zn"; fi)\n\
 $(if $package_dir/$1.sh -O | grep -q 'C'; then echo "Conflicts with: \Zu$($package_dir/$1.sh -C)\Zn\n"; fi)\n\
 An internet connection is required for installation.\n\
-$(if $package_dir/$1.sh -O | grep -q 'U'; then echo "\nFor more information, visit $($package_dir/$1.sh -U)"; fi)" 0 0
+$(if $package_dir/$1.sh -O | grep -q 'U'; then echo "\nFor more information, visit $($package_dir/$1.sh -U)"; fi)" 50 75
   package_menu $1 # after user hits "OK", move on to package menu
 }
 
