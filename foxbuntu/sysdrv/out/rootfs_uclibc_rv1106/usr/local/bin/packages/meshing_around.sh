@@ -55,7 +55,7 @@ description="Meshing Around is a feature-rich bot designed to enhance your Mesht
 URL="https://github.com/SpudGunMan/meshing-around" # software URL. Can contain multiple URLs - OPTIONAL
 options="xiugedsrNADUOSLCIto"   # script options in use by software package. For example, for a package with no service, exclude `edsr`
 launch=""   # command to launch software, if applicable
-service_name="mesh_bot pong_bot" # the name of the service, such as `chrony`. REQUIRED if service options are in use. If multiple services, separate by spaces "service1 service2"
+service_name="mesh_bot pong_bot mesh_bot_reporting" # the name of the service, such as `chrony`. REQUIRED if service options are in use. If multiple services, separate by spaces "service1 service2"
 location="/opt/meshing-around" # install location REQUIRED if not apt installed. Generally, we use `/opt/software-name`
 conflicts="TC²-BBS, any other \"full control\" style bots" # comma delineated plain-text list of packages with which this package conflicts. Use the name as it appears in the $name field of the other package. Extra plaintext is allowed, such as "packageA, packageB, any other software that uses the Meshtastic CLI"
 
@@ -79,10 +79,19 @@ install() {
 # uninstall script
 uninstall() {
   # stop, disable and remove the service, reload systemctl daemon, remove the installation directory and quit
-  systemctl stop $service_name
-  systemctl disable $service_name
-  rm /etc/systemd/system/$service_name.service
+  for service in $service_name; do
+    systemctl stop $service
+    systemctl disable $service
+    rm "/etc/systemd/system/$service.service"
+  done
   systemctl daemon-reload
+  systemctl reset-failed
+  gpasswd -d meshbot dialout
+  gpasswd -d meshbot tty
+  gpasswd -d meshbot bluetooth
+  groupdel meshbot
+  userdel meshbot
+  rm -rf /opt/meshing-around
   rm -rf $location
   echo "user_message: Service removed, all files deleted."
   exit 0
