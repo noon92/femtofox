@@ -25,7 +25,7 @@ Arguments:
 -S          Get service status
 -L          Install location
 -C          Conflicts
--I          Check if installed. Returns an error if already installed
+-I          Check if installed. Returns an error if not installed
 EOF
 )
 
@@ -36,6 +36,8 @@ EOF
 # Arguments to the script are stored in $args
 # For install/uninstall/upgrade, output should be given as echo or printf
 # Successful operations should `exit 0`, fails should `exit 1`
+# Messages to the user (such as configuration instructions, explanatory error messages, etc) should be given as: `echo "user_message: text"`.
+# Everything following `user_message` will be displayed prominently to the user, so it must the last thing echoed
 
 name="Meshing Around" # software name
 author="Spud" # software author - OPTIONAL
@@ -114,23 +116,29 @@ install() {
 }
 
 
+# uninstall script
 uninstall() {
-echo placeholder
+  echo "user_message: Exit message to user, displayed prominently in post-install"
+  exit 0 # should be `exit 1` if the installation failed
 }
 
 
+#upgrade script
 upgrade() {
-echo placeholder
+  echo "user_message: Exit message to user, displayed prominently in post-install"
+  exit 0 # should be `exit 1` if the installation failed
 }
 
-# Check if already installed. `exit 1` if yes, `exit 0` if no
+
+# Check if already installed. `exit 0` if yes, `exit 1` if no
 check() {
+  #the following works for cloned repos, but not for apt installs
   if [ -d "$location" ]; then
     #echo "Already installed"
-    exit 1
+    exit 0
   else
     #echo "Not installed"
-    exit 0
+    exit 1
   fi
 }
 

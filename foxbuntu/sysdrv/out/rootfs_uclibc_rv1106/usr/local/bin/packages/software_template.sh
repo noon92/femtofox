@@ -25,7 +25,7 @@ Arguments:
 -S          Get service status
 -L          Get Install location
 -C          Get Conflicts
--I          Check if installed. Returns an error if already installed
+-I          Check if installed. Returns an error if not installed
 EOF
 )
 
@@ -35,15 +35,19 @@ EOF
 # Remember that this script may be launched in terminal, via web UI or another method, so inputs aren't really possible
 # Arguments to the script are stored in $args
 # For install/uninstall/upgrade, output should be given as echo or printf
+# Successful operations should `exit 0`, fails should `exit 1`
+# Messages to the user (such as configuration instructions, explanatory error messages, etc) should be given as: `echo "user_message: text"`.
+# Everything following `user_message: ` will be displayed prominently to the user, so it must the last thing echoed
 
-name="" # software name
-author="" # software author - OPTIONAL
-description="" # software description - OPTIONAL (but strongly recommended!)
-URL="" # software URL. Can contain multiple URLs - OPTIONAL
-options="iugedsrNADUOSLCI" # script options in use by software package. For example, for a package with no service, exclude `edsr`
-service_name="" # the name of the service/s, such as `chrony`. REQUIRED if service options are in use. If multiple services, separate by spaces "service1 service2"
-location="" # install location REQUIRED if not apt installed. Generally, we use `/opt/software-name`
-conflicts="" # comma delineated plain-text list of packages with which this package conflicts. Use the name as it appears in the $name field of the other package. Extra plaintext is allowed, such as "packageA, packageB, any other software that uses the Meshtastic CLI"
+
+name="name"   # software name
+author="author"   # software author - OPTIONAL
+description="description"   # software description - OPTIONAL (but strongly recommended!)
+URL="URL"   # software URL. Can contain multiple URLs - OPTIONAL
+options="iugedsrNADUOSLCI"   # script options in use by software package. For example, for a package with no service, exclude `edsr`
+service_name="service_name"   # the name of the service/s, such as `chrony`. REQUIRED if service options are in use. If multiple services, separate by spaces "service1 service2"
+location="/opt/location"   # install location REQUIRED if not apt installed. Generally, we use `/opt/software-name`
+conflicts="package name, other package name"   # comma delineated plain-text list of packages with which this package conflicts. Blank if none. Use the name as it appears in the $name field of the other package. Extra plaintext is allowed, such as "packageA, packageB, any other software that uses the Meshtastic CLI"
 
 
 if [ $# -eq 0 ]; then
@@ -55,31 +59,35 @@ fi
 
 # install script
 install() {
-  echo placeholder
+  echo "user_message: Exit message to user, displayed prominently in post-install"
+  exit 0 # should be `exit 1` if the installation failed
 }
 
 
 # uninstall script
 uninstall() {
-  echo placeholder
+  echo "user_message: Exit message to user, displayed prominently in post-install"
+  exit 0 # should be `exit 1` if the installation failed
 }
 
 
 #upgrade script
 upgrade() {
-  echo placeholder
+  echo "user_message: Exit message to user, displayed prominently in post-install"
+  exit 0 # should be `exit 1` if the installation failed
 }
 
-# Check if already installed. `exit 1` if yes, `exit 0` if no
+
+# Check if already installed. `exit 0` if yes, `exit 1` if no
 check() {
-        # the following works for cloned repos, but not for apt installs
-        # if [ -d "$location" ]; then
-        #   #echo "Already installed"
-        #   exit 1
-        # else
-        #   #echo "Not installed"
-        #   exit 0
-        # fi
+  #the following works for cloned repos, but not for apt installs
+  if [ -d "$location" ]; then
+    #echo "Already installed"
+    exit 0
+  else
+    #echo "Not installed"
+    exit 1
+  fi
 }
 
 while getopts ":h$options" opt; do
