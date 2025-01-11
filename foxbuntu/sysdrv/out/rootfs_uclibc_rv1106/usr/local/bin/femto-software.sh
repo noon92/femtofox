@@ -7,11 +7,11 @@ title="Software Manager"
 package_dir="/usr/local/bin/packages"
 
 install() {
-  dialog --title "$title" --yesno "\nInstall $1\n\nProceed?" 10 40
+  dialog --title "$title" --yesno "\nInstall $($package_dir/$1.sh -N)\n\nProceed?" 10 40
   if [ $? -eq 1 ]; then #if cancel/no
     return 1
   fi
-  echo "Installing $1..."
+  echo "Installing $($package_dir/$1.sh -N)..."
   # Run the installation script, capturing the output and displaying it in real time
   output=$(eval "$package_dir/$1.sh -i 2>&1 | tee /dev/tty")
   install_status=$?  # Capture the exit status of the eval command
@@ -19,26 +19,26 @@ install() {
   output=$(echo "$output" | sed '/user_message: /,$d') # remove the user message from the detailed output
 
   if [ $install_status -eq 0 ]; then # if the installation was successful
-    dialog --colors --title "$title" --beep --msgbox "\n\ZuInstallation of $1 successful!\Zn$([ -n "$user_message" ] && echo "\n\n$user_message")\n\nLog:\n$output" 0 0 # if there's a user_message, display it with two preceeding line breaks
+    dialog --colors --title "$title" --beep --msgbox "\n\ZuInstallation of $($package_dir/$1.sh -N) successful!\Zn$([ -n "$user_message" ] && echo "\n\n$user_message")\n\nLog:\n$(echo -e $output)" 0 0 # if there's a user_message, display it with two preceeding line breaks
   else
-    dialog --colors --title "$title" --beep --msgbox "\n\ZuInstallation of $1 FAILED!\Zn\n\n$user_message\n\nLog:\n$output" 0 0 # if there's a user_message, display it with two preceeding line breaks
+    dialog --colors --title "$title" --beep --msgbox "\n\ZuInstallation of $($package_dir/$1.sh -N) FAILED!\Zn\n\n$user_message\n\nLog:\n$(echo -e $output)" 0 0 # if there's a user_message, display it with two preceeding line breaks
   fi
 }
 
 uninstall() {
-  dialog --title "$title" --yesno "\nUninstall $1\n\nProceed?" 10 40
+  dialog --title "$title" --yesno "\nUninstall $1\n\nWill permanently delete all files and settings. Proceed?" 10 40
   if [ $? -eq 1 ]; then #if cancel/no
     return 1
   fi
-  echo "Uninstalling $1..."
+  echo "Uninstalling $($package_dir/$1.sh -N)..."
   output=$(eval "$package_dir/$1.sh -u 2>&1 | tee /dev/tty")
   install_status=$?  # Capture the exit status of the eval command
   user_message=$(echo "$output" | awk '/user_message: / {found=1; split($0, arr, "user_message: "); print arr[2]; next} found {print}' | sed '/^$/q') # grab the user_message, if present
   output=$(echo "$output" | sed '/user_message: /,$d') # remove the user message from the detailed output
   if [ $install_status -eq 0 ]; then # if the installation was successful
-    dialog --colors --title "$title" --beep --msgbox "\n\ZuUninstallation of $1 successful!\Zn$([ -n "$user_message" ] && echo "\n\n$user_message")\n\nLog:\n$output" 0 0 # if there's a user_message, display it with two preceeding line breaks
+    dialog --colors --title "$title" --beep --msgbox "\n\ZuUninstallation of $($package_dir/$1.sh -N) successful!\Zn$([ -n "$user_message" ] && echo "\n\n$user_message")\n\nLog:\n$output" 0 0 # if there's a user_message, display it with two preceeding line breaks
   else
-    dialog --colors --title "$title" --beep --msgbox "\n\ZuUninstallation of $1 FAILED!\Zn\n\n$user_message\n\nLog:\n$output" 0 0 # if there's a user_message, display it with two preceeding line breaks
+    dialog --colors --title "$title" --beep --msgbox "\n\ZuUninstallation of $($package_dir/$1.sh -N) FAILED!\Zn\n\n$user_message\n\nLog:\n$output" 0 0 # if there's a user_message, display it with two preceeding line breaks
   fi  
 }
 
@@ -47,15 +47,15 @@ upgrade() {
   if [ $? -eq 1 ]; then #if cancel/no
     return 1
   fi
-  echo "Upgrading $1..."
+  echo "Upgrading $($package_dir/$1.sh -N)..."
   output=$(eval "$package_dir/$1.sh -g 2>&1 | tee /dev/tty")
   install_status=$?  # Capture the exit status of the eval command
   user_message=$(echo "$output" | awk '/user_message: / {found=1; split($0, arr, "user_message: "); print arr[2]; next} found {print}' | sed '/^$/q') # grab the user_message, if present
   output=$(echo "$output" | sed '/user_message: /,$d') # remove the user message from the detailed output
   if [ $install_status -eq 0 ]; then # if the installation was successful
-    dialog --colors --title "$title" --beep --msgbox "\n\ZuUpgrade of $1 successful!\Zn$([ -n "$user_message" ] && echo "\n\n$user_message")\n\nLog:\n$output" 0 0 # if there's a user_message, display it with two preceeding line breaks
+    dialog --colors --title "$title" --beep --msgbox "\n\ZuUpgrade of $($package_dir/$1.sh -N) successful!\Zn$([ -n "$user_message" ] && echo "\n\n$user_message")\n\nLog:\n$output" 0 0 # if there's a user_message, display it with two preceeding line breaks
   else
-    dialog --colors --title "$title" --beep --msgbox "\n\ZuUpgrade of $1 FAILED!\Zn\n\n$user_message\n\nLog:\n$output" 0 0 # if there's a user_message, display it with two preceeding line breaks
+    dialog --colors --title "$title" --beep --msgbox "\n\ZuUpgrade of $($package_dir/$1.sh -N) FAILED!\Zn\n\n$user_message\n\nLog:\n$output" 0 0 # if there's a user_message, display it with two preceeding line breaks
   fi  
 
 }
@@ -91,6 +91,7 @@ package_menu() {
       $(if $package_dir/$1.sh -O | grep -q 'd' && $package_dir/$1.sh -I; then echo "Disable service x"; fi) \
       $(if $package_dir/$1.sh -O | grep -q 's' && $package_dir/$1.sh -I; then echo "Stop service x"; fi) \
       $(if $package_dir/$1.sh -O | grep -q 'r' && $package_dir/$1.sh -I; then echo "Start/restart service x"; fi) \
+      $(if $package_dir/$1.sh -O | grep -q 'S' && $package_dir/$1.sh -I; then echo "Get service status x"; fi) \
       "" "" \
       "Back to software manager" "" 3>&1 1>&2 2>&3)
     
@@ -110,6 +111,7 @@ package_menu() {
       "Disable service") eval "$package_dir/$1.sh -d" ;;
       "Stop service") eval "$package_dir/$1.sh -s" ;;
       "Start/restart service") eval "$package_dir/$1.sh -r" ;;
+      "Get service status") dialog --title "$title" --msgbox "$(eval "$package_dir/$1.sh -S")" 0 0 ;;
       "Back to software manager") break ;;
     esac
   done
@@ -123,10 +125,8 @@ title="$title"
     1 "Meshing Around by Spud" \
     2 "The Comms Channel BBS, TC²BBS" \
     3 "Curses Client for Meshtastic" \
-    4 "Mosquitto MQTT broker" \
-    5 "GPS and Telemetry" \
     "" ""\
-    6 "Back to Main Menu" 3>&1 1>&2 2>&3)
+    4 "Back to Main Menu" 3>&1 1>&2 2>&3)
   
   exit_status=$? # This line checks the exit status of the dialog command
   if [ $exit_status -ne 0 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
@@ -137,11 +137,14 @@ title="$title"
     1) package_intro "meshing_around" ;;
     2) package_intro "tc2_bbs" ;;
     3) package_intro "curses_client" ;;
-    4) mosquitto ;;
-    5) gpsd ;;
-    6) package_intro "software_template" ;;
-    7) break ;;
+    4) break ;;
   esac
 done
 
 exit 0
+
+
+    # 4 "Mosquitto MQTT broker" \
+    # 5 "GPS and Telemetry" \
+    # 4) mosquitto ;;
+    # 5) gpsd ;;
