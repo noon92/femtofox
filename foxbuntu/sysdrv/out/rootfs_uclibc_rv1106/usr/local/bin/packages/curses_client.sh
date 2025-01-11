@@ -19,6 +19,7 @@ Arguments:
 -d          Disable service, if applicable
 -s          Stop service
 -r          Start/Restart
+-l          Command to run software
     Information:
 -N          Get name
 -A          Get author
@@ -43,14 +44,15 @@ EOF
 # Everything following `user_message: ` will be displayed prominently to the user, so it must the last thing echoed
 
 
-name="TC2-BBS"   # software name
-author="The Comms Channel"   # software author - OPTIONAL
-description="The TC²-BBS system integrates with Meshtastic devices. The system allows for message handling, bulletin boards, mail systems, and a channel directory."   # software description - OPTIONAL (but strongly recommended!)
-URL="https://github.com/TheCommsChannel/TC2-BBS-mesh"   # software URL. Can contain multiple URLs - OPTIONAL
-options="xiugedsrNADUOSLCIto"   # script options in use by software package. For example, for a package with no service, exclude `edsr`
-service_name="mesh-bbs"   # the name of the service/s, such as `chrony`. REQUIRED if service options are in use. If multiple services, separate by spaces "service1 service2"
-location="/opt/TC2-BBS-mesh"   # install location REQUIRED if not apt installed. Generally, we use `/opt/software-name`
-conflicts="Meshing Around, other \"full control\" packages"   # comma delineated plain-text list of packages with which this package conflicts. Blank if none. Use the name as it appears in the $name field of the other package. Extra plaintext is allowed, such as "packageA, packageB, any other software that uses the Meshtastic CLI"
+name="Curses Client for Meshtastic"   # software name
+author="pdxlocations"   # software author - OPTIONAL
+description="Command line client using the curses library, powered by Meshtastic.org.\nAfter install, run \`curses\` to launch."   # software description - OPTIONAL (but strongly recommended!)
+URL="https://github.com/pdxlocations/curses-client-for-meshtastic/"   # software URL. Can contain multiple URLs - OPTIONAL
+options="xiuglNADUOLIto"   # script options in use by software package. For example, for a package with no service, exclude `edsr`
+launch="python /opt/curses-client-for-meshtastic/main.py --host"   # command to launch software, if applicable
+service_name=""   # the name of the service/s, such as `chrony`. REQUIRED if service options are in use. If multiple services, separate by spaces "service1 service2"
+location="/opt/curses-client-for-meshtastic"   # install location REQUIRED if not apt installed. Generally, we use `/opt/software-name`
+conflicts=""   # comma delineated plain-text list of packages with which this package conflicts. Blank if none. Use the name as it appears in the $name field of the other package. Extra plaintext is allowed, such as "packageA, packageB, any other software that uses the Meshtastic CLI"
 
 
 if [ $# -eq 0 ]; then
@@ -62,36 +64,33 @@ fi
 
 # install script
 install() {
-  if ! git clone https://github.com/TheCommsChannel/TC2-BBS-mesh.git $location; then
+  if ! git clone https://github.com/pdxlocations/curses-client-for-meshtastic.git /opt/curses-client-for-meshtastic; then
     echo "user_message: Git clone failed. Is internet connected?"
     exit 1
   fi
   chown -R femto $location #give ownership of installation directory to $user
   git config --global --add safe.directory $location # prevents git error when updating
 
-  cd $location
-  mv example_config.ini config.ini
-  sed -i 's/type = serial/type = tcp/' config.ini
-  sed -i 's/^# hostname = 192.168.x.x/hostname = 127.0.0.1/' config.ini
-  echo "Installation/upgrade successful! Adding/recreating service."
-  sed -i "s/pi/${SUDO_USER:-$(whoami)}/g" mesh-bbs.service
-  sed -i "s|/home/femto/|/opt/|g" mesh-bbs.service
-  cp mesh-bbs.service /etc/systemd/system/
-  systemctl enable mesh-bbs.service
-  systemctl restart mesh-bbs.service
-
-  echo "user_message: Installation complete, service launched. To adjust configuration, run \`sudo nano $location/config.ini\`"
-  exit 0
+  if ! grep -Fxq "alias curses" "/home/${SUDO_USER:-$(whoami)}/.bashrc"; then
+    echo "alias curses='python $location/main.py --host'" >> "/home/${SUDO_USER:-$(whoami)}/.bashrc"
+    echo "Shortcut \`curses\` added to .bashrc"
+  else
+    echo "Shortcut already exists in .bashrc"
+  fi
+  source /home/${SUDO_USER:-$(whoami)}/.bashrc
+  echo "user_message: To launch, run \`curses\`."
+  exit 0 # should be `exit 1` if the installation failed
 }
 
 
 # uninstall script
 uninstall() {
-  systemctl disable mesh-bbs.service
-  systemctl stop mesh-bbs.service
   rm -rf $location
-  echo "user_message: Service removed, all files deleted."
-  exit 0
+  sed -i "/alias curses/d" "/home/${SUDO_USER:-$(whoami)}/.bashrc"
+  echo "Shortcut \`curses\` removed from .bashrc"
+  source /home/${SUDO_USER:-$(whoami)}/.bashrc
+  echo "user_message: All files removed shortcut \`curses\` removed."
+  exit 0 # should be `exit 1` if the installation failed
 }
 
 
@@ -117,7 +116,6 @@ check() {
     exit 1
   fi
 }
-
 
 while getopts ":h$options" opt; do
   case ${opt} in
@@ -148,9 +146,13 @@ while getopts ":h$options" opt; do
     r) # Option -r (Start/Restart)
       systemctl restart $service_name
       ;;
+    l) # Option -l (Run software)
+      echo "Launching $name..."
+      sudo -u ${SUDO_USER:-$(whoami)} $launch 
+      ;;
     N) echo -e $name ;;
     A) echo -e $author ;;
-    D) echo -e $description ;;
+    D) echo $description ;;
     U) echo -e $URL ;;
     O) echo -e $options ;;
     S) # Option -S (Get service status)

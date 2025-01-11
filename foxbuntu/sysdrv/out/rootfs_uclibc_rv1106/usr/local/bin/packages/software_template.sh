@@ -1,14 +1,22 @@
-  #!/bin/bash
+#!/bin/bash
 if [[ $EUID -ne 0 ]]; then
-   echo "This script must be run as root. Try \`sudo femto-meshtasticd-config\`."
+   echo "This script must be run as root. Try \`sudo\`."
    exit 1
+fi
+if [ $# -eq 0 ]; then
+  echo "No arguments provided."
+  echo -e "$help"
+  exit 1
 fi
 
 args="$@" # arguments to this script
+interaction="true"
 help=$(cat <<EOF
 Arguments:
-    Actions:
 -h          This message
+    Environment - must be first argument:
+-x          User UI is not terminal (script interaction unavailable)
+    Actions:
 -i          Install
 -u          Uninstall
 -g          Upgrade
@@ -16,6 +24,7 @@ Arguments:
 -d          Disable service, if applicable
 -s          Stop service
 -r          Start/Restart
+-l          Command to run software
     Information:
 -N          Get name
 -A          Get author
@@ -34,9 +43,9 @@ EOF
 # Populate the install, uninstall and upgrade functions
 # Remember that this script may be launched in terminal, via web UI or another method, so inputs aren't really possible
 # Arguments to the script are stored in $args
-# For install/uninstall/upgrade, output should be given as echo or printf
+# This system supports both interactive and non-interactive installs. For non-interactive installs, $interaction="false". In this cause special instructions to the user should be given as user_message
 # Successful operations should `exit 0`, fails should `exit 1`
-# Messages to the user (such as configuration instructions, explanatory error messages, etc) should be given as: `echo "user_message: text"`.
+# Messages to the user (such as configuration instructions, explanatory error messages, etc) should be given as: `echo "user_message: text"`
 # Everything following `user_message: ` will be displayed prominently to the user, so it must the last thing echoed
 
 
@@ -44,48 +53,38 @@ name="name"   # software name
 author="author"   # software author - OPTIONAL
 description="description"   # software description - OPTIONAL (but strongly recommended!)
 URL="URL"   # software URL. Can contain multiple URLs - OPTIONAL
-options="iugedsrNADUOSLCI"   # script options in use by software package. For example, for a package with no service, exclude `edsr`
+options="xiugedsrlNADUOSLCIto"   # script options in use by software package. For example, for a package with no service, exclude `edsr`
+launch=""   # command to launch software, if applicable
 service_name="service_name"   # the name of the service/s, such as `chrony`. REQUIRED if service options are in use. If multiple services, separate by spaces "service1 service2"
 location="/opt/location"   # install location REQUIRED if not apt installed. Generally, we use `/opt/software-name`
 conflicts="package name, other package name"   # comma delineated plain-text list of packages with which this package conflicts. Blank if none. Use the name as it appears in the $name field of the other package. Extra plaintext is allowed, such as "packageA, packageB, any other software that uses the Meshtastic CLI"
 
-
-if [ $# -eq 0 ]; then
-  echo "No arguments provided."
-  echo -e "$help"
-  exit 1
-fi
-
-
 # install script
 install() {
   echo "user_message: Exit message to user, displayed prominently in post-install"
-  exit 0 # should be `exit 1` if the installation failed
+  exit 0 # should be `exit 1` if operation failed
 }
 
 
 # uninstall script
 uninstall() {
   echo "user_message: Exit message to user, displayed prominently in post-install"
-  exit 0 # should be `exit 1` if the installation failed
+  exit 0 # should be `exit 1` if operation failed
 }
 
 
 #upgrade script
 upgrade() {
   echo "user_message: Exit message to user, displayed prominently in post-install"
-  exit 0 # should be `exit 1` if the installation failed
+  exit 0 # should be `exit 1` if operation failed
 }
-
 
 # Check if already installed. `exit 0` if yes, `exit 1` if no
 check() {
   #the following works for cloned repos, but not for apt installs
   if [ -d "$location" ]; then
-    #echo "Already installed"
     exit 0
   else
-    #echo "Not installed"
     exit 1
   fi
 }
@@ -94,6 +93,9 @@ while getopts ":h$options" opt; do
   case ${opt} in
     h) # Option -h (help)
       echo -e "$help"
+      ;;
+    x) # Option -x (no user interaction available)
+      interaction="false"
       ;;
     i) # Option -i (install)
       install
@@ -116,9 +118,13 @@ while getopts ":h$options" opt; do
     r) # Option -r (Start/Restart)
       systemctl restart $service_name
       ;;
+    l) # Option -l (Run software)
+      echo "Launching $name..."
+      sudo -u ${SUDO_USER:-$(whoami)} $launch 
+      ;;
     N) echo -e $name ;;
     A) echo -e $author ;;
-    D) echo -e $description ;;
+    D) echo $description ;;
     U) echo -e $URL ;;
     O) echo -e $options ;;
     S) # Option -S (Get service status)

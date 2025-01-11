@@ -7,8 +7,10 @@ fi
 args="$@"
 help=$(cat <<EOF
 Arguments:
-    Actions:
 -h          This message
+    Environment - must be first argument:
+-x          User UI is not terminal (script interaction unavailable)
+    Actions:
 -i          Install
 -u          Uninstall
 -g          Upgrade
@@ -23,8 +25,8 @@ Arguments:
 -U          Get URL
 -O          Get options supported by this script
 -S          Get service status
--L          Install location
--C          Conflicts
+-L          Get Install location
+-C          Get Conflicts
 -I          Check if installed. Returns an error if not installed
 EOF
 )
@@ -34,16 +36,16 @@ EOF
 # Populate the install, uninstall and upgrade functions
 # Remember that this script may be launched in terminal, via web UI or another method, so inputs aren't really possible
 # Arguments to the script are stored in $args
-# For install/uninstall/upgrade, output should be given as echo or printf
+# This system supports both interactive and non-interactive installs. For non-interactive installs, $interaction="false". In this cause special instructions to the user should be given as user_message
 # Successful operations should `exit 0`, fails should `exit 1`
-# Messages to the user (such as configuration instructions, explanatory error messages, etc) should be given as: `echo "user_message: text"`.
-# Everything following `user_message` will be displayed prominently to the user, so it must the last thing echoed
+# Messages to the user (such as configuration instructions, explanatory error messages, etc) should be given as: `echo "user_message: text"`
+# Everything following `user_message: ` will be displayed prominently to the user, so it must the last thing echoed
 
 name="Meshing Around" # software name
 author="Spud" # software author - OPTIONAL
 description="Meshing Around is a feature-rich bot designed to enhance your Meshtastic network experience with a variety of powerful tools and fun features. Connectivity and utility through text-based message delivery. Whether you're looking to perform network tests, send messages, or even play games, mesh_bot.py has you covered." # software description - OPTIONAL (but strongly recommended!)
 URL="https://github.com/SpudGunMan/meshing-around" # software URL. Can contain multiple URLs - OPTIONAL
-options="iugedsrNADUOSLCI" # script options in use by software package. For example, for a package with no service, exclude `edsr`
+options="xiugedsrNADUOSLCIto" # script options in use by software package. For example, for a package with no service, exclude `edsr`
 service_name="mesh_bot pong_bot" # the name of the service, such as `chrony`. REQUIRED if service options are in use. If multiple services, separate by spaces "service1 service2"
 location="/opt/meshing-around" # install location REQUIRED if not apt installed. Generally, we use `/opt/software-name`
 conflicts="TC²-BBS, any other \"full control\" style bots" # comma delineated plain-text list of packages with which this package conflicts. Use the name as it appears in the $name field of the other package. Extra plaintext is allowed, such as "packageA, packageB, any other software that uses the Meshtastic CLI"
