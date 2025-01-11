@@ -1,7 +1,4 @@
 #!/bin/bash
-export NCURSES_NO_UTF8_ACS=1
-export TERM=screen
-export LANG=C.UTF-8
 
 title="Software Manager"
 package_dir="/usr/local/bin/packages"
@@ -14,12 +11,13 @@ install() {
   echo "Installing $($package_dir/$1.sh -N)..."
   # Run the installation script, capturing the output and displaying it in real time
   output=$(eval "$package_dir/$1.sh -i 2>&1 | tee /dev/tty")
+  echo $output
   install_status=$?  # Capture the exit status of the eval command
   user_message=$(echo "$output" | awk '/user_message: / {found=1; split($0, arr, "user_message: "); print arr[2]; next} found {print}' | sed '/^$/q') # grab the user_message, if present
-  output=$(echo "$output" | sed '/user_message: /,$d') # remove the user message from the detailed output
+  #output=$(echo -e "$output" | sed '/user_message: /,$d') # remove the user message from the detailed output
 
   if [ $install_status -eq 0 ]; then # if the installation was successful
-    dialog --colors --title "$title" --beep --msgbox "\n\ZuInstallation of $($package_dir/$1.sh -N) successful!\Zn$([ -n "$user_message" ] && echo "\n\n$user_message")\n\nLog:\n$(echo -e $output)" 0 0 # if there's a user_message, display it with two preceeding line breaks
+    dialog --colors --title "$title" --beep --msgbox "\n\ZuInstallation of $($package_dir/$1.sh -N) successful!\Zn$([ -n "$user_message" ] && echo "\n\n$user_message")\n\nLog:\n$(echo $output)" 0 0 # if there's a user_message, display it with two preceeding line breaks
   else
     dialog --colors --title "$title" --beep --msgbox "\n\ZuInstallation of $($package_dir/$1.sh -N) FAILED!\Zn\n\n$user_message\n\nLog:\n$(echo -e $output)" 0 0 # if there's a user_message, display it with two preceeding line breaks
   fi
@@ -34,11 +32,11 @@ uninstall() {
   output=$(eval "$package_dir/$1.sh -u 2>&1 | tee /dev/tty")
   install_status=$?  # Capture the exit status of the eval command
   user_message=$(echo "$output" | awk '/user_message: / {found=1; split($0, arr, "user_message: "); print arr[2]; next} found {print}' | sed '/^$/q') # grab the user_message, if present
-  output=$(echo "$output" | sed '/user_message: /,$d') # remove the user message from the detailed output
+  #output=$(echo "$output" | sed '/user_message: /,$d') # remove the user message from the detailed output
   if [ $install_status -eq 0 ]; then # if the installation was successful
-    dialog --colors --title "$title" --beep --msgbox "\n\ZuUninstallation of $($package_dir/$1.sh -N) successful!\Zn$([ -n "$user_message" ] && echo "\n\n$user_message")\n\nLog:\n$output" 0 0 # if there's a user_message, display it with two preceeding line breaks
+    dialog --colors --title "$title" --beep --msgbox "\n\ZuUninstallation of $($package_dir/$1.sh -N) successful!\Zn$([ -n "$user_message" ] && echo "\n\n$user_message")\n\nLog:\n$(echo -e "$output")" 0 0 # if there's a user_message, display it with two preceeding line breaks
   else
-    dialog --colors --title "$title" --beep --msgbox "\n\ZuUninstallation of $($package_dir/$1.sh -N) FAILED!\Zn\n\n$user_message\n\nLog:\n$output" 0 0 # if there's a user_message, display it with two preceeding line breaks
+    dialog --colors --title "$title" --beep --msgbox "\n\ZuUninstallation of $($package_dir/$1.sh -N) FAILED!\Zn\n\n$user_message\n\nLog:\n$(echo "$output")" 0 0 # if there's a user_message, display it with two preceeding line breaks
   fi  
 }
 
@@ -146,5 +144,6 @@ exit 0
 
     # 4 "Mosquitto MQTT broker" \
     # 5 "GPS and Telemetry" \
+    
     # 4) mosquitto ;;
     # 5) gpsd ;;
