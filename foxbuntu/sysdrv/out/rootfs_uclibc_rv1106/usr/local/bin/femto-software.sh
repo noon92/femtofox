@@ -1,186 +1,132 @@
 #!/bin/bash
+export NCURSES_NO_UTF8_ACS=1
+export TERM=screen
+export LANG=C.UTF-8
 
-uninstall="false"
+title="Software Manager"
+package_dir="/usr/local/bin/packages"
 
-meshing_around() { # Install Meshing Around
-  failedInstall=false
-      #check if /opt/meshing-around exists if not git clone
-  if [ ! -d /opt/meshing-around ]; then
-    dialog --title "$software" --yesno "Meshing Around is a feature-rich bot designed to enhance your Meshtastic network experience with a variety of powerful tools and fun features\nConnectivity and utility through text-based message delivery.\nWhether you're looking to perform network tests, send messages, or even play games, mesh_bot.py has you covered.\nInstallation requires internet connection.\n\nLearn more at https://github.com/SpudGunMan/meshing-around\nIf software is already present, will attempt to update.\n\nInstall?" 0 0
-    if [ $? -eq 0 ]; then #unless cancel/no
-      if ! git clone https://github.com/spudgunman/meshing-around /opt/meshing-around; then
-        dialog --title "$software" --msgbox "\nCloning of Meshing Around git repo failed.\nCheck internet connectivity." 10 60
-        failedInstall=true
-      fi
-    fi
+install() {
+  dialog --title "$title" --yesno "\nInstall $($package_dir/$1.sh -N)\n\nProceed?" 10 40
+  if [ $? -eq 1 ]; then #if cancel/no
+    return 1
+  fi
+  echo "Installing $($package_dir/$1.sh -N)..."
+  # Run the installation script, capturing the output and displaying it in real time
+  output=$(eval "$package_dir/$1.sh -i 2>&1 | tee /dev/tty")
+  install_status=$?  # Capture the exit status of the eval command
+  user_message=$(echo "$output" | awk '/user_message: / {found=1; split($0, arr, "user_message: "); print arr[2]; next} found {print}' | sed '/^$/q') # grab the user_message, if present
+  output=$(echo "$output" | sed '/user_message: /,$d') # remove the user message from the detailed output
+
+  if [ $install_status -eq 0 ]; then # if the installation was successful
+    dialog --colors --title "$title" --beep --msgbox "\n\ZuInstallation of $($package_dir/$1.sh -N) successful!\Zn$([ -n "$user_message" ] && echo "\n\n$user_message")\n\nLog:\n$(echo -e $output)" 0 0 # if there's a user_message, display it with two preceeding line breaks
   else
-    # /opt/meshing-around exists, check for updates
-    cd /opt/meshing-around
-    if ! sudo git pull; then
-      dialog --title "$software" --msgbox "\nFailed to update Meshing Around.\nCheck internet connectivity." 10 60
-      failedInstall=true
-    fi
-    # check if /opt/meshing-around/data has any .pkl files if so assume it's installed
-    if [ -n "$(find /opt/meshing-around/data -name '*.pkl' -print -quit)" ]; then
-      # todo uninstall?
-      dialog --title "$software" --yesno "Meshing Around appears installed and updated, do you want to edit the config file? (press ctl+o,enter to save, ctl+x to exit nano)" 0 0
-      if [ $? -eq 0 ]; then #unless cancel/no
-        sudo nano /opt/meshing-around/config.ini
-      fi
-      # set flag to not run install.sh
-      installed=true
-      echo "Restarting services..."
-      sudo systemctl restart mesh_bot
-      sudo systemctl restart pong_bot
-    fi
-  fi
-  # if /opt/meshing-around exists
-  if [ -f /opt/meshing-around/install.sh ] && [ "$installed" != true ] && [ "$failedInstall" != true ]; then
-    # ask what type of bot mesh or pong
-    dialog --title "$software" --yesno "Meshing Around can be configured to run as mesh_bot or pong_bot.\n\nRun mesh_bot?" 0 0
-    if [ $? -eq 0 ]; then #unless cancel/no
-      /opt/meshing-around/install.sh mesh
-      dialog --title "$software" --yesno "Would you like to edit the config file? (press ctl+s save, ctl+x to exit editor)" 0 0
-      if [ $? -eq 0 ]; then #unless cancel/no
-        sudo nano /opt/meshing-around/config.ini
-        echo "Restarting services..."
-        sudo systemctl restart mesh_bot
-      fi
-      # finished. display the contents of install_notes.txt
-      dialog --title "$software" --textbox /opt/meshing-around/install_notes.txt 20 60
-    else
-      /opt/meshing-around/install.sh pong
-      dialog --title "$software" --yesno "Would you like to edit the config file? (press ctl+s save, ctl+x to exit editor)" 0 0
-      if [ $? -eq 0 ]; then #unless cancel/no
-        sudo nano /opt/meshing-around/config.ini
-        echo "Restarting services..."
-        sudo systemctl restart pong_bot
-      fi
-      # finished. display the contents of install_notes.txt
-      dialog --title "$software" --textbox /opt/meshing-around/install_notes.txt 20 60
-    fi
+    dialog --colors --title "$title" --beep --msgbox "\n\ZuInstallation of $($package_dir/$1.sh -N) FAILED!\Zn\n\n$user_message\n\nLog:\n$(echo -e $output)" 0 0 # if there's a user_message, display it with two preceeding line breaks
   fi
 }
 
-
-tc2_bbs() { # Install TC²BBS
-  dialog --title "$software" --yesno "The TC²-BBS system integrates with Meshtastic devices. The system allows for message handling, bulletin boards, mail systems, and a channel directory.\nInstallation requires internet connection.\n\nLearn more at https://github.com/TheCommsChannel/TC2-BBS-mesh\nIf software is already present, will attempt to update.\n\nInstall?" 0 0
-  if [ $? -eq 0 ]; then #unless cancel/no
-    if [ ! -d /opt/TC2-BBS-mesh ]; then
-        if ! git clone https://github.com/TheCommsChannel/TC2-BBS-mesh.git /opt/TC2-BBS-mesh; then
-          dialog --title "$software" --msgbox "\nCloning of TC²-BBS git repo failed.\nCheck internet connectivity." 10 60
-          return
-        fi
-        chown -R femto /opt/TC2-BBS-mesh
-        git config --global --add safe.directory /opt/TC2-BBS-mesh # prevents git error when updating
-    else
-      # /opt/meshing-around exists, check for updates
-      cd /opt/TC2-BBS-mesh
-      if ! sudo git pull; then
-        dialog --title "$software" --msgbox "\nFailed to update TC²-BBS.\nCheck internet connectivity." 10 60
-        return
-      fi
-    fi
+uninstall() {
+  dialog --title "$title" --yesno "\nUninstall $1\n\nWill permanently delete all files and settings. Proceed?" 10 40
+  if [ $? -eq 1 ]; then #if cancel/no
+    return 1
+  fi
+  echo "Uninstalling $($package_dir/$1.sh -N)..."
+  output=$(eval "$package_dir/$1.sh -u 2>&1 | tee /dev/tty")
+  install_status=$?  # Capture the exit status of the eval command
+  user_message=$(echo "$output" | awk '/user_message: / {found=1; split($0, arr, "user_message: "); print arr[2]; next} found {print}' | sed '/^$/q') # grab the user_message, if present
+  output=$(echo "$output" | sed '/user_message: /,$d') # remove the user message from the detailed output
+  if [ $install_status -eq 0 ]; then # if the installation was successful
+    dialog --colors --title "$title" --beep --msgbox "\n\ZuUninstallation of $($package_dir/$1.sh -N) successful!\Zn$([ -n "$user_message" ] && echo "\n\n$user_message")\n\nLog:\n$output" 0 0 # if there's a user_message, display it with two preceeding line breaks
   else
-    return
+    dialog --colors --title "$title" --beep --msgbox "\n\ZuUninstallation of $($package_dir/$1.sh -N) FAILED!\Zn\n\n$user_message\n\nLog:\n$output" 0 0 # if there's a user_message, display it with two preceeding line breaks
+  fi  
+}
+
+upgrade() {
+  dialog --title "$title" --yesno "\nUpgrade $1\n\nProceed?" 10 40
+  if [ $? -eq 1 ]; then #if cancel/no
+    return 1
   fi
-  if [ ! -f /opt/TC2-BBS-mesh/config.ini ]; then # if the config file doesn't exist but the clone was successful, then we need to do some configuring and rejiggering
-		cd /opt/TC2-BBS-mesh
-		echo "Creating virtual environment. This can take a couple minutes."
-		python3 -m venv venv
-		source venv/bin/activate
-		pip install -r requirements.txt
-		mv example_config.ini config.ini
-		sed -i 's/type = serial/type = tcp/' config.ini
-		sed -i 's/^# hostname = 192.168.x.x/hostname = 127.0.0.1/' config.ini
-  fi
-  echo "Installation/upgrade successful! Adding/recreating service."
-  cd /opt/TC2-BBS-mesh
-  source venv/bin/activate
-  sed -i "s/pi/${SUDO_USER:-$(whoami)}/g" mesh-bbs.service
-  sed -i "s|/home/femto/|/opt/|g" mesh-bbs.service
-  cp mesh-bbs.service /etc/systemd/system/
-  sudo systemctl enable mesh-bbs.service
-  sudo systemctl restart mesh-bbs.service
+  echo "Upgrading $($package_dir/$1.sh -N)..."
+  output=$(eval "$package_dir/$1.sh -g 2>&1 | tee /dev/tty")
+  install_status=$?  # Capture the exit status of the eval command
+  user_message=$(echo "$output" | awk '/user_message: / {found=1; split($0, arr, "user_message: "); print arr[2]; next} found {print}' | sed '/^$/q') # grab the user_message, if present
+  output=$(echo "$output" | sed '/user_message: /,$d') # remove the user message from the detailed output
+  if [ $install_status -eq 0 ]; then # if the installation was successful
+    dialog --colors --title "$title" --beep --msgbox "\n\ZuUpgrade of $($package_dir/$1.sh -N) successful!\Zn$([ -n "$user_message" ] && echo "\n\n$user_message")\n\nLog:\n$output" 0 0 # if there's a user_message, display it with two preceeding line breaks
+  else
+    dialog --colors --title "$title" --beep --msgbox "\n\ZuUpgrade of $($package_dir/$1.sh -N) FAILED!\Zn\n\n$user_message\n\nLog:\n$output" 0 0 # if there's a user_message, display it with two preceeding line breaks
+  fi  
 
-  # for whatever reason, this is necessary
-  sleep 5
-  sudo systemctl restart mesh-bbs
-  
-  echo -e "\nPress any key to continue..."
-  read -n 1 -s -r
-  dialog --title "$software" --msgbox "\nInstallation complete." 8 50
 }
 
 
-curses_client() { # Install curses client
-  git clone https://github.com/pdxlocations/curses-client-for-meshtastic.git /opt/curses-client-for-meshtastic
-  ln -s /opt/curses-client-for-meshtastic/meshtastic-curses.py ~/meshtastic-curses.py
-  # config the curses client to localhost tcp TODO, permissions?
-  dialog --title "$software" --msgbox "\nInstallation complete.\n\nRun \`~/meshtastic-curses.py\` to launch." 10 60
+# build and display package intro
+package_intro() {
+  echo "Loading package info..."
+  # check if each field in the package info is supported by the package, and if so get it and insert it into the package info dialog
+  dialog --colors --title "$title" --msgbox "\
+    $($package_dir/$1.sh -N)\n\
+        $(if $package_dir/$1.sh -O | grep -q 'A'; then echo -e "by $($package_dir/$1.sh -A)"; fi)\n\
+$(if $package_dir/$1.sh -O | grep -q 'D'; then echo "\n$($package_dir/$1.sh -D)"; fi)\n\
+\n\
+$(echo "Currently:      " && $package_dir/$1.sh -I && echo "\Zuinstalled\Zn" || echo "\Zunot installed\Zn")\n\
+$(if $package_dir/$1.sh -O | grep -q 'L'; then echo "Installs to:    \Zu$($package_dir/$1.sh -L)\Zn"; fi)\n\
+$(if $package_dir/$1.sh -O | grep -q 'C'; then echo "Conflicts with: \Zu$($package_dir/$1.sh -C)\Zn\n"; fi)\n\
+An internet connection is required for installation.\n\
+$(if $package_dir/$1.sh -O | grep -q 'U'; then echo "\nFor more information, visit $($package_dir/$1.sh -U)"; fi)" 0 0
+  package_menu $1 # after user hits "OK", move on to package menu
 }
 
-
-mosquitto() { # Install mosquitto
-  apt update
-  DEBIAN_FRONTEND=noninteractive apt install -y --option Dpkg::Options::="--force-confold" mosquitto mosquitto-clients
-  # config mosquitto to listen on all interfaces and allow anonymous
-  sudo sh -c "echo 'listener 1883 0.0.0.0\nallow_anonymous true' >> /etc/mosquitto/mosquitto.conf"
-  sudo systemctl restart mosquitto
-  dialog --title "$software" --msgbox "\nInstallation complete.\n\nMosquitto service has been started." 10 60
+package_menu() {
+  while true; do
+    echo "Loading package menu..."
+    # for each line, check if it's supported by the package, display it if the current install state of the package is appropriate (example: don't display "install" if the package is already installed, don't display "stop service" for a package with no services)
+    choice=$(dialog --title "$title" --cancel-label "Back" --menu "$($package_dir/$1.sh -N)" 16 45 5 \
+      $(if $package_dir/$1.sh -O | grep -q 'l' && $package_dir/$1.sh -I; then echo "Run software x"; fi) \
+      $(if $package_dir/$1.sh -O | grep -q 'i' && ! $package_dir/$1.sh -I; then echo "Install x"; fi) \
+      $(if $package_dir/$1.sh -O | grep -q 'u' && $package_dir/$1.sh -I; then echo "Uninstall x"; fi) \
+      $(if $package_dir/$1.sh -O | grep -q 'g' && $package_dir/$1.sh -I; then echo "Upgrade x"; fi) \
+      $(if $package_dir/$1.sh -O | grep -q 'e' && $package_dir/$1.sh -I; then echo "Enable service x"; fi) \
+      $(if $package_dir/$1.sh -O | grep -q 'd' && $package_dir/$1.sh -I; then echo "Disable service x"; fi) \
+      $(if $package_dir/$1.sh -O | grep -q 's' && $package_dir/$1.sh -I; then echo "Stop service x"; fi) \
+      $(if $package_dir/$1.sh -O | grep -q 'r' && $package_dir/$1.sh -I; then echo "Start/restart service x"; fi) \
+      $(if $package_dir/$1.sh -O | grep -q 'S' && $package_dir/$1.sh -I; then echo "Get service status x"; fi) \
+      "" "" \
+      "Back to software manager" "" 3>&1 1>&2 2>&3)
+    
+    exit_status=$? # This line checks the exit status of the dialog command
+    
+    if [ $exit_status -ne 0 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
+      break
+    fi
+    
+    # execute the actual commands
+    case $choice in
+      "Run software") eval "$package_dir/$1.sh -l" ;;
+      "Install") install $1 ;;
+      "Uninstall") uninstall $1 ;;
+      "Upgrade") upgrade $1 ;;
+      "Enable service") eval "$package_dir/$1.sh -e" ;;
+      "Disable service") eval "$package_dir/$1.sh -d" ;;
+      "Stop service") eval "$package_dir/$1.sh -s" ;;
+      "Start/restart service") eval "$package_dir/$1.sh -r" ;;
+      "Get service status") dialog --title "$title" --msgbox "$(eval "$package_dir/$1.sh -S")" 0 0 ;;
+      "Back to software manager") break ;;
+    esac
+  done
 }
-
-
-gpsd() { # Install gpsd 
-  apt update
-  DEBIAN_FRONTEND=noninteractive apt install -y --option Dpkg::Options::="--force-confold" gpsd gpsd-clients python-gps
-  # do stuff TODO config gpsd and chrony
-  # telemetry script
-  sudo systemctl restart gpsd
-  dialog --title "$software" --msgbox "\nInstallation complete.\n\nGPSD." 10 60
-}
-
-
-help=$(cat <<EOF
-If script is run without arguments, a dialog menu UI will load.
-Options are:
--h        This message
--u        Uninstall - must be FIRST argument. if this is not set, the default operation is to install the software
--s        Meshing Around by Spud
--b        The Comms Channel BBS, TC²BBS
--c        Curses Client for Meshtastic
--m        Mosquitto MQTT broker
--g        GPS and Telemetry
-EOF
-)
-# Parse options
-while getopts ":husbcmg" opt; do
-  case ${opt} in
-    h) echo help && exit 0 ;;
-    u) uninstall="true" ;;
-    s) meshing_around ;;
-    b) tc2_bbs ;;
-    c) curses_client ;;
-    m) mosquitto ;;
-    g) gpsd ;;
-  esac
-done
-if [ -n "$1" ]; then
-  exit
-fi
 
 
 while true; do
-title="Software"
+title="$title"
   option=""
   option=$(dialog --cancel-label "Back" --menu "$title" 0 0 6 \
     1 "Meshing Around by Spud" \
     2 "The Comms Channel BBS, TC²BBS" \
     3 "Curses Client for Meshtastic" \
-    4 "Mosquitto MQTT broker" \
-    5 "GPS and Telemetry" \
     "" ""\
-    6 "Back to Main Menu" 3>&1 1>&2 2>&3)
+    4 "Back to Main Menu" 3>&1 1>&2 2>&3)
   
   exit_status=$? # This line checks the exit status of the dialog command
   if [ $exit_status -ne 0 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
@@ -188,13 +134,17 @@ title="Software"
   fi
   
   case $option in
-    1) meshing_around ;;
-    2) tc2_bbs ;;
-    3) curses_client ;;
-    4) mosquitto ;;
-    5) gpsd ;;
-    6) break ;;
+    1) package_intro "meshing_around" ;;
+    2) package_intro "tc2_bbs" ;;
+    3) package_intro "curses_client" ;;
+    4) break ;;
   esac
 done
 
 exit 0
+
+
+    # 4 "Mosquitto MQTT broker" \
+    # 5 "GPS and Telemetry" \
+    # 4) mosquitto ;;
+    # 5) gpsd ;;
