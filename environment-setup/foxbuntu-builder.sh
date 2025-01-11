@@ -252,6 +252,20 @@ update_image() {
   create_image
 }
 
+full_rebuild() {
+  build_env
+  build_uboot
+  sync_foxbuntu_changes
+  build_kernelconfig
+  build_rootfs
+  rsync -aHAXv --progress --keep-dirlinks --itemize-changes /home/${sudoer}/femtofox/foxbuntu/sysdrv/out/rootfs_uclibc_rv1106/ /home/${sudoer}/luckfox-pico/sysdrv/out/rootfs_uclibc_rv1106/
+  build_firmware
+  install_rootfs
+  build_rootfs
+  build_firmware
+  create_image
+}
+
 install_rootfs() {
   echo "Modifying rootfs..."
   cd /home/${sudoer}/luckfox-pico/output/image
@@ -356,7 +370,7 @@ usage() {
   echo "To modify the chroot and build an updated image use the arg 'modify_chroot'."
   echo "To modify the kernel and build an updated image use the arg 'modify_kernel'."
   echo "To specify a custom chroot script use the arg '--chroot-script /full/path/to/custom.chroot'"
-  echo "other args: rebuild_chroot inject_chroot build_env sync_foxbuntu_changes build_kernelconfig install_rootfs build_rootfs build_uboot build_firmware create_image"
+  echo "other args: full_rebuild rebuild_chroot inject_chroot build_env sync_foxbuntu_changes build_kernelconfig install_rootfs build_rootfs build_uboot build_firmware create_image"
   echo "Example:  sudo ~/foxbunto_env_setup.sh sdk_install"
   echo "Example:  sudo ~/foxbunto_env_setup.sh modify_chroot"
   echo "Example:  sudo ~/foxbunto_env_setup.sh --chroot-script /home/user/custom.chroot"
@@ -385,35 +399,37 @@ elif [[ -z ${1} ]]; then
     CHOICE=$(dialog --clear --no-cancel --backtitle "Foxbuntu SDK Builder" \
       --title "Main Menu" \
       --menu "Choose an action:" 20 60 12 \
-      1 "Get Image Updates" \
-      2 "Modify Kernel Menu" \
-      3 "Enter and Modify Chroot" \
-      4 "Rebuild Chroot" \
-      5 "Inject Chroot Script (CAUTION)" \
-      6 "Manual Build Environment" \
-      7 "Manual Build U-Boot" \
-      8 "Manual Build RootFS" \
-      9 "Manual Build Firmware" \
-      10 "Manual Create Final Image" \
-      11 "SDK Install (Run this first.)" \
-      12 "Exit" \
+      1 "Full Image Rebuild" \
+      2 "Get Image Updates" \
+      3 "Modify Kernel Menu" \
+      4 "Enter and Modify Chroot" \
+      5 "Rebuild Chroot" \
+      6 "Inject Chroot Script (CAUTION)" \
+      7 "Manual Build Environment" \
+      8 "Manual Build U-Boot" \
+      9 "Manual Build RootFS" \
+      10 "Manual Build Firmware" \
+      11 "Manual Create Final Image" \
+      12 "SDK Install (Run this first.)" \
+      13 "Exit" \
       2>&1 >/dev/tty)
 
     clear
 
     case $CHOICE in
-      1) update_image ;;
-      2) modify_kernel ;;
-      3) modify_chroot ;;
-      4) rebuild_chroot ;;
-      5) inject_chroot ;;
-      6) build_env ;;
-      7) build_uboot ;;
-      8) build_rootfs ;;
-      9) build_firmware ;;
-      10) create_image ;;
-      11) sdk_install ;;
-      12) echo "Exiting..."; break ;;
+      1) full_rebuild ;;
+      2) update_image ;;
+      3) modify_kernel ;;
+      4) modify_chroot ;;
+      5) rebuild_chroot ;;
+      6) inject_chroot ;;
+      7) build_env ;;
+      8) build_uboot ;;
+      9) build_rootfs ;;
+      10) build_firmware ;;
+      11) create_image ;;
+      12) sdk_install ;;
+      13) echo "Exiting..."; break ;;
       *) echo "Invalid option, please try again." ;;
     esac
 
