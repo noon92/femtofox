@@ -49,64 +49,34 @@ EOF
 # Everything following `user_message: ` will be displayed prominently to the user, so it must the last thing echoed
 
 
-name="TC2-BBS"   # software name
-author="The Comms Channel"   # software author - OPTIONAL
-description="The TC²-BBS system integrates with Meshtastic devices. The system allows for message handling, bulletin boards, mail systems, and a channel directory."   # software description - OPTIONAL (but strongly recommended!)
-URL="https://github.com/TheCommsChannel/TC2-BBS-mesh"   # software URL. Can contain multiple URLs - OPTIONAL
-options="xiugedsrNADUOSLCIto"   # script options in use by software package. For example, for a package with no service, exclude `edsr`
+name="name"   # software name
+author="author"   # software author - OPTIONAL
+description="description"   # software description - OPTIONAL (but strongly recommended!)
+URL="URL"   # software URL. Can contain multiple URLs - OPTIONAL
+options="xiugedsrlNADUOSLCIto"   # script options in use by software package. For example, for a package with no service, exclude `edsr`
 launch=""   # command to launch software, if applicable
-service_name="mesh-bbs"   # the name of the service/s, such as `chrony`. REQUIRED if service options are in use. If multiple services, separate by spaces "service1 service2"
-location="/opt/TC2-BBS-mesh"   # install location REQUIRED if not apt installed. Generally, we use `/opt/software-name`
-conflicts="Meshing Around, other \"full control\" packages"   # comma delineated plain-text list of packages with which this package conflicts. Blank if none. Use the name as it appears in the $name field of the other package. Extra plaintext is allowed, such as "packageA, packageB, any other software that uses the Meshtastic CLI"
+service_name="service_name"   # the name of the service/s, such as `chrony`. REQUIRED if service options are in use. If multiple services, separate by spaces "service1 service2"
+location="/opt/location"   # install location REQUIRED if not apt installed. Generally, we use `/opt/software-name`
+conflicts="package name, other package name"   # comma delineated plain-text list of packages with which this package conflicts. Blank if none. Use the name as it appears in the $name field of the other package. Extra plaintext is allowed, such as "packageA, packageB, any other software that uses the Meshtastic CLI"
 
 # install script
 install() {
-  if ! git clone https://github.com/TheCommsChannel/TC2-BBS-mesh.git $location; then
-    echo "user_message: Git clone failed. Is internet connected?"
-    exit 1
-  fi
-  chown -R femto $location #give ownership of installation directory to $user
-  git config --global --add safe.directory $location # prevents git error when updating
-
-  cd $location
-  mv example_config.ini config.ini
-  sed -i 's/type = serial/type = tcp/' config.ini
-  sed -i 's/^# hostname = 192.168.x.x/hostname = 127.0.0.1/' config.ini
-  echo "Installation/upgrade successful! Adding/recreating service."
-  sed -i "s/pi/${SUDO_USER:-$(whoami)}/g" $service_name.service
-  sed -i "s|/home/${SUDO_USER:-$(whoami)}/|/opt/|g" $service_name.service
-  sed -i 's|/opt/TC2-BBS-mesh/venv/bin/python3|python|g' mesh-bbs.service 
-  cp $service_name.service /etc/systemd/system/
-  systemctl daemon-reload
-  systemctl enable $service_name.service
-  systemctl restart $service_name.service
-
-  echo "user_message: Installation complete, service launched. To adjust configuration, run \`sudo nano $location/config.ini\`"
-  exit 0
+  echo "user_message: Exit message to user, displayed prominently in post-install"
+  exit 0 # should be `exit 1` if operation failed
 }
 
 
 # uninstall script
 uninstall() {
-  # stop, disable and remove the service, reload systemctl daemon, remove the installation directory and quit
-  systemctl disable $service_name
-  systemctl stop $service_name
-  rm /etc/systemd/system/$service_name.service
-  systemctl daemon-reload
-  rm -rf $location
-  echo "user_message: Service removed, all files deleted."
-  exit 0
+  echo "user_message: Exit message to user, displayed prominently in post-install"
+  exit 0 # should be `exit 1` if operation failed
 }
 
 
 #upgrade script
 upgrade() {
-  cd $location
-  if ! git pull; then
-    echo "user_message: Git pull failed. Is internet connected?"
-    exit 1
-  fi
-  exit 0
+  echo "user_message: Exit message to user, displayed prominently in post-install"
+  exit 0 # should be `exit 1` if operation failed
 }
 
 # Check if already installed. `exit 0` if yes, `exit 1` if no

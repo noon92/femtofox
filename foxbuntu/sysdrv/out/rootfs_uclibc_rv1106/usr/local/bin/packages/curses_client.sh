@@ -5,12 +5,12 @@ if [[ $EUID -ne 0 ]]; then
 fi
 
 args="$@" # arguments to this script
-interaction="true"
+interactive="true"
 help=$(cat <<EOF
 Arguments:
 -h          This message
     Environment - must be first argument:
--x          User UI is not terminal (script interaction unavailable)
+-x          User UI is not terminal (script interactive unavailable)
     Actions:
 -i          Install
 -u          Uninstall
@@ -38,7 +38,7 @@ EOF
 # Populate the install, uninstall and upgrade functions
 # Remember that this script may be launched in terminal, via web UI or another method, so inputs aren't really possible
 # Arguments to the script are stored in $args
-# This system supports both interactive and non-interactive installs. For non-interactive installs, $interaction="false". In this cause special instructions to the user should be given as user_message
+# This system supports both interactive and non-interactive installs. For non-interactive installs, $interactive="false". In this cause special instructions to the user should be given as user_message, such as `After installation, edit /opt/software/config.ini`
 # Successful operations should `exit 0`, fails should `exit 1`
 # Messages to the user (such as configuration instructions, explanatory error messages, etc) should be given as: `echo "user_message: text"`
 # Everything following `user_message: ` will be displayed prominently to the user, so it must the last thing echoed
@@ -123,7 +123,7 @@ while getopts ":h$options" opt; do
       echo -e "$help"
       ;;
     x) # Option -x (no user interaction available)
-      interaction="false"
+      interactive="false"
       ;;
     i) # Option -i (install)
       install

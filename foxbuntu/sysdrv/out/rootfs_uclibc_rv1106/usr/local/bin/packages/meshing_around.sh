@@ -1,15 +1,21 @@
 #!/bin/bash
 if [[ $EUID -ne 0 ]]; then
-   echo "This script must be run as root. Try \`sudo femto-meshtasticd-config\`."
+   echo "This script must be run as root. Try \`sudo\`."
    exit 1
 fi
+if [ $# -eq 0 ]; then
+  echo "No arguments provided."
+  echo -e "$help"
+  exit 1
+fi
 
-args="$@"
+args="$@" # arguments to this script
+interactive="true"
 help=$(cat <<EOF
 Arguments:
 -h          This message
     Environment - must be first argument:
--x          User UI is not terminal (script interaction unavailable)
+-x          User UI is not terminal (script interactive unavailable)
     Actions:
 -i          Install
 -u          Uninstall
@@ -18,6 +24,7 @@ Arguments:
 -d          Disable service, if applicable
 -s          Stop service
 -r          Start/Restart
+-l          Command to run software
     Information:
 -N          Get name
 -A          Get author
@@ -36,110 +43,68 @@ EOF
 # Populate the install, uninstall and upgrade functions
 # Remember that this script may be launched in terminal, via web UI or another method, so inputs aren't really possible
 # Arguments to the script are stored in $args
-# This system supports both interactive and non-interactive installs. For non-interactive installs, $interaction="false". In this cause special instructions to the user should be given as user_message
+# This system supports both interactive and non-interactive installs. For non-interactive installs, $interactive="false". In this cause special instructions to the user should be given as user_message, such as `After installation, edit /opt/software/config.ini`
 # Successful operations should `exit 0`, fails should `exit 1`
 # Messages to the user (such as configuration instructions, explanatory error messages, etc) should be given as: `echo "user_message: text"`
 # Everything following `user_message: ` will be displayed prominently to the user, so it must the last thing echoed
+
 
 name="Meshing Around" # software name
 author="Spud" # software author - OPTIONAL
 description="Meshing Around is a feature-rich bot designed to enhance your Meshtastic network experience with a variety of powerful tools and fun features. Connectivity and utility through text-based message delivery. Whether you're looking to perform network tests, send messages, or even play games, mesh_bot.py has you covered." # software description - OPTIONAL (but strongly recommended!)
 URL="https://github.com/SpudGunMan/meshing-around" # software URL. Can contain multiple URLs - OPTIONAL
-options="xiugedsrNADUOSLCIto" # script options in use by software package. For example, for a package with no service, exclude `edsr`
+options="xiugedsrNADUOSLCIto"   # script options in use by software package. For example, for a package with no service, exclude `edsr`
+launch=""   # command to launch software, if applicable
 service_name="mesh_bot pong_bot" # the name of the service, such as `chrony`. REQUIRED if service options are in use. If multiple services, separate by spaces "service1 service2"
 location="/opt/meshing-around" # install location REQUIRED if not apt installed. Generally, we use `/opt/software-name`
 conflicts="TC²-BBS, any other \"full control\" style bots" # comma delineated plain-text list of packages with which this package conflicts. Use the name as it appears in the $name field of the other package. Extra plaintext is allowed, such as "packageA, packageB, any other software that uses the Meshtastic CLI"
 
-if [ $# -eq 0 ]; then
-  echo "No arguments provided."
-  echo -e "$help"
-  exit 1
-fi
-
-
+# install script
 install() {
-  failedInstall=false
-      #check if /opt/meshing-around exists if not git clone
-  if [ ! -d /opt/meshing-around ]; then
-    dialog --title "$software" --yesno "\nInstallation requires internet connection.\n\nLearn more at \nIf software is already present, will attempt to update.\n\nInstall?" 0 0
-    if [ $? -eq 0 ]; then #unless cancel/no
-      if ! git clone https://github.com/spudgunman/meshing-around /opt/meshing-around; then
-        dialog --title "$software" --msgbox "\nCloning of Meshing Around git repo failed.\nCheck internet connectivity." 10 60
-        failedInstall=true
-      fi
-    fi
-  else
-    # /opt/meshing-around exists, check for updates
-    cd /opt/meshing-around
-    if ! sudo git pull; then
-      dialog --title "$software" --msgbox "\nFailed to update Meshing Around.\nCheck internet connectivity." 10 60
-      failedInstall=true
-    fi
-    # check if /opt/meshing-around/data has any .pkl files if so assume it's installed
-    if [ -n "$(find /opt/meshing-around/data -name '*.pkl' -print -quit)" ]; then
-      # todo uninstall?
-      dialog --title "$software" --yesno "Meshing Around appears installed and updated, do you want to edit the config file? (press ctl+o,enter to save, ctl+x to exit nano)" 0 0
-      if [ $? -eq 0 ]; then #unless cancel/no
-        sudo nano /opt/meshing-around/config.ini
-      fi
-      # set flag to not run install.sh
-      installed=true
-      echo "Restarting services..."
-      sudo systemctl restart mesh_bot
-      sudo systemctl restart pong_bot
-    fi
+  if ! git clone https://github.com/spudgunman/meshing-around $location; then
+    echo "user_message: Git clone failed. Is internet connected?"
+    exit 1
   fi
-  # if /opt/meshing-around exists
-  if [ -f /opt/meshing-around/install.sh ] && [ "$installed" != true ] && [ "$failedInstall" != true ]; then
-    # ask what type of bot mesh or pong
-    dialog --title "$software" --yesno "Meshing Around can be configured to run as mesh_bot or pong_bot.\n\nRun mesh_bot?" 0 0
-    if [ $? -eq 0 ]; then #unless cancel/no
-      /opt/meshing-around/install.sh mesh
-      dialog --title "$software" --yesno "Would you like to edit the config file? (press ctl+s save, ctl+x to exit editor)" 0 0
-      if [ $? -eq 0 ]; then #unless cancel/no
-        sudo nano /opt/meshing-around/config.ini
-        echo "Restarting services..."
-        sudo systemctl restart mesh_bot
-      fi
-      # finished. display the contents of install_notes.txt
-      dialog --title "$software" --textbox /opt/meshing-around/install_notes.txt 20 60
-    else
-      /opt/meshing-around/install.sh pong
-      dialog --title "$software" --yesno "Would you like to edit the config file? (press ctl+s save, ctl+x to exit editor)" 0 0
-      if [ $? -eq 0 ]; then #unless cancel/no
-        sudo nano /opt/meshing-around/config.ini
-        echo "Restarting services..."
-        sudo systemctl restart pong_bot
-      fi
-      # finished. display the contents of install_notes.txt
-      dialog --title "$software" --textbox /opt/meshing-around/install_notes.txt 20 60
-    fi
+  if [ "$interactive" = "true" ]; then #interactive install
+    eval "$location/install.sh"
+    echo "user_message: To change settings, run \`sudo nano $location/config.ini\`"
+    exit 0
+  else
+    echo "user_message: IMPORTANT: To complete installation, run \`sudo $location/install.sh\`\nTo change settings, run \`sudo nano $location/config.ini\`"
+    exit 0
   fi
 }
 
 
 # uninstall script
 uninstall() {
-  echo "user_message: Exit message to user, displayed prominently in post-install"
-  exit 0 # should be `exit 1` if the installation failed
+  # stop, disable and remove the service, reload systemctl daemon, remove the installation directory and quit
+  systemctl stop $service_name
+  systemctl disable $service_name
+  rm /etc/systemd/system/$service_name.service
+  systemctl daemon-reload
+  rm -rf $location
+  echo "user_message: Service removed, all files deleted."
+  exit 0
 }
 
 
 #upgrade script
 upgrade() {
-  echo "user_message: Exit message to user, displayed prominently in post-install"
-  exit 0 # should be `exit 1` if the installation failed
+  cd $location
+  if ! git pull; then
+    echo "user_message: Git pull failed. Is internet connected?"
+    exit 1
+  fi
+  exit 0
 }
-
 
 # Check if already installed. `exit 0` if yes, `exit 1` if no
 check() {
   #the following works for cloned repos, but not for apt installs
   if [ -d "$location" ]; then
-    #echo "Already installed"
     exit 0
   else
-    #echo "Not installed"
     exit 1
   fi
 }
@@ -148,6 +113,10 @@ while getopts ":h$options" opt; do
   case ${opt} in
     h) # Option -h (help)
       echo -e "$help"
+      ;;
+    x) # Option -x (no user interaction available)
+      echo "Running in non-interactive mode"
+      interactive="false"
       ;;
     i) # Option -i (install)
       install
@@ -170,9 +139,13 @@ while getopts ":h$options" opt; do
     r) # Option -r (Start/Restart)
       systemctl restart $service_name
       ;;
+    l) # Option -l (Run software)
+      echo "Launching $name..."
+      sudo -u ${SUDO_USER:-$(whoami)} $launch 
+      ;;
     N) echo -e $name ;;
     A) echo -e $author ;;
-    D) echo -e $description ;;
+    D) echo $description ;;
     U) echo -e $URL ;;
     O) echo -e $options ;;
     S) # Option -S (Get service status)
