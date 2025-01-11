@@ -1,4 +1,4 @@
-  #!/bin/bash
+#!/bin/bash
 if [[ $EUID -ne 0 ]]; then
    echo "This script must be run as root. Try \`sudo femto-meshtasticd-config\`."
    exit 1
@@ -70,14 +70,9 @@ install() {
   fi
   chown -R femto $location #give ownership of installation directory to $user
   git config --global --add safe.directory $location # prevents git error when updating
-
-  if ! grep -Fxq "alias curses" "/home/${SUDO_USER:-$(whoami)}/.bashrc"; then
-    echo "alias curses='python $location/main.py --host'" >> "/home/${SUDO_USER:-$(whoami)}/.bashrc"
-    echo "Shortcut \`curses\` added to .bashrc"
-  else
-    echo "Shortcut already exists in .bashrc"
-  fi
-  source /home/${SUDO_USER:-$(whoami)}/.bashrc
+  echo "Creating \`curses\` shortcut."
+  echo -e "#!/bin/bash\n$launch" | sudo tee /usr/local/bin/curses > /dev/null
+  chmod +x /usr/local/bin/curses
   echo "user_message: To launch, run \`curses\`."
   exit 0 # should be `exit 1` if the installation failed
 }
@@ -86,13 +81,10 @@ install() {
 # uninstall script
 uninstall() {
   rm -rf $location
-  sed -i "/alias curses/d" "/home/${SUDO_USER:-$(whoami)}/.bashrc"
-  echo "Shortcut \`curses\` removed from .bashrc"
-  source /home/${SUDO_USER:-$(whoami)}/.bashrc
-  echo "user_message: All files removed shortcut \`curses\` removed."
+  rm /usr/local/bin/curses
+  echo "user_message: All files removed."
   exit 0 # should be `exit 1` if the installation failed
 }
-
 
 #upgrade script
 upgrade() {
