@@ -71,7 +71,11 @@ install() {
   chown -R femto $location #give ownership of installation directory to $user
   git config --global --add safe.directory $location # prevents git error when updating
   echo "Creating \`curses\` shortcut."
-  echo -e "#!/bin/bash\n$launch" | sudo tee /usr/local/bin/curses > /dev/null
+  echo -e "#!/bin/bash\n\
+export NCURSES_NO_UTF8_ACS=1\n\
+export TERM=xterm-256color\n\
+export LANG=C.UTF-8\n\
+$launch" | sudo tee /usr/local/bin/curses > /dev/null
   chmod +x /usr/local/bin/curses
   echo "user_message: To launch, run \`curses\`."
   exit 0 # should be `exit 1` if the installation failed
