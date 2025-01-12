@@ -22,9 +22,9 @@ Proceed?" 14 60
 fi
 
 # Perform filesystem resize
+  log_message "Resizing filesystem. This can take up to 10 minutes, depending on microSD card size and speed"
   sudo resize2fs /dev/mmcblk1p5
   sudo resize2fs /dev/mmcblk1p6
-  log_message "Resizing /dev/mmcblk1p7 can take up to 10 minutes, depending on microSD card size and speed."
   sudo resize2fs /dev/mmcblk1p7
 
 	# allocate swap file
