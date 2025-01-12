@@ -212,19 +212,16 @@ set_lora_radio() {
   while true; do
     local option=""
     option=$(dialog --menu "Select your installed Meshtastic LoRa radio." 0 0 10 \
-      1 "ebyte-e22-900m30s (Femtofox Pro)" \
-      2 "ebyte-e22-900m22s" \
-      3 "ebyte-e80-900m22s" \
-      4 "heltec-ht-ra62" \
-      5 "seeed-wio-sx1262" \
-      6 "waveshare-sx126x-xxxm" \
-      7 "ai-thinker-ra-01sh" \
-      8 "sx1262_tcxo" \
-      9 "sx1262_xtal" \
-      10 "lr1121_tcxo" \
-      11 "none (simulated radio)" \
+       "Ebyte e22-900m30s" "(sx1262_tcxo)" \
+       "Ebyte e22-900m22s" "(sx1262_tcxo)"\
+       "Ebyte e80-900m22s" "(sx1262_xtal)"\
+       "Heltec ht-ra62" "(sx1262_tcxo)"\
+       "Seeed wio-sx1262" "(sx1262_tcxo)"\
+       "Waveshare sx126x-xxxm" "(sx1262_xtal)"\
+       "AI Thinker ra-01sh" "(sx1262_xtal)"\
+       "none" "(simulated radio)"\
       "" "" \
-    12 "Skip" 3>&1 1>&2 2>&3)
+    "Skip" "" 3>&1 1>&2 2>&3)
     
     exit_status=$? # This line checks the exit status of the dialog command
     if [ $exit_status -ne 0 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
@@ -233,35 +230,26 @@ set_lora_radio() {
     
     local radio=""
     case $option in
-      1)
+      "Ebyte e22-900m30s")
         radio="sx1262_tcxo"
       ;;
-      2)
+      "Ebyte e22-900m22s")
         radio="sx1262_tcxo"
       ;;
-      3)
+      "Ebyte e80-900m22s")
         radio="sx1262_xtal"
       ;;
-      4)
+      "Heltec ht-ra62")
         radio="sx1262_tcxo"
       ;;
-      5)
+      "Seeed wio-sx1262")
         radio="sx1262_tcxo"
       ;;
-      6)
+      "Waveshare sx126x-xxxm")
         radio="sx1262_xtal"
       ;;
-      7)
+      "AI Thinker ra-01sh")
         radio="sx1262_xtal"
-      ;;
-      8)
-        radio="sx1262_tcxo"
-      ;;
-      9)
-        radio="sx1262_xtal"
-      ;;
-      10)
-        radio="lr1121_tcxo"
       ;;
       11)
         radio="none"
@@ -329,7 +317,7 @@ meshtasticd_settings() {
         fi
       ;;
       3)
-        dialog --colors --title "LoRa radio" --msgbox "Currently configured LoRa radio: $(replace_colors "$(femto-meshtasticd-config.sh -k)")" 6 40
+        dialog --colors --title "LoRa radio" --msgbox "Currently configured LoRa radio:\n$(replace_colors "$(femto-meshtasticd-config.sh -k)")$([ -d /etc/meshtasticd/config.d ] && files=$(ls -d /etc/meshtasticd/config.d/* 2>/dev/null) && [ -n "$files" ] && echo "\n\nConfiguration files in use:\n$files" | paste -sd, -)" 10 55
       ;;
       4)
         set_lora_radio
