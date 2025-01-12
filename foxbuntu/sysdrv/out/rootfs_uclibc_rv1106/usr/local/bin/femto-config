@@ -183,7 +183,7 @@ utilities() {
     case $option in
       1) femto-set-timezone.sh ;; # set timezone)
       2) # Kernel modules)
-        dialog --title "$title" --msgbox "Kernel modules are loadable pieces of code that extend a Linux kernel's functionality without requiring a reboot. Common examples include device drivers, file systems, or system calls.\n\nThis tool will allow you to add pre-compiled modules to the Foxbuntu kernel.\n\nModules currently autostarting at boot:\n$(sed -n '6,$p' /etc/modules | sed ':a;N;$!ba;s/\n/, /g;s/, $//')" 16 65
+        dialog --title "$title" --msgbox "Kernel modules are loadable pieces of code that extend a Linux kernel's functionality without requiring a reboot. Common examples include device drivers, file systems, or system calls.\n\nThis tool will allow you to add pre-compiled modules to the Foxbuntu kernel.\n\nModules currently autostarting at boot: $(modules=$(sed -n '6,$p' /etc/modules | sed ':a;N;$!ba;s/\n/, /g;s/, $//'); [ -z "$modules" ] && echo "none" || echo "$modules")\n\nCurrently active modules: $(lsmod | awk 'NR>1 {print $1}' | tr '\n' ' ')" 18 65
         femto-kernel-modules.sh
       ;;
       3) femto-runonce.sh ;; # Re-run first-boot script)
@@ -251,10 +251,10 @@ set_lora_radio() {
       "AI Thinker ra-01sh")
         radio="sx1262_xtal"
       ;;
-      11)
+      "none")
         radio="none"
       ;;
-      12)
+      "Skip")
         return
       ;;
     esac
@@ -317,7 +317,7 @@ meshtasticd_settings() {
         fi
       ;;
       3)
-        dialog --colors --title "LoRa radio" --msgbox "Currently configured LoRa radio:\n$(replace_colors "$(femto-meshtasticd-config.sh -k)")$([ -d /etc/meshtasticd/config.d ] && files=$(ls -d /etc/meshtasticd/config.d/* 2>/dev/null) && [ -n "$files" ] && echo "\n\nConfiguration files in use:\n$files" | paste -sd, -)" 10 55
+dialog --colors --title "LoRa radio" --msgbox "Currently configured LoRa radio:\n$(replace_colors "$(output=$(femto-meshtasticd-config.sh -k); [ -z "$output" ] && echo none || echo "$output")")$([ -d /etc/meshtasticd/config.d ] && files=$(ls -d /etc/meshtasticd/config.d/* 2>/dev/null) && [ -n "$files" ] && echo "\n\nConfiguration files in use:\n$files" | paste -sd, -)" 10 55
       ;;
       4)
         set_lora_radio
