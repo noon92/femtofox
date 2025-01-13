@@ -8,7 +8,8 @@ wpa_supplicant_conf="/etc/wpa_supplicant/wpa_supplicant.conf"
 help=$(cat <<EOF
 Options are:
 -h             This message
--x "up"        Set wifi status (options are "up" or "down")
+-x "up"        Set wifi state (options are "up" or "down")
+-T             Toggle wifi state
 -s "SSID"      Set Wi-Fi SSID
 -p "PSK"       Set Wi-Fi PSK (password)
 -c "COUNTRY"   Set Wi-Fi 2-letter country code (such as US, DE)
@@ -36,16 +37,27 @@ if [ $# -eq 0 ]; then
 fi
 
 # Parse options
-while getopts ":hx:s:p:c:ewn:tr" opt; do
+while getopts ":hx:Ts:p:c:ewn:tr" opt; do
   case ${opt} in
     h) # Option -h (help)
       echo -e "$help"
       ;;
-    x) # Option -x (set wifi status)
+    x) # Option -x (set wifi state)
       if [ $OPTARG = "up" ]; then
+        logger "Setting wifi to up"
         ip link set wlan0 up
       elif [ $OPTARG = "down" ]; then
+        logger "Setting wifi to up"
         ip link set wlan0 down
+      fi
+      ;;
+    T) # Option -T (toggle wifi state)
+      if [ "$(cat /etc/wifi_state.txt)" == "up" ]; then
+        logger "Toggling wifi off"
+        femto-network-config.sh -x "up"
+      else
+        logger "Toggling wifi on"
+        femto-network-config.sh -x "down"
       fi
       ;;
     s) # Option -s (ssid)
