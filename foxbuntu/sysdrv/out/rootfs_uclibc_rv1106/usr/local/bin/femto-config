@@ -165,16 +165,17 @@ utilities() {
   local title="Utilities"
   while true; do
     local option=""
-    option=$(dialog --cancel-label "Back" --menu "$title" 16 40 4 \
+    option=$(dialog --cancel-label "Back" --menu "$title" 17 40 4 \
       1 "Set system timezone" \
       2 "Kernel modules" \
       3 "Re-run first-boot script" \
       4 "Run USB configuration tool" \
       5 "Run OEM luckfox-config" \
-      6 "Reboot" \
-      7 "Shutdown" \
+      6 "Process viewer/manager" \
+      7 "Reboot" \
+      8 "Shutdown" \
       "" "" \
-      8 "Back to Main Menu" 3>&1 1>&2 2>&3)
+      9 "Back to Main Menu" 3>&1 1>&2 2>&3)
     
     exit_status=$? # This line checks the exit status of the dialog command
     if [ $exit_status -ne 0 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
@@ -196,14 +197,15 @@ utilities() {
         fi
       ;;
       5) luckfox-config ;;
-      6) 
+      6) htop ;;
+      7) 
         dialog --title "$title" --yesno "Reboot now?\n\nTip: Reboot can also be triggered by long-pressing the BOOT button on the luckfox." 10 45
         if [ $? -eq 0 ]; then #unless cancel/no
           dialog --infobox "Rebooting..." 5 45
           reboot
         fi
       ;;
-      7)
+      8)
         dialog --title "$title" --yesno "Shut down now?\n\nTo power system back on, disconnect/reconnect power.\n\nThe system shutdown command prevents damage to the filesystem from power interrupts, but does not stop power consumption.\n\nTip: You can also shut down the Femtofox by pressing the BOOT button for 5 seconds or by running \`sudo halt\`." 14 60
         if [ $? -eq 0 ]; then #unless cancel/no
           dialog --infobox "Shutting down...\n\nPower consumption will not stop." 5 45
@@ -211,7 +213,7 @@ utilities() {
           halt
         fi
       ;;
-      8) return ;;
+      9) return ;;
     esac
   done
 }

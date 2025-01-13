@@ -1,0 +1,5 @@
+#!/bin/bash
+export NCURSES_NO_UTF8_ACS=1
+export TERM=xterm-256color
+export LANG=C.UTF-8
+python /opt/curses-client-for-meshtastic/main.py --host

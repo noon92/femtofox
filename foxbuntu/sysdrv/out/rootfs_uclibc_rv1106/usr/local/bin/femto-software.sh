@@ -120,12 +120,13 @@ while true; do
 title="$title"
   option=""
   option=$(dialog --cancel-label "Back" --menu "$title" 0 0 6 \
-    1 "Meshing Around by Spud" \
-    2 "The Comms Channel BBS, TC²BBS" \
-    3 "Curses Client for Meshtastic" \
+    1 "The Comms Channel BBS, TC²BBS" \
+    2 "Curses Client for Meshtastic" \
+    3 "Meshing Around by Spud" \
     4 "Mosquitto MQTT Broker" \
+    5 "Mosquitto MQTT Client" \
     "" ""\
-    5 "Back to Main Menu" 3>&1 1>&2 2>&3)
+    6 "Back to Main Menu" 3>&1 1>&2 2>&3)
   
   exit_status=$? # This line checks the exit status of the dialog command
   if [ $exit_status -ne 0 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
@@ -133,11 +134,12 @@ title="$title"
   fi
   
   case $option in
-    1) package_intro "meshing_around" ;;
-    2) package_intro "tc2_bbs" ;;
-    3) package_intro "curses_client" ;;
+    1) package_intro "tc2_bbs" ;;
+    2) package_intro "curses_client" ;;
+    3) package_intro "meshing_around" ;;
     4) package_intro "mosquitto_mqtt_broker" ;;
-    5) break ;;
+    5) package_intro "mosquitto_mqtt_client" ;;
+    6) break ;;
   esac
 done
 

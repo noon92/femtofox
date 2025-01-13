@@ -61,6 +61,8 @@ fi
 lines="export NCURSES_NO_UTF8_ACS=1
 export TERM=xterm-256color
 export LANG=C.UTF-8"
+
+# Check if the lines are already in .bashrc
 if ! grep -Fxq "$lines" /home/femto/.bashrc; then
     echo "$lines" >> /home/femto/.bashrc
     echo "Added TERM, LANG and NCURSES_NO_UTF8_ACS to .bashrc"
