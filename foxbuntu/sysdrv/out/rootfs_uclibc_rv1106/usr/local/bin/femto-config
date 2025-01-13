@@ -172,8 +172,9 @@ utilities() {
       4 "Run USB configuration tool" \
       5 "Run OEM luckfox-config" \
       6 "Reboot" \
+      7 "Shutdown" \
       "" "" \
-      7 "Back to Main Menu" 3>&1 1>&2 2>&3)
+      8 "Back to Main Menu" 3>&1 1>&2 2>&3)
     
     exit_status=$? # This line checks the exit status of the dialog command
     if [ $exit_status -ne 0 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
@@ -202,7 +203,15 @@ utilities() {
           reboot
         fi
       ;;
-      7) return ;;
+      7)
+        dialog --title "$title" --yesno "Shut down now?\n\nTo power system back on, disconnect/reconnect power.\n\nThe system shutdown command prevents damage to the filesystem from power interrupts, but does not stop power consumption.\n\nTip: You can also shut down the Femtofox by pressing the BOOT button for 5 seconds or by running \`sudo halt\`." 14 60
+        if [ $? -eq 0 ]; then #unless cancel/no
+          dialog --infobox "Shutting down...\n\nPower consumption will not stop." 5 45
+          logger "User requested system halt"
+          halt
+        fi
+      ;;
+      8) return ;;
     esac
   done
 }
