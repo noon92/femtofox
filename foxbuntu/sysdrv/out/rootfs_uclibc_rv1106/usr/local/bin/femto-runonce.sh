@@ -57,6 +57,19 @@ else
   log_message "eth0 already exists in /etc/network/interfaces, skipping."
 fi
 
+# Add term stuff to .bashrc
+lines="export NCURSES_NO_UTF8_ACS=1
+export TERM=xterm-256color
+export LANG=C.UTF-8"
+
+# Check if the lines are already in .bashrc
+if ! grep -Fxq "$lines" /home/femto/.bashrc; then
+    echo "$lines" >> /home/femto/.bashrc
+    echo "Added TERM, LANG and NCURSES_NO_UTF8_ACS to .bashrc"
+else
+    echo "TERM, LANG and NCURSES_NO_UTF8_ACS already present in .bashrc, skipping"
+fi
+
 # set meshtastic nodeid to derivative of CPU serial number (unique to this board)
 seed=$(sed -n '/Serial/ s/^.*: \(.*\)$/\U\1/p' /proc/cpuinfo | bc | tail -c 9)
 #seed=$((0x$(awk '/Serial/ {print $3}' /proc/cpuinfo) & 0x3B9AC9FF)) #alternate method for generating seed - not in use

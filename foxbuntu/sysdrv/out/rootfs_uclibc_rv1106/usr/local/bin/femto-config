@@ -137,7 +137,7 @@ femto_pinouts() {
   while true; do
     local option=""
     option=$(dialog --cancel-label "Back" --menu "Pinouts" 15 40 5 \
-      1 "Femtofox" \
+      1 "Femtofox Pro/CE" \
       2 "Femtofox Zero" \
       3 "Femtofox Tiny" \
       4 "Luckfox Pico Mini" \
@@ -151,7 +151,7 @@ femto_pinouts() {
     fi
     
     case $option in
-      1) dialog --title "Femtofox" --msgbox "$(femto-pinout.sh -f)" 41 70 ;;
+      1) dialog --title "Femtofox" --msgbox "$(femto-pinout.sh -f)" 43 68 ;;
       2) dialog --title "Femtofox Zero" --msgbox "$(femto-pinout.sh -z)" 34 48 ;;
       3) dialog --title "Femtofox Tiny" --msgbox "$(femto-pinout.sh -t)" 38 70 ;;
       4) dialog --title "Luckfox Pico Mini" --msgbox "$(femto-pinout.sh -l)" 23 65 ;;
@@ -210,16 +210,18 @@ utilities() {
 #set lora radio
 set_lora_radio() {
   while true; do
+    echo "Checking LoRa radio..."
     local option=""
-    option=$(dialog --menu "Select your installed Meshtastic LoRa radio." 0 0 10 \
-       "Ebyte e22-900m30s" "(sx1262_tcxo)" \
-       "Ebyte e22-900m22s" "(sx1262_tcxo)"\
-       "Ebyte e80-900m22s" "(sx1262_xtal)"\
-       "Heltec ht-ra62" "(sx1262_tcxo)"\
-       "Seeed wio-sx1262" "(sx1262_tcxo)"\
-       "Waveshare sx126x-xxxm" "(sx1262_xtal)"\
-       "AI Thinker ra-01sh" "(sx1262_xtal)"\
-       "none" "(simulated radio)"\
+    #Display filename, if exists: $(files=$(ls /etc/meshtasticd/config.d/* 2>/dev/null) && [ -n "$files" ] && echo "\n\nConfiguration files in use:\n$files" | paste -sd, -))
+    option=$(dialog --colors --cancel-label "Back" --title "Meshtastic LoRa radio" --menu "Currently configured LoRa radio:\n$(replace_colors "$(femto-meshtasticd-config.sh -k)")$(ls -1 /etc/meshtasticd/config.d 2>/dev/null | paste -sd ', ' - | sed 's/^/ (/; s/$/)/; s/,/, /g' | grep -v '^ ()$')" 18 50 10 \
+       "Ebyte e22-900m30s" "(SX1262_TCXO)" \
+       "Ebyte e22-900m22s" "(SX1262_TCXO)"\
+       "Ebyte e80-900m22s" "(SX1262_XTAL)"\
+       "Heltec ht-ra62" "(SX1262_TCXO)"\
+       "Seeed wio-sx1262" "(SX1262_TCXO)"\
+       "Waveshare sx126x-xxxm" "(SX1262_XTAL)"\
+       "AI Thinker ra-01sh" "(SX1262_XTAL)"\
+       "None" "(simulated radio)"\
       "" "" \
     "Skip" "" 3>&1 1>&2 2>&3)
     
@@ -251,7 +253,7 @@ set_lora_radio() {
       "AI Thinker ra-01sh")
         radio="sx1262_xtal"
       ;;
-      "none")
+      "None")
         radio="none"
       ;;
       "Skip")
@@ -269,6 +271,7 @@ set_lora_radio() {
 meshtasticd_settings() {
   local title="Meshtastic Settings"
   while true; do
+      echo "Checking Meshtasticd service state..."
     if echo "$(systemctl status meshtasticd)" | grep -q "active (running)"; then
       local service_state="\Z2\Zuonline\Zn"
     elif echo "$(systemctl status meshtasticd)" | grep -q "inactive (dead)"; then
@@ -277,23 +280,22 @@ meshtasticd_settings() {
       local service_state="unknown"
     fi
     local option=""
-    option=$(dialog --colors --title "$title" --cancel-label "Back" --menu "Meshtasticd service is $service_state$(femto-meshtasticd-config.sh -k | grep -q 'simulated' && echo '\n\Z1Using simulated radio\Zn')" 23 50 4 \
+    option=$(dialog --colors --title "$title" --cancel-label "Back" --menu "Meshtasticd service is $service_state$(femto-meshtasticd-config.sh -k | grep -q 'simulated' && echo '\n\Z1Using simulated radio\Zn')" 22 50 4 \
       1 "View configuration URL & QR code" \
       2 "Set new configuration URL" \
-      3 "View lora radio selection" \
-      4 "Set LoRa radio" \
-      5 "View admin keys" \
-      6 "Set admin key" \
-      7 "Clear admin keys" \
-      8 "Legacy admin channel" \
-      9 "Detailed Meshtasticd service status" \
-      10 "Mesh connectivity test" \
-      11 "Start/restart Meshtasticd service" \
-      12 "Stop Meshtasticd service" \
-      13 "Upgrade/install Meshtasticd" \
-      14 "Uninstall Meshtasticd" \
+      3 "Set LoRa radio" \
+      4 "View admin keys" \
+      5 "Set admin key" \
+      6 "Clear admin keys" \
+      7 "Legacy admin channel" \
+      8 "Detailed Meshtasticd service status" \
+      9 "Mesh connectivity test" \
+      10 "Start/restart Meshtasticd service" \
+      11 "Stop Meshtasticd service" \
+      12 "Upgrade/install Meshtasticd" \
+      13 "Uninstall Meshtasticd" \
       "" "" \
-    15 "Back to Main Menu" 3>&1 1>&2 2>&3)
+    14 "Back to Main Menu" 3>&1 1>&2 2>&3)
     
     exit_status=$? # This line checks the exit status of the dialog command
     if [ $exit_status -ne 0 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
@@ -317,30 +319,27 @@ meshtasticd_settings() {
         fi
       ;;
       3)
-dialog --colors --title "LoRa radio" --msgbox "Currently configured LoRa radio:\n$(replace_colors "$(output=$(femto-meshtasticd-config.sh -k); [ -z "$output" ] && echo none || echo "$output")")$([ -d /etc/meshtasticd/config.d ] && files=$(ls -d /etc/meshtasticd/config.d/* 2>/dev/null) && [ -n "$files" ] && echo "\n\nConfiguration files in use:\n$files" | paste -sd, -)" 10 55
-      ;;
-      4)
         set_lora_radio
       ;;
-      5)
+      4)
         dialog --infobox "Getting admin keys..." 5 45
         dialog --title "Admin keys" --msgbox "Up to 3 admin keys are permitted, more will be ignored.\n\nKeys:$(femto-meshtasticd-config.sh -v | tail -n 1 | sed 's/|n/\\n/g')" 0 0
       ;;
-      6) #set admin key)
+      5) #set admin key)
         key=$(dialog --title "Meshtastic Admin Key" --inputbox "Meshtastic admin key - up to 3, more will be ignored.\n\n(SHIFT+INS to paste):" 11 40 3>&1 1>&2 2>&3)
         if [ -n "$key" ]; then #if a URL was entered
           femto-meshtasticd-config.sh -a "$key"
           pause
         fi
       ;;
-      7)
+      6)
         dialog --title "$title" --yesno "Meshtasticd can have up to 3 admin keys.\nClear admin key list?" 0 0
         if [ $? -eq 0 ]; then #unless cancel/no
           femto-meshtasticd-config.sh -c
           pause
         fi
       ;;
-      8) #legacy admin)
+      7) #legacy admin)
         dialog --infobox "Getting current legacy admin state..." 5 45
         state=$(sudo femto-meshtasticd-config.sh -p)
         if echo "$state" | grep -q "True"; then
@@ -364,46 +363,46 @@ dialog --colors --title "LoRa radio" --msgbox "Currently configured LoRa radio:\
           esac
         done
       ;;
-      9) #check meshtasticd service status)
+      8) #check meshtasticd service status)
         dialog --infobox "Getting Meshtasticd service status..." 5 45
         dialog --title "Meshtasticd service status" --msgbox "$(systemctl status meshtasticd)" 0 0
       ;;
-      10) #test mesh connectivity)
+      9) #test mesh connectivity)
         dialog --title "Meshtastic connectivity test" --yesno "Will send \"test\" to channel 0 and wait for acknowledgement. Will try up to 3 times.\n\nPerform test?" 10 45
         if [ $? -eq 0 ]; then #unless cancel/no
           dialog --infobox "Performing mesh connectivity test.\n\nThis may take a while..." 6 45
           dialog --title "Meshtasticd service status" --msgbox "$(femto-meshtasticd-config.sh -r)" 0 0
         fi
       ;;
-      11) #start/restart meshtasticd)
+      10) #start/restart meshtasticd)
         dialog --title "$title" --yesno "Start/restart Meshtasticd service?" 5 45
         if [ $? -eq 0 ]; then #unless cancel/no
           femto-meshtasticd-config.sh -s
           dialog --msgbox "Meshtasticd service started/restarted." 5 45
         fi
       ;;
-      12) #stop meshtasticd)
+      11) #stop meshtasticd)
         dialog --title "$title" --yesno "Stop Meshtasticd service?" 5 45
         if [ $? -eq 0 ]; then #unless cancel/no
           femto-meshtasticd-config.sh -t
           dialog --msgbox "Meshtasticd service stopped." 5 45
         fi
       ;;
-      13) #Upgrade meshtasticd)
+      12) #Upgrade meshtasticd)
         dialog --title "$title" --yesno "Upgrade Meshtasticd?\nRequires internet connection." 0 0
         if [ $? -eq 0 ]; then #unless cancel/no
           femto-meshtasticd-config.sh -u
           pause
         fi
       ;;
-      14) #uninstall meshtasticd)
+      13) #uninstall meshtasticd)
         dialog --title "$title" --yesno "Uninstall Meshtasticd?\n\nFoxbuntu was designed with Meshtasticd integration in mind, and may behave unexpectedly if Meshtasticd is removed." 0 0
         if [ $? -eq 0 ]; then
           femto-meshtasticd-config.sh -x
           dialog --msgbox "Meshtasticd uninstalled. To purge all remnants, run \`sudo apt purge\`.\nAfter reinstallation but before first launch, run the \"first boot script\" from the misc menu." 8 40
         fi
       ;;
-      15)
+      14)
         return
       ;;
     esac

@@ -81,7 +81,7 @@ while getopts ":hgkl:q:va:cpo:struxm" opt; do
       echo $url
       ;;
     k) # Option -k (get current lora radio model)
-      ls /etc/meshtasticd/config.d 2>/dev/null | xargs -r -n 1 basename | sed 's/^femtofox_//;s/\.yaml$//' || echo -e "\033[0;31mnone (simulated radio)\033[0m"
+      ls /etc/meshtasticd/config.d 2>/dev/null | xargs -r -n 1 basename | sed 's/^femtofox_//;s/\.yaml$//' | grep . || echo -e "\033[0;31mnone (simulated radio)\033[0m"
       ;;
     l) # Option -l (choose lora radio model)
       prepare="rm -f /etc/meshtasticd/config.d/femtofox* && echo \"Radio type $OPTARG selected.\""
