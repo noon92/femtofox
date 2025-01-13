@@ -165,7 +165,7 @@ utilities() {
   local title="Utilities"
   while true; do
     local option=""
-    option=$(dialog --cancel-label "Back" --menu "$title" 15 40 4 \
+    option=$(dialog --cancel-label "Back" --menu "$title" 16 40 4 \
       1 "Set system timezone" \
       2 "Kernel modules" \
       3 "Re-run first-boot script" \
@@ -282,7 +282,7 @@ meshtasticd_settings() {
   while true; do
       echo "Checking Meshtasticd service state..."
     if echo "$(systemctl status meshtasticd)" | grep -q "active (running)"; then
-      local service_state="\Z2\Zuonline\Zn"
+      local service_state="\Z4\Zuonline\Zn"
     elif echo "$(systemctl status meshtasticd)" | grep -q "inactive (dead)"; then
       local service_state="\Z1\Zuoffline\Zn"
     else

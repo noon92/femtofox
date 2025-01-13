@@ -89,7 +89,7 @@ Hostname:        $(hostname).local"
       if [ "$(ip link show wlan0)" ]; then # if wlan0 exists
         mac_address_line="MAC address:      $(ifconfig wlan0 | grep ether | awk '{print $2}')\n"
         if [ "$(cat /etc/wifi_state.txt)" = "up" ]; then
-            wifi_status="\033[4m\033[0;32menabled\033[0m"
+            wifi_status="\033[4m\033[0;34menabled\033[0m"
         else
           if ip link show wlan0 &>/dev/null; then # if wlan0 exists
             wifi_status="\033[0;31mdisabled\033[0m"
