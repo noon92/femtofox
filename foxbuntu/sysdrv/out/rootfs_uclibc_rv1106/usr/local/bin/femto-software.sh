@@ -10,7 +10,7 @@ install() {
   fi
   echo "Installing $($package_dir/$1.sh -N)..."
   # Run the installation script, capturing the output and displaying it in real time
-  output=$(eval "$package_dir/$1.sh -i 2>&1 | tee /dev/tty")
+  output=$($package_dir/$1.sh -i)
   echo $output
   install_status=$?  # Capture the exit status of the eval command
   user_message=$(echo "$output" | awk '/user_message: / {found=1; split($0, arr, "user_message: "); print arr[2]; next} found {print}' | sed '/^$/q') # grab the user_message, if present
@@ -24,7 +24,7 @@ install() {
 }
 
 uninstall() {
-  dialog --title "$title" --yesno "\nUninstall $1\n\nWill permanently delete all files and settings. Proceed?" 10 40
+  dialog --title "$title" --yesno "\nUninstall $1\n\nProceed?" 10 40
   if [ $? -eq 1 ]; then #if cancel/no
     return 1
   fi
@@ -69,10 +69,10 @@ package_intro() {
 $(if $package_dir/$1.sh -O | grep -q 'D'; then echo "\n$($package_dir/$1.sh -D)"; fi)\n\
 \n\
 $(echo "Currently:      " && $package_dir/$1.sh -I && echo "\Zuinstalled\Zn" || echo "\Zunot installed\Zn")\n\
-$(if $package_dir/$1.sh -O | grep -q 'L'; then echo "Installs to:    \Zu$($package_dir/$1.sh -L)\Zn"; fi)\n\
-$(if $package_dir/$1.sh -O | grep -q 'C'; then echo "Conflicts with: \Zu$($package_dir/$1.sh -C)\Zn\n"; fi)\n\
+$(if output=$($package_dir/$1.sh -L); [ -n "$output" ]; then echo "Installs to:    \Zu$output\Zn"; fi)\
+$(if output=$($package_dir/$1.sh -C); [ -n "$output" ]; then echo "Installs to:    \Zu$output\Zn"; fi)\
 An internet connection is required for installation.\n\
-$(if $package_dir/$1.sh -O | grep -q 'U'; then echo "\nFor more information, visit $($package_dir/$1.sh -U)"; fi)" 50 75
+$(if $package_dir/$1.sh -O | grep -q 'U'; then echo "\nFor more information, visit $($package_dir/$1.sh -U)"; fi)" 0 0
   package_menu $1 # after user hits "OK", move on to package menu
 }
 
@@ -80,7 +80,7 @@ package_menu() {
   while true; do
     echo "Loading package menu..."
     # for each line, check if it's supported by the package, display it if the current install state of the package is appropriate (example: don't display "install" if the package is already installed, don't display "stop service" for a package with no services)
-    choice=$(dialog --title "$title" --cancel-label "Back" --menu "$($package_dir/$1.sh -N)" 16 45 5 \
+    choice=$(dialog --title "$title" --cancel-label "Back" --menu "$($package_dir/$1.sh -N)" 17 45 5 \
       $(if $package_dir/$1.sh -O | grep -q 'l' && $package_dir/$1.sh -I; then echo "Run software x"; fi) \
       $(if $package_dir/$1.sh -O | grep -q 'i' && ! $package_dir/$1.sh -I; then echo "Install x"; fi) \
       $(if $package_dir/$1.sh -O | grep -q 'u' && $package_dir/$1.sh -I; then echo "Uninstall x"; fi) \
@@ -123,8 +123,9 @@ title="$title"
     1 "Meshing Around by Spud" \
     2 "The Comms Channel BBS, TC²BBS" \
     3 "Curses Client for Meshtastic" \
+    4 "Mosquitto MQTT Broker" \
     "" ""\
-    4 "Back to Main Menu" 3>&1 1>&2 2>&3)
+    5 "Back to Main Menu" 3>&1 1>&2 2>&3)
   
   exit_status=$? # This line checks the exit status of the dialog command
   if [ $exit_status -ne 0 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
@@ -135,7 +136,8 @@ title="$title"
     1) package_intro "meshing_around" ;;
     2) package_intro "tc2_bbs" ;;
     3) package_intro "curses_client" ;;
-    4) break ;;
+    4) package_intro "mosquitto_mqtt_broker" ;;
+    5) break ;;
   esac
 done
 
