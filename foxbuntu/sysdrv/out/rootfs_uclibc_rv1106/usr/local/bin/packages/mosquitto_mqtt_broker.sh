@@ -49,53 +49,51 @@ EOF
 # Everything following `user_message: ` will be displayed prominently to the user, so it must the last thing echoed
 
 
-name="name"   # software name
-author="author"   # software author - OPTIONAL
-description="description"   # software description - OPTIONAL (but strongly recommended!)
-URL="URL"   # software URL. Can contain multiple URLs - OPTIONAL
-options="xiugedsrlNADUOSLCIto"   # script options in use by software package. For example, for a package with no service, exclude `edsr`
+name="Mosquitto MQTT Broker"   # software name
+author="Eclipse Foundation"   # software author - OPTIONAL
+description="Eclipse Mosquitto is an open source (EPL/EDL licensed) message broker that implements the MQTT protocol versions 5.0, 3.1.1 and 3.1. Mosquitto is lightweight and is suitable for use on all devices from low power single board computers to full servers.\n\nThe MQTT protocol provides a lightweight method of carrying out messaging using a publish/subscribe model. This makes it suitable for Internet of Things messaging such as with low power sensors or mobile devices such as phones, embedded computers or microcontrollers.\n\nThe Mosquitto project also provides a C library for implementing MQTT clients, and the very popular mosquitto_pub and mosquitto_sub command line MQTT clients.\n\nMosquitto is part of the Eclipse Foundation, and is an iot.eclipse.org project. The development is driven by Cedalo."   # software description - OPTIONAL (but strongly recommended!)
+URL="https://mosquitto.org/"   # software URL. Can contain multiple URLs - OPTIONAL
+options="xiugedslNADUOSLCIto"   # script options in use by software package. For example, for a package with no service, exclude `edsr`
 launch=""   # command to launch software, if applicable
-service_name="service_name"   # the name of the service/s, such as `chrony`. REQUIRED if service options are in use. If multiple services, separate by spaces "service1 service2"
-location="/opt/location"   # install location REQUIRED if not apt installed. Generally, we use `/opt/software-name`
-conflicts="package name, other package name"   # comma delineated plain-text list of packages with which this package conflicts. Blank if none. Use the name as it appears in the $name field of the other package. Extra plaintext is allowed, such as "packageA, packageB, any other software that uses the Meshtastic CLI"
+service_name="mosquitto"   # the name of the service/s, such as `chrony`. REQUIRED if service options are in use. If multiple services, separate by spaces "service1 service2"
+location=""   # install location REQUIRED if not apt installed. Generally, we use `/opt/software-name`
+conflicts=""   # comma delineated plain-text list of packages with which this package conflicts. Blank if none. Use the name as it appears in the $name field of the other package. Extra plaintext is allowed, such as "packageA, packageB, any other software that uses the Meshtastic CLI"
 
 # install script
 install() {
-  # for apt packages, this method allows onscreen output during install:
-  # DEBIAN_FRONTEND=noninteractive sudo apt-get install mosquitto -y 2>&1 | tee /dev/tty # allows output to be shown onscreen
-  echo "user_message: Exit message to user, displayed prominently in post-install"
+  echo "apt update can take a long while..."
+  DEBIAN_FRONTEND=noninteractive apt-get update -y 2>&1 | tee /dev/tty # allows output to be shown onscreen
+  DEBIAN_FRONTEND=noninteractive apt-get install mosquitto -y 2>&1 | tee /dev/tty # allows output to be shown onscreen
+  echo "user_message: Installation requires more setup. For a guide, see https://docs.vultr.com/how-to-install-mosquitto-mqtt-broker-on-ubuntu-24-04"
   exit 0 # should be `exit 1` if operation failed
 }
 
 
 # uninstall script
 uninstall() {
-  echo "user_message: Exit message to user, displayed prominently in post-install"
+  DEBIAN_FRONTEND=noninteractive apt remove -y mosquitto 2>&1 | tee /dev/tty
+  /usr/local/bin/mosquitto_mqtt_broker.sh -s # stop service
+  /usr/local/bin/mosquitto_mqtt_broker.sh -d # disable service
+  echo "user_message: Some files may remain on system. To remove, run \`sudo apt remove --purge mosquitto -y\` and \`sudo apt autoremove -y\`."
   exit 0 # should be `exit 1` if operation failed
 }
 
 
-# upgrade script
+#upgrade script
 upgrade() {
-  echo "user_message: Exit message to user, displayed prominently in post-install"
+  echo "apt update can take a long while..."
+  DEBIAN_FRONTEND=noninteractive apt-get update -y 2>&1 | tee /dev/tty # allows output to be shown onscreen
+  DEBIAN_FRONTEND=noninteractive apt upgrade -y mosquitto 2>&1 | tee /dev/tty
   exit 0 # should be `exit 1` if operation failed
 }
 
 # Check if already installed. `exit 0` if yes, `exit 1` if no
 check() {
-  # the following works for cloned repos, but not for apt installs
-  if [ -d "$location" ]; then
-    exit 0
-  else
-    exit 1
-  fi
-
-  # this works for apt packages
-  if [ dpkg -l | grep -q package-name ] ; then
-    exit 0
-  else
-    exit 1
-  fi
+if dpkg -l | grep -q mosquitto; then
+  exit 0
+else
+  exit 1
+fi
 }
 
 while getopts ":h$options" opt; do
