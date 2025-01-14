@@ -204,7 +204,7 @@ if [ -f "$mount_point/femtofox-config.txt" ]; then
   if [[ -n "$timezone" ]]; then # set timezone
     timezone=$(echo "$timezone" | sed 's/\\//g')
     log_message "Updating system timezone to $timezone."
-    femto-set-timezone.sh -t "$timezone"
+    femto-set-time.sh -t "$timezone"
     found_config="true"
   fi
   

@@ -19,7 +19,7 @@ title="Install Wizard"
 
 wizard() {
 
-  femto-set-timezone.sh
+  femto-set-time.sh
 
   new_hostname=$(dialog --title "$title" --cancel-label "Skip" --inputbox "Enter hostname:" 8 40 $(hostname) 3>&1 1>&2 2>&3)
   if [ $? -eq 0 ]; then #unless cancel/no
