@@ -132,7 +132,7 @@ networking_settings() {
   done
 }
 
-  # Pinout menu
+  # pinout menu
 femto_pinouts() {
   while true; do
     local option=""
@@ -160,22 +160,67 @@ femto_pinouts() {
   done
 }
 
-# Function to handle misc settings
+# enable/disable system logging
+logging() {
+  enable_logging() {
+    chattr -i /var/log
+    msg="Enabling system logging by making /var/log writable."
+    logger $msg
+    echo $msg
+    return 0
+  }
+  disable_logging() {
+    msg="Disabling system logging by making /var/log immutable."
+    logger $msg
+    echo $msg
+    chattr +i /var/log
+    return 0
+  }
+  check_logging() {
+    lsattr -d /var/log | grep -q 'i' && echo -e "\033[0;31mdisabled\033[0m" || echo -e "\033[0;34menabled\033[0m"
+  }
+  if [ "$1" = "true" ]; then
+    disable_logging
+  elif [ "$1" = "false" ]; then
+    enable_logging
+  elif [ "$1" = "check" ]; then
+    check_logging
+  elif [ -z "$1" ]; then
+    while true; do
+      choice=$(dialog --colors --title "Logging" --menu "Before deploying a Femtofox, it is advisable to disable logging to reduce SD card wear.\nCurrent state: $(replace_colors "$(check_logging)")" 12 50 2 \
+        1 "Enable (default)" \
+        2 "Disable" 3>&1 1>&2 2>&3)
+      exit_status=$? # This line checks the exit status of the dialog command
+      if [ $exit_status -ne 0 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
+        break
+      fi
+      case $choice in
+        1) enable_logging ;;
+        2) disable_logging ;;
+      esac
+    done
+  else
+    echo "$1 is not a valid argument for -L. Options are \"true\" and \"false\"."
+  fi
+}
+
+# utilities
 utilities() {
   local title="Utilities"
   while true; do
     local option=""
-    option=$(dialog --cancel-label "Back" --menu "$title" 17 40 4 \
+    option=$(dialog --cancel-label "Back" --menu "$title" 18 40 4 \
       1 "Set system time" \
       2 "Kernel modules" \
       3 "Re-run first-boot script" \
       4 "Run USB configuration tool" \
       5 "Run OEM luckfox-config" \
       6 "Process viewer/manager" \
-      7 "Reboot" \
-      8 "Shutdown" \
+      7 "Disable/enable logging" \
+      8 "Reboot" \
+      9 "Shutdown" \
       "" "" \
-      9 "Back to Main Menu" 3>&1 1>&2 2>&3)
+      10 "Back to Main Menu" 3>&1 1>&2 2>&3)
     
     exit_status=$? # This line checks the exit status of the dialog command
     if [ $exit_status -ne 0 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
@@ -198,14 +243,15 @@ utilities() {
       ;;
       5) luckfox-config ;;
       6) htop ;;
-      7) 
+      7) logging ;;
+      8) # reboot)
         dialog --title "$title" --yesno "Reboot now?\n\nTip: Reboot can also be triggered by long-pressing the BOOT button on the luckfox." 10 45
         if [ $? -eq 0 ]; then #unless cancel/no
           dialog --infobox "Rebooting..." 5 45
           reboot
         fi
       ;;
-      8)
+      9) # shutdown)
         dialog --title "$title" --yesno "Shut down now?\n\nTo power system back on, disconnect/reconnect power.\n\nThe system shutdown command prevents damage to the filesystem from power interrupts, but does not stop power consumption.\n\nTip: You can also shut down the Femtofox by pressing the BOOT button for 5 seconds or by running \`sudo halt\`." 14 60
         if [ $? -eq 0 ]; then #unless cancel/no
           dialog --infobox "Shutting down...\n\nPower consumption will not stop." 5 45
@@ -213,7 +259,7 @@ utilities() {
           halt
         fi
       ;;
-      9) return ;;
+      10) return ;;
     esac
   done
 }
@@ -473,20 +519,33 @@ help_menu() {
 }
 
 # Parse options
-while getopts ":hlw" opt; do
-  case ${opt} in
-    h)
-      echo -e "If script is run without arguments, the main femto-config UI will load.\n\
+help="If script is run without arguments, femto-config menu will load.\n\
 Options are:\n\
--h          This message\n\
--l          Set LoRa radio model menu\n\
--w          Set Wi-Fi config menu"
+-h           This message\n\
+-l           Set LoRa radio model menu\n\
+-w           Set Wi-Fi config menu\n\
+-L \"true\"  Set system logging true/false/check"
+while getopts ":hlwL:" opt; do
+  case ${opt} in
+    h) # Option -h (help)
+      echo -e $help
       ;;
     l) # Option -l (set lora radio)
       set_lora_radio
     ;;
     w) # Option -w (Wi-Fi config)
       wifi_config
+    ;;
+    L) # Option -L (Logging)
+      logging $OPTARG
+    ;;
+    \?) # Unknown option)
+      echo -e "Unknown argument $1.\n$help"
+    ;;
+    :) # Missing argument for option)
+      echo "Option -$OPTARG requires a setting."
+      echo -e "$help"
+      exit 1
     ;;
   esac
 done
