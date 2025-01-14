@@ -48,7 +48,6 @@ EOF
 # Messages to the user (such as configuration instructions, explanatory error messages, etc) should be given as: `echo "user_message: text"`
 # Everything following `user_message: ` will be displayed prominently to the user, so it must the last thing echoed
 
-
 name="Meshing Around" # software name
 author="Spud" # software author - OPTIONAL
 description="Meshing Around is a feature-rich bot designed to enhance your Meshtastic network experience with a variety of powerful tools and fun features. Connectivity and utility through text-based message delivery. Whether you're looking to perform network tests, send messages, or even play games, mesh_bot.py has you covered." # software description - OPTIONAL (but strongly recommended!)
@@ -66,7 +65,7 @@ install() {
     exit 1
   fi
   if [ "$interactive" = "true" ]; then #interactive install
-    eval "$location/install.sh"
+    "$location/install.sh" | tee /dev/tty
     echo "user_message: To change settings, run \`sudo nano $location/config.ini\`"
     exit 0
   else
