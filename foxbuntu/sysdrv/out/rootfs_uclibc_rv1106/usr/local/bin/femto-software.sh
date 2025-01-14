@@ -68,9 +68,9 @@ package_intro() {
         $(if $package_dir/$1.sh -O | grep -q 'A'; then echo -e "by $($package_dir/$1.sh -A)"; fi)\n\
 $(if $package_dir/$1.sh -O | grep -q 'D'; then echo "\n$($package_dir/$1.sh -D)"; fi)\n\
 \n\
-$(echo "Currently:      " && $package_dir/$1.sh -I && echo "\Zuinstalled\Zn" || echo "\Zunot installed\Zn")\n\
-$(if output=$($package_dir/$1.sh -L); [ -n "$output" ]; then echo "Installs to:    \Zu$output\Zn"; fi)\
-$(if output=$($package_dir/$1.sh -C); [ -n "$output" ]; then echo "Installs to:    \Zu$output\Zn"; fi)\
+$(echo "Currently:      " && $package_dir/$1.sh -I && echo "\Zuinstalled\Zn" || echo " \Zunot installed\Zn")\n\
+$(if output=$($package_dir/$1.sh -L); [ -n "$output" ]; then echo "Installs to:     \Zu$output\Zn\n"; fi)\
+$(if output=$($package_dir/$1.sh -C); [ -n "$output" ]; then echo "Conflicts with:  \Zu$output\Zn\n"; fi)\
 An internet connection is required for installation.\n\
 $(if $package_dir/$1.sh -O | grep -q 'U'; then echo "\nFor more information, visit $($package_dir/$1.sh -U)"; fi)" 0 0
   package_menu $1 # after user hits "OK", move on to package menu
