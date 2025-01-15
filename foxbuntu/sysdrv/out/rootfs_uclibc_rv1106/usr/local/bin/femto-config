@@ -204,6 +204,39 @@ logging() {
   fi
 }
 
+system_info() {
+
+  local cpu_architecture="armv7l (armhf 32bit)"
+  local cpu_model="Rockchip rv1103 (rev$(awk '/CPU revision/ {print $4}' /proc/cpuinfo))"
+  local cpu_serial="$(awk '/Serial/ {print $3}' /proc/cpuinfo)"
+  local cpu_speed="$(lscpu | grep "CPU min MHz" | awk '{print int($4)}') - $(lscpu | grep "CPU max MHz" | awk '{print int($4)}')mhz"
+  local microsd_size="$(df -h / | awk 'NR==2 {printf "%s       (%.0f%% free)", $4, (100 - $5+0)}')"
+  local memory="$(free -m | awk 'NR==2{printf "%d MB     (%.2f%% free)", $2, ($4/$2)*100}')"
+  local swap="$(free -m | awk 'NR==3{printf "%d MB   (%.2f%% free)", $2, ($4/$2)*100}')"
+  local mounted_drives="$([ "$(for dir in /mnt/*/; do echo -n "/mnt${dir#"/mnt"} "; done)" ] && echo "Mounted drives:   $(for dir in /mnt/*; do echo -n "/mnt${dir#"/mnt"} "; done | sed 's/\/$//')")"
+  local os_version="Foxbuntu v$(grep -oP 'major=\K[0-9]+' /etc/foxbuntu-release).$(grep -oP 'minor=\K[0-9]+' /etc/foxbuntu-release)$(output=$(grep -o 'patch=[1-9][0-9]*' /etc/foxbuntu-release | cut -d= -f2) && [ -n "$output" ] && echo ".$output")$(grep -oP 'hotfix=\K[a-z]+' /etc/foxbuntu-release) ($(lsb_release -d | awk -F'\t' '{print $2}') $(lsb_release -c | awk -F'\t' '{print $2}'))"
+  info="\
+Femtofox\n\
+Core:             Luckfox Pico Mini\n\
+  CPU:\n\
+Architecture:     $cpu_architecture\n\
+Model:            $cpu_model\n\
+Serial #          $cpu_serial\n\
+Cores:            1\n\
+Speed:            $cpu_speed\n\
+  Storage:\n\
+microSD size:     $microsd_size\n\
+Memory:           $memory\n\
+Swap:             $swap\n\
+$mounted_drives\n\
+\n\
+Uptime:$(uptime -p | awk '{$1=""; print $0}' | sed -e 's/ day\b/d/g' -e 's/ hour\b/h/g' -e 's/ hours\b/h/g' -e 's/ minute\b/m/g' -e 's/ minutes\b/m/g' | sed 's/,//g')\n\
+Operating System: $os_version\n\
+$(replace_colors "$(femto-network-config.sh -e)")\
+"
+echo -e "$info"
+}
+
 # utilities
 utilities() {
   local title="Utilities"
@@ -522,10 +555,11 @@ help_menu() {
 help="If script is run without arguments, femto-config menu will load.\n\
 Options are:\n\
 -h           This message\n\
--l           Set LoRa radio model menu\n\
+-l           Set LoRa radio cpu_model menu\n\
 -w           Set Wi-Fi config menu\n\
--L \"true\"  Set system logging true/false/check"
-while getopts ":hlwL:" opt; do
+-L \"true\"  Set system logging true/false/check
+-i           Get system info"
+while getopts ":hlwL:i" opt; do
   case ${opt} in
     h) # Option -h (help)
       echo -e $help
@@ -539,6 +573,7 @@ while getopts ":hlwL:" opt; do
     L) # Option -L (Logging)
       logging $OPTARG
     ;;
+    i) system_info ;;
     \?) # Unknown option)
       echo -e "Unknown argument $1.\n$help"
     ;;
