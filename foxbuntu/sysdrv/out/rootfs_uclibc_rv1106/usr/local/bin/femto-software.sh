@@ -121,7 +121,7 @@ title="$title"
   option=""
   option=$(dialog --cancel-label "Back" --menu "$title" 0 0 6 \
     1 "The Comms Channel BBS, TC²BBS" \
-    2 "Contact" \
+    2 "Contact (Meshtastic client)" \
     3 "Meshing Around by Spud" \
     4 "Mosquitto MQTT Broker" \
     5 "Mosquitto MQTT Client" \
