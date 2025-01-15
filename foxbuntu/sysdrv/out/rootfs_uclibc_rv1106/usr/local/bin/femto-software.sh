@@ -121,7 +121,7 @@ title="$title"
   option=""
   option=$(dialog --cancel-label "Back" --menu "$title" 0 0 6 \
     1 "The Comms Channel BBS, TC²BBS" \
-    2 "Curses Client for Meshtastic" \
+    2 "Contact (Meshtastic client)" \
     3 "Meshing Around by Spud" \
     4 "Mosquitto MQTT Broker" \
     5 "Mosquitto MQTT Client" \
@@ -135,7 +135,7 @@ title="$title"
   
   case $option in
     1) package_intro "tc2_bbs" ;;
-    2) package_intro "curses_client" ;;
+    2) package_intro "contact_client" ;;
     3) package_intro "meshing_around" ;;
     4) package_intro "mosquitto_mqtt_broker" ;;
     5) package_intro "mosquitto_mqtt_client" ;;
