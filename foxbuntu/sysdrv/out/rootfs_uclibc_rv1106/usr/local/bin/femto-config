@@ -205,7 +205,6 @@ logging() {
 }
 
 system_info() {
-
   local cpu_architecture="armv7l (armhf 32bit)"
   local cpu_model="Rockchip rv1103 (rev$(awk '/CPU revision/ {print $4}' /proc/cpuinfo))"
   local cpu_serial="$(awk '/Serial/ {print $3}' /proc/cpuinfo)"
@@ -215,6 +214,8 @@ system_info() {
   local swap="$(free -m | awk 'NR==3{printf "%d MB   (%.2f%% free)", $2, ($4/$2)*100}')"
   local mounted_drives="$([ "$(for dir in /mnt/*/; do echo -n "/mnt${dir#"/mnt"} "; done)" ] && echo "Mounted drives:   $(for dir in /mnt/*; do echo -n "/mnt${dir#"/mnt"} "; done | sed 's/\/$//')")"
   local os_version="Foxbuntu v$(grep -oP 'major=\K[0-9]+' /etc/foxbuntu-release).$(grep -oP 'minor=\K[0-9]+' /etc/foxbuntu-release)$(output=$(grep -o 'patch=[1-9][0-9]*' /etc/foxbuntu-release | cut -d= -f2) && [ -n "$output" ] && echo ".$output")$(grep -oP 'hotfix=\K[a-z]+' /etc/foxbuntu-release) ($(lsb_release -d | awk -F'\t' '{print $2}') $(lsb_release -c | awk -F'\t' '{print $2}'))"
+  local boot_modules="$(modules=$(sed -n '6,$p' /etc/modules | sed ':a;N;$!ba;s/\n/, /g;s/, $//'); [ -z "$modules" ] && echo "none" || echo "$modules")"
+  local i2c_addresses="$(i2cdetect -y 3 | awk 'NR>1 {for(i=2;i<=17;i++) if ($i == "ff" || $i == "UU") { printf "0x%02x ", (i-2) + (NR-2)*16} }' | tr -d '\n' )"
   local info="\
             Femtofox\n\
 Core:             Luckfox Pico Mini\n\
@@ -237,7 +238,7 @@ Memory:           $memory\n\
 Swap:             $swap\n\
 $mounted_drives\n\
 \n\
-    Networking (wlan0 & eth0 only):\n\
+    Networking (wlan0 & eth0):\n\
 $(replace_colors "$(femto-network-config.sh -w | grep -v '^$' | grep -v '^MAC Address')")\n\
 ---
 $(replace_colors "$(femto-network-config.sh -e)")\n\
@@ -245,11 +246,15 @@ $(replace_colors "$(femto-network-config.sh -e)")\n\
     Attached devices:\n\
 LoRa radio:       $(replace_colors "$(femto-meshtasticd-config.sh -k)")\n\
 $(lsusb | grep -v 'root hub' | awk 'NR>0{printf "USB:              "; for(i=7;i<=NF;i++) printf "%s ", $i; print ""} END {if (NR == 0) printf "USB:              None detected"}')\n\
-i2c devices:      $(i2cdetect -y 3 | awk 'NR>1 {for(i=2;i<=17;i++) if ($i == "ff" || $i == "UU") { printf "0x%02x ", (i-2) + (NR-2)*16} }' | tr -d '\n' )\n\
+i2c devices:      $i2c_addresses\n\
 \n\
     Kernel:
 Modules active:   $(lsmod | awk 'NR>1 {print $1}' | tr '\n' ' ' && echo)\n\
-Boot modules:     $(modules=$(sed -n '6,$p' /etc/modules | sed ':a;N;$!ba;s/\n/, /g;s/, $//'); [ -z "$modules" ] && echo "none" || echo "$modules")\
+Boot modules:     $boot_modules\n\
+\n\
+    Meshtasticd:\n\
+Service status:   $(femto-meshtasticd-config.sh -S)\n\
+$(femto-meshtasticd-config.sh -i)\
 "
 echo -e "$info"
 }

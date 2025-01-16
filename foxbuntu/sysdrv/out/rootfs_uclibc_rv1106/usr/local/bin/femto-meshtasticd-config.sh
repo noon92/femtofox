@@ -7,6 +7,7 @@ fi
 help=$(cat <<EOF
 Options are:
 -h             This message
+-i             Get important node info
 -g             Gets the current configuration URL and QR code
 -k             Get current LoRa radio selection
 -l "RADIO"     Choose LoRa radio model. Options are \`lr1121_tcxo\`, \`sx1262_tcxo\`, \`sx1262_xtal\`, \`none\` (simradio)
@@ -69,10 +70,25 @@ meshtastic_update() {
 }
 
 # Parse options
-while getopts ":hgkl:q:va:cpo:sStruxm" opt; do
+while getopts ":higkl:q:va:cpo:sStruxm" opt; do
   case ${opt} in
     h) # Option -h (help)
       echo -e "$help"
+      ;;
+    i) # Option -i (Get important node info)
+      output=$(meshtastic --host --info)
+      echo -e "\
+Version:          $(echo "$output" | grep -oP '"firmwareVersion":\s*"\K[^"]+' | head -n 1)\n\
+Node name:        $(echo "$output" | grep -oP 'Owner:\s*\K.*' | head -n 1)\n\
+NodeID:           $(printf "%X\n" $(echo "$output" | grep -oP '"myNodeNum":\s*\K\d+' | head -n 1) | tr '[:upper:]' '[:lower:]') ($(echo "$output" | grep -oP '"myNodeNum":\s*\K\d+' | head -n 1))\n\
+Role:             $(echo "$output" | grep -oP '"role":\s*"\K[^"]+' | head -n 1)\n\
+Preset:           $(echo "$output" | grep -oP '"modemPreset":\s*"\K[^"]+')\n\
+Region:           $(echo "$output" | grep -oP '"region":\s*"\K[^"]+')\n\
+$(channelNum=$(echo "$output" | grep -oP '"channelNum":\s*\K\d+' | head -n 1); [[ -n "$channelNum" && "$channelNum" -gt 0 ]] && echo -e "Frequency slot:   $channelNum")
+$(overrideFrequency=$(echo "$output" | grep -oP '"overrideFrequency":\s*\K[0-9.]+'); [[ -n "$overrideFrequency" && $(echo "$overrideFrequency > 0" | bc) -eq 1 ]] && echo -e "Override freq:    $overrideFrequency")\n\
+Uptime:           $(echo "$output" | grep -oP '"uptimeSeconds":\s*\K\d+' | head -n 1 | awk '{days=int($1/86400); hrs=int(($1%86400)/3600); mins=int(($1%3600)/60); secs=int($1%60); printf "%d days %02d:%02d:%02d\n", days, hrs, mins, secs}')\n\
+Public key:       $(echo "$output" | grep -oP '"publicKey":\s*"\K[^"]+' | head -n 1)\
+"
       ;;
     g) # Option -g (get config URL)
       url=$(meshtastic --host --qr-all | grep -oP '(?<=Complete URL \(includes all channels\): )https://[^ ]+') #add look for errors
@@ -142,9 +158,9 @@ while getopts ":hgkl:q:va:cpo:sStruxm" opt; do
       ;;
     S) # Option -S (Get Meshtasticd Service state)
       if echo "$(systemctl status meshtasticd)" | grep -q "active (running)"; then
-        echo -e "\033[4m\033[0;34monline\033[0m"
+        echo -e "\033[4m\033[0;34mrunning\033[0m"
       elif echo "$(systemctl status meshtasticd)" | grep -q "inactive (dead)"; then
-        echo -e "\033[4m\033[0;31moffline\033[0m"
+        echo -e "\033[4m\033[0;31mnot running\033[0m"
       else
         echo "unknown"
       fi
