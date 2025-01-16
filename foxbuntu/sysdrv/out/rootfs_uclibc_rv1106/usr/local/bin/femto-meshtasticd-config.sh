@@ -80,7 +80,8 @@ while getopts ":higkl:q:va:cpo:sStruxm" opt; do
       echo -e "\
 Version:          $(echo "$output" | grep -oP '"firmwareVersion":\s*"\K[^"]+' | head -n 1)\n\
 Node name:        $(echo "$output" | grep -oP 'Owner:\s*\K.*' | head -n 1)\n\
-NodeID:           $(printf "%X\n" $(echo "$output" | grep -oP '"myNodeNum":\s*\K\d+' | head -n 1) | tr '[:upper:]' '[:lower:]') ($(echo "$output" | grep -oP '"myNodeNum":\s*\K\d+' | head -n 1))\n\
+NodeID:           $(printf "%08x\n" $(echo "$output" | grep -oP '"myNodeNum":\s*\K\d+' | head -n 1)) ($(echo "$output" | grep -oP '"myNodeNum":\s*\K\d+' | head -n 1))\n\
+TX enabled?       $(txEnabled=$(echo "$output" | grep -oP '"txEnabled":\s*\K\w+'); [[ "$txEnabled" == "true" ]] && echo "\033[0;34menabled\033[0m" || echo "\033[0;31mdisabled\033[0m")\n\
 Role:             $(echo "$output" | grep -oP '"role":\s*"\K[^"]+' | head -n 1)\n\
 Preset:           $(echo "$output" | grep -oP '"modemPreset":\s*"\K[^"]+')\n\
 Region:           $(echo "$output" | grep -oP '"region":\s*"\K[^"]+')\n\

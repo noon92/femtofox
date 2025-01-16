@@ -249,12 +249,13 @@ $(lsusb | grep -v 'root hub' | awk 'NR>0{printf "USB:              "; for(i=7;i<
 i2c devices:      $i2c_addresses\n\
 \n\
     Kernel:
+Version:          $(uname -r)
 Modules active:   $(lsmod | awk 'NR>1 {print $1}' | tr '\n' ' ' && echo)\n\
 Boot modules:     $boot_modules\n\
 \n\
     Meshtasticd:\n\
-Service status:   $(femto-meshtasticd-config.sh -S)\n\
-$(femto-meshtasticd-config.sh -i)\
+Service status:   $(replace_colors "$(femto-meshtasticd-config.sh -S)")\n\
+$(replace_colors "$(femto-meshtasticd-config.sh -i)")\
 "
 echo -e "$info"
 }
