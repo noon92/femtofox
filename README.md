@@ -34,7 +34,7 @@ The Luckfox Pico Mini is the postage stamp sized heart of the Femtofox - a compa
 - [x] USB mass storage
 - [x] Real time clock (RTC) support (see [supported hardware](supported_hardware.md))
 - [x] Activity LED disabled. User LED will blink for 5 seconds when boot is complete
-- [x] Pressing the "BOOT" button triggers reboot
+- [x] Short pressing the "BOOT" button toggles wifi, 2-5 second press triggers reboot, 5+ second press shuts system down
 - [x] Ability to reconfigure wifi via USB flash drive
 - [x] Meshtasticd to run LoRa radio over SPI (accomplished, updated image and instructions coming soon)
 - [x] Allow editing of config files by plugging in thumb drive
