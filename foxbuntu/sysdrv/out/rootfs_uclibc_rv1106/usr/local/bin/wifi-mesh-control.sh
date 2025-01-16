@@ -53,7 +53,7 @@ sync_states() {
         log "Synced mobile Wi-Fi state to $text_state."
     fi
 
-    current_wlan_state=$(ip link show wlan0 | grep -q 'state UP' && echo "up" || echo "down")
+    current_wlan_state=$(cat /sys/class/net/wlan0/operstate)
     if [[ "$text_state" != "$current_wlan_state" ]]; then
         set_wlan_state "$text_state"
         log "Synced wlan0 state to $text_state."
@@ -63,7 +63,7 @@ sync_states() {
 monitor_changes() {
     local previous_mobile_state previous_wlan_state
     previous_mobile_state=$(get_mobile_wifi_state)
-    previous_wlan_state=$(ip link show wlan0 | grep -q 'state UP' && echo "up" || echo "down")
+    previous_wlan_state=$(cat /sys/class/net/wlan0/operstate)
 
     while true; do
         PID=$(ps -C meshtasticd -o pid= | tr -d ' ')
@@ -71,7 +71,7 @@ monitor_changes() {
         #if sudo lsof /dev/spidev0.0 | grep -q "meshtasticd"; then
           local current_mobile_state current_wlan_state
           current_mobile_state=$(get_mobile_wifi_state)
-          current_wlan_state=$(ip link show wlan0 | grep -q 'state UP' && echo "up" || echo "down")
+          current_wlan_state=$(cat /sys/class/net/wlan0/operstate)
 
           if [[ "$current_mobile_state" != "$previous_mobile_state" ]]; then
               log "Detected mobile Wi-Fi state change: $previous_mobile_state -> $current_mobile_state"
