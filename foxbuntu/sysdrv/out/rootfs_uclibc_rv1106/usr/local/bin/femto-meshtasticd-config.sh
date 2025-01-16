@@ -19,6 +19,7 @@ Options are:
 -r             Test mesh connectivity by sending "test" to channel 0 and waiting for. Will attempt 3 times
 -s             Start/restart Meshtasticd Service
 -t             Stop Meshtasticd Service
+-S             Get Meshtasticd Service state
 -u             Upgrade Meshtasticd
 -x             Uninstall Meshtasticd
 -m             Meshtastic update tool. Syntax: \`femto-meshtasticd-config.sh -m \"--set security.admin_channel_enabled false\" 10 \"Disable legacy admin\"\`
@@ -68,7 +69,7 @@ meshtastic_update() {
 }
 
 # Parse options
-while getopts ":hgkl:q:va:cpo:struxm" opt; do
+while getopts ":hgkl:q:va:cpo:sStruxm" opt; do
   case ${opt} in
     h) # Option -h (help)
       echo -e "$help"
@@ -138,6 +139,15 @@ while getopts ":hgkl:q:va:cpo:struxm" opt; do
     s) # Option -s (start/restart Meshtasticd service)
       systemctl restart meshtasticd
       echo "Meshtasticd service started/restarted."
+      ;;
+    S) # Option -S (Get Meshtasticd Service state)
+      if echo "$(systemctl status meshtasticd)" | grep -q "active (running)"; then
+        echo -e "\033[4m\033[0;34monline\033[0m"
+      elif echo "$(systemctl status meshtasticd)" | grep -q "inactive (dead)"; then
+        echo -e "\033[4m\033[0;31moffline\033[0m"
+      else
+        echo "unknown"
+      fi
       ;;
     t) # Option -t (stop Meshtasticd service)
       systemctl stop meshtasticd
