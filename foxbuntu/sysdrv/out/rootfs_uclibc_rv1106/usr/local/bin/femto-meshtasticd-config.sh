@@ -7,6 +7,7 @@ fi
 help=$(cat <<EOF
 Options are:
 -h             This message
+-i             Get important node info
 -g             Gets the current configuration URL and QR code
 -k             Get current LoRa radio selection
 -l "RADIO"     Choose LoRa radio model. Options are \`lr1121_tcxo\`, \`sx1262_tcxo\`, \`sx1262_xtal\`, \`none\` (simradio)
@@ -19,6 +20,7 @@ Options are:
 -r             Test mesh connectivity by sending "test" to channel 0 and waiting for. Will attempt 3 times
 -s             Start/restart Meshtasticd Service
 -t             Stop Meshtasticd Service
+-S             Get Meshtasticd Service state
 -u             Upgrade Meshtasticd
 -x             Uninstall Meshtasticd
 -m             Meshtastic update tool. Syntax: \`femto-meshtasticd-config.sh -m \"--set security.admin_channel_enabled false\" 10 \"Disable legacy admin\"\`
@@ -68,10 +70,37 @@ meshtastic_update() {
 }
 
 # Parse options
-while getopts ":hgkl:q:va:cpo:struxm" opt; do
+while getopts ":higkl:q:va:cpo:sStruxm" opt; do
   case ${opt} in
     h) # Option -h (help)
       echo -e "$help"
+      ;;
+    i) # Option -i (Get important node info)
+      output=$(meshtastic --host --info)
+      preset_or_settings="Use preset?       $(echo "$output" | grep -oP '"usePreset":\s*\K\w+')\n"
+      if echo "$output" | grep -qP '"usePreset":\s*true'; then
+        preset_or_settings+="Preset:           $(echo "$output" | grep -oP '"modemPreset":\s*"\K[^"]+')"
+      else
+        preset_or_settings+="\
+Bandwidth:        $(echo "$output" | grep -oP '"bandwidth":\s*\K\w+')\n\
+Spread factor:    $(echo "$output" | grep -oP '"spreadFactor":\s*\K\w+')\n\
+Coding rate:      $(echo "$output" | grep -oP '"codingRate":\s*\K\w+')"
+      fi
+      echo -e "\
+Version:          $(echo "$output" | grep -oP '"firmwareVersion":\s*"\K[^"]+' | head -n 1)\n\
+Node name:        $(echo "$output" | grep -oP 'Owner:\s*\K.*' | head -n 1)\n\
+NodeID:           !$(printf "%08x\n" $(echo "$output" | grep -oP '"myNodeNum":\s*\K\d+' | head -n 1))   (nodenum: $(echo "$output" | grep -oP '"myNodeNum":\s*\K\d+' | head -n 1))\n\
+TX enabled?       $(txEnabled=$(echo "$output" | grep -oP '"txEnabled":\s*\K\w+'); [[ "$txEnabled" == "true" ]] && echo "\033[0;34menabled\033[0m" || echo "\033[0;31mdisabled\033[0m")\n\
+Role:             $(echo "$output" | grep -oP '"role":\s*"\K[^"]+' | head -n 1)\n\
+$preset_or_settings\n\
+Frequency offset: $(echo "$output" | grep -oP '"bandwidth":\s*\K\w+')
+Region:           $(echo "$output" | grep -oP '"region":\s*"\K[^"]+')\n\
+Hop limit:        $(echo "$output" | grep -oP '"hopLimit":\s*\K\w+')\n\
+$(channelNum=$(echo "$output" | grep -oP '"channelNum":\s*\K\d+' | head -n 1); [[ -n "$channelNum" && "$channelNum" -gt 0 ]] && echo -e "Frequency slot:   $channelNum\n")\
+$(overrideFrequency=$(echo "$output" | grep -oP '"overrideFrequency":\s*\K[0-9.]+'); [[ -n "$overrideFrequency" && $(echo "$overrideFrequency > 0" | bc) -eq 1 ]] && echo "Override freq:    $overrideFrequency\n")\
+Public key:       $(echo "$output" | grep -oP '"publicKey":\s*"\K[^"]+' | head -n 1)\n\
+Nodes in nodedb:  $(echo "$output" | grep -oP '"![a-zA-Z0-9]+":\s*\{' | wc -l)\
+"
       ;;
     g) # Option -g (get config URL)
       url=$(meshtastic --host --qr-all | grep -oP '(?<=Complete URL \(includes all channels\): )https://[^ ]+') #add look for errors
@@ -127,17 +156,26 @@ while getopts ":hgkl:q:va:cpo:struxm" opt; do
     r) # Option -r (mesh connectivity test)
       for ((i=0; i<=2; i++)); do
         if meshtastic --host --ch-index 0 --sendtext "test" --ack 2>/dev/null | grep -q "ACK"; then
-          echo "Received acknowledgement!"
+          echo -e "Received acknowledgement...\n\n\033[0;34mMesh connectivity confirmed!\033[0m"
           exit 0
         else
-          echo "Retrying... ($((i + 1)))"
+          echo "No response, retrying... ($((i + 1)))"
         fi
       done
-      echo "Failed after 3 attempts."
+      echo -e "\033[0;31mFailed after 3 attempts.\033[0m"
       ;;
     s) # Option -s (start/restart Meshtasticd service)
       systemctl restart meshtasticd
       echo "Meshtasticd service started/restarted."
+      ;;
+    S) # Option -S (Get Meshtasticd Service state)
+      if echo "$(systemctl status meshtasticd)" | grep -q "active (running)"; then
+        echo -e "\033[4m\033[0;34mrunning\033[0m"
+      elif echo "$(systemctl status meshtasticd)" | grep -q "inactive (dead)"; then
+        echo -e "\033[4m\033[0;31mnot running\033[0m"
+      else
+        echo "unknown"
+      fi
       ;;
     t) # Option -t (stop Meshtasticd service)
       systemctl stop meshtasticd

@@ -37,18 +37,18 @@ wifi_config() {
   local wifi_ssid=""
   local wifi_psk=""
   local wifi_country=""
-  wifi_ssid=$(dialog --title "$title2" --inputbox "Enter Wi-Fi SSID:" 8 40 "$(grep -oP '^ *ssid="\K[^"]+' /etc/wpa_supplicant/wpa_supplicant.conf)" 3>&1 1>&2 2>&3) # display current SSID
-  wifi_psk=$(dialog --title "$title2" --inputbox "Enter Wi-Fi Password:" 8 40 3>&1 1>&2 2>&3)
-  wifi_country=$(dialog --title "$title2" --inputbox "Enter Country Code (US, DE...):" 8 40 "$(grep -oP '^ *country=\K[^ ]+' /etc/wpa_supplicant/wpa_supplicant.conf)" 3>&1 1>&2 2>&3) # display current country
+  wifi_ssid=$(dialog --no-collapse --title "$title2" --inputbox "Enter Wi-Fi SSID:" 8 40 "$(grep -oP '^ *ssid="\K[^"]+' /etc/wpa_supplicant/wpa_supplicant.conf)" 3>&1 1>&2 2>&3) # display current SSID
+  wifi_psk=$(dialog --no-collapse --title "$title2" --inputbox "Enter Wi-Fi Password:" 8 40 3>&1 1>&2 2>&3)
+  wifi_country=$(dialog --no-collapse --title "$title2" --inputbox "Enter Country Code (US, DE...):" 8 40 "$(grep -oP '^ *country=\K[^ ]+' /etc/wpa_supplicant/wpa_supplicant.conf)" 3>&1 1>&2 2>&3) # display current country
   cmd="femto-network-config.sh -s \"$wifi_ssid\" -p \"$wifi_psk\""
   [ -n "$wifi_country" ] && cmd="$cmd -c \"$wifi_country\""
   cmd="$cmd -r"
   if [ -z "$wifi_ssid" ]; then
-    dialog --title "$title2" --msgbox "\nSSID is required to configure Wi-Fi." 8 40
+    dialog --no-collapse --title "$title2" --msgbox "\nSSID is required to configure Wi-Fi." 8 40
     return
   fi
   eval $cmd
-  dialog --title "$title2" --msgbox "Wi-Fi Settings Saved:\nSSID: $wifi_ssid\nPassword: (hidden)\nCountry: $wifi_country\nMeshtastic Wi-Fi setting set to ON" 9 40
+  dialog --no-collapse --title "$title2" --msgbox "Wi-Fi Settings Saved:\nSSID: $wifi_ssid\nPassword: (hidden)\nCountry: $wifi_country\nMeshtastic Wi-Fi setting set to ON" 9 40
   if [ "$1" = "-w" ]; then
     exit 0
   fi
@@ -61,7 +61,7 @@ networking_settings() {
   wpa_supplicant_conf="/etc/wpa_supplicant/wpa_supplicant.conf"
   while true; do
     local option=""
-    option=$(dialog --cancel-label "Back" --menu "$title" 16 40 4 \
+    option=$(dialog --no-collapse --cancel-label "Back" --menu "$title" 16 40 4 \
       1 "Turn Wi-Fi on/off" \
       2 "View Wi-Fi settings" \
       3 "Change Wi-Fi settings" \
@@ -80,10 +80,10 @@ networking_settings() {
     case $option in
       1) # Turn Wi-Fi on/off)
         if ! ip link show wlan0 &>/dev/null; then
-          dialog --colors --msgbox "\Z1Network adapter wlan0 does not exist.\Zn\n\nIs a wifi adapter connected?" 8 40
+          dialog --no-collapse --colors --msgbox "\Z1Network adapter wlan0 does not exist.\Zn\n\nIs a wifi adapter connected?" 8 40
         else
           while true; do
-            choice=$(dialog --cancel-label "Back" --title "Enable/disable Wi-Fi" --menu "Tip: Wi-Fi can also be toggled by short-pressing the BOOT button on the Luckfox." 11 50 5 \
+            choice=$(dialog --no-collapse --cancel-label "Back" --title "Enable/disable Wi-Fi" --menu "Tip: Wi-Fi can also be toggled by short-pressing the BOOT button on the Luckfox." 11 50 5 \
               1 "Turn Wi-Fi on" \
               2 "Turn Wi-Fi off" 3>&1 1>&2 2>&3)
             exit_status=$? # This line checks the exit status of the dialog command
@@ -99,31 +99,31 @@ networking_settings() {
       ;;
       2) # View Wi-Fi settings)
         echo "Getting Wi-Fi configuration..."
-        dialog --title "$title2" --colors --msgbox "$(replace_colors "$(femto-network-config.sh -w)")" 0 0
+        dialog --no-collapse --title "$title2" --colors --msgbox "$(replace_colors "$(femto-network-config.sh -w)")" 0 0
       ;;
       3) # Change Wi-Fi settings)
         wifi_config
       ;;
       4) # View ethernet settings)
         echo "Getting ethernet configuration..."
-        dialog --title "Ethernet (eth0) settings" --colors --msgbox "$(replace_colors "$(femto-network-config.sh -e)")" 0 0
+        dialog --no-collapse --title "Ethernet (eth0) settings" --colors --msgbox "$(echo -e "$(replace_colors "$(femto-network-config.sh -e)")")" 0 0
       ;;
       5) # Restart networking)
-        dialog --title "$title2" --yesno "Wi-Fi and Ethernet will be restarted.\nMeshtastic Wi-Fi setting will be set to ON.\n\nProceed?" 10 40
+        dialog --no-collapse --title "$title2" --yesno "Wi-Fi and Ethernet will be restarted.\nMeshtastic Wi-Fi setting will be set to ON.\n\nProceed?" 10 40
         if [ $? -eq 0 ]; then #unless cancel/no
           femto-network-config.sh -r
         fi
       ;;
       6) # set hostname)
-        new_hostname=$(dialog --title "$title" --inputbox "Enter new hostname:" 8 40 $(hostname) 3>&1 1>&2 2>&3)
+        new_hostname=$(dialog --no-collapse --title "$title" --inputbox "Enter new hostname:" 8 40 $(hostname) 3>&1 1>&2 2>&3)
         if [ $? -eq 0 ]; then #unless cancel/no
           femto-network-config.sh -n "$new_hostname"
-          dialog --title "$title" --msgbox "Femtofox is now reachable at\n$new_hostname.local" 8 40
+          dialog --no-collapse --title "$title" --msgbox "Femtofox is now reachable at\n$new_hostname.local" 8 40
         fi
       ;;
       7) # Test internet connection)
-        dialog --infobox "Testing internet connection..." 5 45
-        dialog --title "Internet connectivity test" --colors --msgbox "$(replace_colors "$(femto-network-config.sh -t)")" 8 40
+        dialog --no-collapse --infobox "Testing internet connection..." 5 45
+        dialog --no-collapse --title "Internet connectivity test" --colors --msgbox "$(replace_colors "$(femto-network-config.sh -t)")" 8 40
       ;;
       8)
         return
@@ -136,7 +136,7 @@ networking_settings() {
 femto_pinouts() {
   while true; do
     local option=""
-    option=$(dialog --cancel-label "Back" --menu "Pinouts" 15 40 5 \
+    option=$(dialog --no-collapse --cancel-label "Back" --menu "Pinouts" 15 40 5 \
       1 "Femtofox Pro/CE" \
       2 "Femtofox Zero" \
       3 "Femtofox Tiny" \
@@ -151,10 +151,10 @@ femto_pinouts() {
     fi
     
     case $option in
-      1) dialog --title "Femtofox" --msgbox "$(femto-pinout.sh -f)" 43 68 ;;
-      2) dialog --title "Femtofox Zero" --msgbox "$(femto-pinout.sh -z)" 34 48 ;;
-      3) dialog --title "Femtofox Tiny" --msgbox "$(femto-pinout.sh -t)" 38 70 ;;
-      4) dialog --title "Luckfox Pico Mini" --msgbox "$(femto-pinout.sh -l)" 23 65 ;;
+      1) dialog --no-collapse --title "Femtofox" --msgbox "$(femto-pinout.sh -f)" 43 68 ;;
+      2) dialog --no-collapse --title "Femtofox Zero" --msgbox "$(femto-pinout.sh -z)" 34 48 ;;
+      3) dialog --no-collapse --title "Femtofox Tiny" --msgbox "$(femto-pinout.sh -t)" 38 70 ;;
+      4) dialog --no-collapse --title "Luckfox Pico Mini" --msgbox "$(femto-pinout.sh -l)" 23 65 ;;
       5) return ;;
     esac
   done
@@ -187,7 +187,7 @@ logging() {
     check_logging
   elif [ -z "$1" ]; then
     while true; do
-      choice=$(dialog --colors --title "Logging" --menu "Before deploying a Femtofox, it is advisable to disable logging to reduce SD card wear.\nCurrent state: $(replace_colors "$(check_logging)")" 12 50 2 \
+      choice=$(dialog --no-collapse --colors --title "Logging" --menu "Before deploying a Femtofox, it is advisable to disable logging to reduce SD card wear.\nCurrent state: $(replace_colors "$(check_logging)")" 12 50 2 \
         1 "Enable (default)" \
         2 "Disable" 3>&1 1>&2 2>&3)
       exit_status=$? # This line checks the exit status of the dialog command
@@ -204,8 +204,8 @@ logging() {
   fi
 }
 
+# at some point this will be moved to a different script, and have many functions instead of one giant dump
 system_info() {
-
   local cpu_architecture="armv7l (armhf 32bit)"
   local cpu_model="Rockchip rv1103 (rev$(awk '/CPU revision/ {print $4}' /proc/cpuinfo))"
   local cpu_serial="$(awk '/Serial/ {print $3}' /proc/cpuinfo)"
@@ -215,26 +215,72 @@ system_info() {
   local swap="$(free -m | awk 'NR==3{printf "%d MB   (%.2f%% free)", $2, ($4/$2)*100}')"
   local mounted_drives="$([ "$(for dir in /mnt/*/; do echo -n "/mnt${dir#"/mnt"} "; done)" ] && echo "Mounted drives:   $(for dir in /mnt/*; do echo -n "/mnt${dir#"/mnt"} "; done | sed 's/\/$//')")"
   local os_version="Foxbuntu v$(grep -oP 'major=\K[0-9]+' /etc/foxbuntu-release).$(grep -oP 'minor=\K[0-9]+' /etc/foxbuntu-release)$(output=$(grep -o 'patch=[1-9][0-9]*' /etc/foxbuntu-release | cut -d= -f2) && [ -n "$output" ] && echo ".$output")$(grep -oP 'hotfix=\K[a-z]+' /etc/foxbuntu-release) ($(lsb_release -d | awk -F'\t' '{print $2}') $(lsb_release -c | awk -F'\t' '{print $2}'))"
-  info="\
-Femtofox\n\
+  local system_uptime="$(uptime -p | awk '{$1=""; print $0}' | sed -e 's/ day\b/d/g' -e 's/ hour\b/h/g' -e 's/ hours\b/h/g' -e 's/ minute\b/m/g' -e 's/ minutes\b/m/g' | sed 's/,//g')"
+  local logging_enabled="$(logging "check" | sed 's/\x1b\[[0-9;]*m//g')"
+  local boot_modules="$(modules=$(sed -n '6,$p' /etc/modules | sed ':a;N;$!ba;s/\n/, /g;s/, $//'); [ -z "$modules" ] && echo "none" || echo "$modules")"
+  local i2c_addresses="$(i2cdetect -y 3 | awk 'NR>1 {for(i=2;i<=17;i++) if ($i == "ff" || $i == "UU") { printf "0x%02x ", (i-2) + (NR-2)*16} }' | tr -d '\n' )"
+  local wifi_status="$(replace_colors "$(femto-network-config.sh -w | grep -v '^$' | grep -v '^Hostname')")" #remove hostname line, as it's identical to the one in ethernet settings
+  local eth_status="$(replace_colors "$(femto-network-config.sh -e)")"
+  local usb_devices="$(lsusb | grep -v 'root hub' | awk 'NR>0{printf "USB:              "; for(i=7;i<=NF;i++) printf "%s ", $i; print ""} END {if (NR == 0) printf "USB:              None detected"}')"
+  local kernel_modules_active="$(lsmod | awk 'NR>1 {print $1}' | tr '\n' ' ' && echo)"
+  local lora_radio="$(replace_colors "$(femto-meshtasticd-config.sh -k)")"
+  local meshtasticd_service_status="$(replace_colors "$(femto-meshtasticd-config.sh -S)")"
+  local meshtasticd_info="$(replace_colors "$(femto-meshtasticd-config.sh -i)")"
+  local usb_mode="$(cat /sys/devices/platform/ff3e0000.usb2-phy/otg_mode)"
+  local spi0_state="$([ "$(awk -F= '/^SPI0_M0_STATUS/ {print $2}' /etc/luckfox.cfg)" -eq 1 ] && echo "enabled" || echo "disabled")"
+  local spi0_speed="$((0x$(xxd -p /sys/firmware/devicetree/base/spi@ff500000/spidev@0/spi-max-frequency | tr -d '\n')))"
+  local i2c3_state="$([ "$(awk -F= '/^I2C3_M1_STATUS/ {print $2}' /etc/luckfox.cfg)" -eq 1 ] && echo "enabled" || echo "disabled")"
+  local i2c3_speed="$(awk -F= '/^I2C3_M1_SPEED/ {print $2}' /etc/luckfox.cfg)"
+  local uart3_state="$([ "$(awk -F= '/^UART3_M1_STATUS/ {print $2}' /etc/luckfox.cfg)" -eq 1 ] && echo "enabled" || echo "disabled")"
+  local uart4_state="$([ "$(awk -F= '/^UART4_M1_STATUS/ {print $2}' /etc/luckfox.cfg)" -eq 1 ] && echo "enabled" || echo "disabled")"
+ 
+  echo -e "\
+            Femtofox\n\
 Core:             Luckfox Pico Mini\n\
-  CPU:\n\
+Operating System: $os_version\n\
+Kernel version:   $(uname -r)\n\
+Uptime:          $system_uptime\n\
+Logging:          $logging_enabled\n\
+System time:      $(date)\n\
+K modules active: $kernel_modules_active\n\
+K boot modules:   $boot_modules\n\
+\n\
+    CPU:\n\
 Architecture:     $cpu_architecture\n\
 Model:            $cpu_model\n\
 Serial #          $cpu_serial\n\
 Cores:            1\n\
 Speed:            $cpu_speed\n\
-  Storage:\n\
+\n\
+    Storage:\n\
 microSD size:     $microsd_size\n\
 Memory:           $memory\n\
 Swap:             $swap\n\
 $mounted_drives\n\
 \n\
-Uptime:$(uptime -p | awk '{$1=""; print $0}' | sed -e 's/ day\b/d/g' -e 's/ hour\b/h/g' -e 's/ hours\b/h/g' -e 's/ minute\b/m/g' -e 's/ minutes\b/m/g' | sed 's/,//g')\n\
-Operating System: $os_version\n\
-$(replace_colors "$(femto-network-config.sh -e)")\
+    Networking (wlan0 & eth0):\n\
+$wifi_status\n\
+---
+$eth_status\n\
+\n\
+    Interfaces:\n\
+USB mode:         $usb_mode\n\
+SPI-0 state:      $spi0_state\n\
+SPI-0 speed:      $spi0_speed\n\
+i2c-3 state:      $i2c3_state\n\
+i2c-3 speed:      $i2c3_speed\n\
+UART-3 state:     $uart3_state\n\
+UART-4 state:     $uart4_state\n\
+\n\
+    Attached devices:\n\
+LoRa radio:       $lora_radio\n\
+$usb_devices\n\
+i2c devices:      $i2c_addresses\n\
+\n\
+    Meshtasticd:\n\
+Service status:   $meshtasticd_service_status\n\
+$meshtasticd_info\
 "
-echo -e "$info"
 }
 
 # utilities
@@ -242,18 +288,19 @@ utilities() {
   local title="Utilities"
   while true; do
     local option=""
-    option=$(dialog --cancel-label "Back" --menu "$title" 18 40 4 \
-      1 "Set system time" \
-      2 "Kernel modules" \
-      3 "Re-run first-boot script" \
-      4 "Run USB configuration tool" \
-      5 "Run OEM luckfox-config" \
-      6 "Process viewer/manager" \
-      7 "Disable/enable logging" \
-      8 "Reboot" \
-      9 "Shutdown" \
+    option=$(dialog --no-collapse --cancel-label "Back" --menu "$title" 19 40 4 \
+      1 "System info" \
+      2 "Set system time" \
+      3 "Kernel modules" \
+      4 "Re-run first-boot script" \
+      5 "Run USB configuration tool" \
+      6 "Run OEM luckfox-config" \
+      7 "Process viewer/manager" \
+      8 "Disable/enable logging" \
+      9 "Reboot" \
+      10 "Shutdown" \
       "" "" \
-      10 "Back to Main Menu" 3>&1 1>&2 2>&3)
+      11 "Back to Main Menu" 3>&1 1>&2 2>&3)
     
     exit_status=$? # This line checks the exit status of the dialog command
     if [ $exit_status -ne 0 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
@@ -261,38 +308,42 @@ utilities() {
     fi
     
     case $option in
-      1) femto-set-time.sh ;; # set timezone)
-      2) # Kernel modules)
-        dialog --title "$title" --msgbox "Kernel modules are loadable pieces of code that extend a Linux kernel's functionality without requiring a reboot. Common examples include device drivers, file systems, or system calls.\n\nThis tool will allow you to add pre-compiled modules to the Foxbuntu kernel.\n\nModules currently autostarting at boot: $(modules=$(sed -n '6,$p' /etc/modules | sed ':a;N;$!ba;s/\n/, /g;s/, $//'); [ -z "$modules" ] && echo "none" || echo "$modules")\n\nCurrently active modules: $(lsmod | awk 'NR>1 {print $1}' | tr '\n' ' ')" 18 65
+      1)
+        dialog --no-collapse --infobox "Loading system info..." 5 45
+        dialog --no-collapse --colors --title "System info" --msgbox "$(system_info)" 0 0
+      ;;
+      2) femto-set-time.sh ;; # set timezone)
+      3) # Kernel modules)
+        dialog --no-collapse --title "$title" --msgbox "Kernel modules are loadable pieces of code that extend a Linux kernel's functionality without requiring a reboot. Common examples include device drivers, file systems, or system calls.\n\nThis tool will allow you to add pre-compiled modules to the Foxbuntu kernel.\n\nModules currently autostarting at boot: $(modules=$(sed -n '6,$p' /etc/modules | sed ':a;N;$!ba;s/\n/, /g;s/, $//'); [ -z "$modules" ] && echo "none" || echo "$modules")\n\nCurrently active modules: $(lsmod | awk 'NR>1 {print $1}' | tr '\n' ' ')" 18 65
         femto-kernel-modules.sh
       ;;
-      3) femto-runonce.sh ;; # Re-run first-boot script)
-      4) # USB config)
-        dialog --title "$title" --yesno "The USB configuration tool allows you to set critical Femtofox settings with a text file on a USB flash drive.\n\nFor more information, visit\ngithub.com/noon92/femtofox/blob/main/usb_config.md\n\nThis tool is run automatically at boot.\n\nRun now?" 14 60
+      4) femto-runonce.sh ;; # Re-run first-boot script)
+      5) # USB config)
+        dialog --no-collapse --title "$title" --yesno "The USB configuration tool allows you to set critical Femtofox settings with a text file on a USB flash drive.\n\nFor more information, visit\ngithub.com/noon92/femtofox/blob/main/usb_config.md\n\nThis tool is run automatically at boot.\n\nRun now?" 14 60
         if [ $? -eq 0 ]; then #unless cancel/no
           femto-usb-config-tool.sh
           pause
         fi
       ;;
-      5) luckfox-config ;;
-      6) htop ;;
-      7) logging ;;
-      8) # reboot)
-        dialog --title "$title" --yesno "Reboot now?\n\nTip: Reboot can also be triggered by long-pressing the BOOT button on the luckfox." 10 45
+      6) luckfox-config ;;
+      7) htop ;;
+      8) logging ;;
+      9) # reboot)
+        dialog --no-collapse --title "$title" --yesno "Reboot now?\n\nTip: Reboot can also be triggered by long-pressing the BOOT button on the luckfox." 10 45
         if [ $? -eq 0 ]; then #unless cancel/no
-          dialog --infobox "Rebooting..." 5 45
+          dialog --no-collapse --infobox "Rebooting..." 5 45
           reboot
         fi
       ;;
-      9) # shutdown)
-        dialog --title "$title" --yesno "Shut down now?\n\nTo power system back on, disconnect/reconnect power.\n\nThe system shutdown command prevents damage to the filesystem from power interrupts, but does not stop power consumption.\n\nTip: You can also shut down the Femtofox by pressing the BOOT button for 5 seconds or by running \`sudo halt\`." 14 60
+      10) # shutdown)
+        dialog --no-collapse --title "$title" --yesno "Shut down now?\n\nTo power system back on, disconnect/reconnect power.\n\nThe system shutdown command prevents damage to the filesystem from power interrupts, but does not stop power consumption.\n\nTip: You can also shut down the Femtofox by pressing the BOOT button for 5 seconds or by running \`sudo halt\`." 14 60
         if [ $? -eq 0 ]; then #unless cancel/no
-          dialog --infobox "Shutting down...\n\nPower consumption will not stop." 5 45
+          dialog --no-collapse --infobox "Shutting down...\n\nPower consumption will not stop." 5 45
           logger "User requested system halt"
           halt
         fi
       ;;
-      10) return ;;
+      11) return ;;
     esac
   done
 }
@@ -303,7 +354,7 @@ set_lora_radio() {
     echo "Checking LoRa radio..."
     local option=""
     #Display filename, if exists: $(files=$(ls /etc/meshtasticd/config.d/* 2>/dev/null) && [ -n "$files" ] && echo "\n\nConfiguration files in use:\n$files" | paste -sd, -))
-    option=$(dialog --colors --cancel-label "Back" --title "Meshtastic LoRa radio" --menu "Currently configured LoRa radio:\n$(replace_colors "$(femto-meshtasticd-config.sh -k)")$(ls -1 /etc/meshtasticd/config.d 2>/dev/null | paste -sd ', ' - | sed 's/^/ (/; s/$/)/; s/,/, /g' | grep -v '^ ()$')" 18 50 10 \
+    option=$(dialog --no-collapse --colors --cancel-label "Back" --title "Meshtastic LoRa radio" --menu "Currently configured LoRa radio:\n$(replace_colors "$(femto-meshtasticd-config.sh -k)")$(ls -1 /etc/meshtasticd/config.d 2>/dev/null | paste -sd ', ' - | sed 's/^/ (/; s/$/)/; s/,/, /g' | grep -v '^ ()$')" 18 50 10 \
        "Ebyte e22-900m30s" "(SX1262_TCXO)" \
        "Ebyte e22-900m22s" "(SX1262_TCXO)"\
        "Ebyte e80-900m22s" "(SX1262_XTAL)"\
@@ -362,30 +413,24 @@ meshtasticd_settings() {
   local title="Meshtastic Settings"
   while true; do
       echo "Checking Meshtasticd service state..."
-    if echo "$(systemctl status meshtasticd)" | grep -q "active (running)"; then
-      local service_state="\Z4\Zuonline\Zn"
-    elif echo "$(systemctl status meshtasticd)" | grep -q "inactive (dead)"; then
-      local service_state="\Z1\Zuoffline\Zn"
-    else
-      local service_state="unknown"
-    fi
     local option=""
-    option=$(dialog --colors --title "$title" --cancel-label "Back" --menu "Meshtasticd service is $service_state$(femto-meshtasticd-config.sh -k | grep -q 'simulated' && echo '\n\Z1Using simulated radio\Zn')" 22 50 4 \
-      1 "View configuration URL & QR code" \
-      2 "Set new configuration URL" \
-      3 "Set LoRa radio" \
-      4 "View admin keys" \
-      5 "Set admin key" \
-      6 "Clear admin keys" \
-      7 "Legacy admin channel" \
-      8 "Detailed Meshtasticd service status" \
-      9 "Mesh connectivity test" \
-      10 "Start/restart Meshtasticd service" \
-      11 "Stop Meshtasticd service" \
-      12 "Upgrade/install Meshtasticd" \
-      13 "Uninstall Meshtasticd" \
+    option=$(dialog --no-collapse --colors --title "$title" --cancel-label "Back" --menu "Meshtasticd service is $(replace_colors "$(femto-meshtasticd-config.sh -S)")$(femto-meshtasticd-config.sh -k | grep -q 'simulated' && echo '\n\Z1Using simulated radio\Zn')" 23 50 4 \
+      1 "View node info" \
+      2 "View configuration URL & QR code" \
+      3 "Set new configuration URL" \
+      4 "Set LoRa radio" \
+      5 "View admin keys" \
+      6 "Set admin key" \
+      7 "Clear admin keys" \
+      8 "Legacy admin channel" \
+      9 "Detailed Meshtasticd service status" \
+      10 "Mesh connectivity test" \
+      11 "Start/restart Meshtasticd service" \
+      12 "Stop Meshtasticd service" \
+      13 "Upgrade/install Meshtasticd" \
+      14 "Uninstall Meshtasticd" \
       "" "" \
-    14 "Back to Main Menu" 3>&1 1>&2 2>&3)
+    15 "Back to Main Menu" 3>&1 1>&2 2>&3)
     
     exit_status=$? # This line checks the exit status of the dialog command
     if [ $exit_status -ne 0 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
@@ -393,44 +438,48 @@ meshtasticd_settings() {
     fi
     
     case $option in
-      1) #Get current configuration URL & QR code)
-        dialog --infobox "Getting Meshtastic QR code and URL..." 5 45
+      1) #View node info)
+        dialog --no-collapse --infobox "Getting Node info..." 5 45
+        dialog --no-collapse --colors --title "Node info" --msgbox "$(replace_colors "$(femto-meshtasticd-config.sh -i)")" 0 0
+        ;;
+      2) #Get current configuration URL & QR code)
+        dialog --no-collapse --infobox "Getting Meshtastic QR code and URL..." 5 45
         femto-meshtasticd-config.sh -g
         pause
       ;;
-      2)
-        newurl=$(dialog --title "Meshtastic URL" --inputbox "New Meshtasticd URL (SHIFT+INS to paste):" 8 60 3>&1 1>&2 2>&3)
+      3)
+        newurl=$(dialog --no-collapse --title "Meshtastic URL" --inputbox "New Meshtasticd URL (SHIFT+INS to paste):" 8 60 3>&1 1>&2 2>&3)
         if [ -n "$newurl" ]; then #if a URL was entered
-          dialog --title "$title" --yesno "New Meshtasticd URL:\n$newurl\n\nConfirm?" 15 60
+          dialog --no-collapse --title "$title" --yesno "New Meshtasticd URL:\n$newurl\n\nConfirm?" 15 60
           if [ $? -eq 0 ]; then #unless cancel/no
             femto-meshtasticd-config.sh -q "$newurl"
             pause
           fi
         fi
       ;;
-      3)
+      4)
         set_lora_radio
       ;;
-      4)
-        dialog --infobox "Getting admin keys..." 5 45
-        dialog --title "Admin keys" --msgbox "Up to 3 admin keys are permitted, more will be ignored.\n\nKeys:$(femto-meshtasticd-config.sh -v | tail -n 1 | sed 's/|n/\\n/g')" 0 0
+      5)
+        dialog --no-collapse --infobox "Getting admin keys..." 5 45
+        dialog --no-collapse --title "Admin keys" --msgbox "Up to 3 admin keys are permitted, more will be ignored.\n\nKeys:$(femto-meshtasticd-config.sh -v | tail -n 1 | sed 's/|n/\\n/g')" 0 0
       ;;
-      5) #set admin key)
-        key=$(dialog --title "Meshtastic Admin Key" --inputbox "Meshtastic admin key - up to 3, more will be ignored.\n\n(SHIFT+INS to paste):" 11 40 3>&1 1>&2 2>&3)
+      6) #set admin key)
+        key=$(dialog --no-collapse --title "Meshtastic Admin Key" --inputbox "Meshtastic admin key - up to 3, more will be ignored.\n\n(SHIFT+INS to paste):" 11 40 3>&1 1>&2 2>&3)
         if [ -n "$key" ]; then #if a URL was entered
           femto-meshtasticd-config.sh -a "$key"
           pause
         fi
       ;;
-      6)
-        dialog --title "$title" --yesno "Meshtasticd can have up to 3 admin keys.\nClear admin key list?" 0 0
+      7)
+        dialog --no-collapse --title "$title" --yesno "Meshtasticd can have up to 3 admin keys.\nClear admin key list?" 0 0
         if [ $? -eq 0 ]; then #unless cancel/no
           femto-meshtasticd-config.sh -c
           pause
         fi
       ;;
-      7) #legacy admin)
-        dialog --infobox "Getting current legacy admin state..." 5 45
+      8) #legacy admin)
+        dialog --no-collapse --infobox "Getting current legacy admin state..." 5 45
         state=$(sudo femto-meshtasticd-config.sh -p)
         if echo "$state" | grep -q "True"; then
           state="Enabled"
@@ -440,7 +489,7 @@ meshtasticd_settings() {
           state="Error"
         fi
         while true; do
-          choice=$(dialog --title "Meshtasticd Legacy Admin" --menu "Current state: $state" 10 40 5 \
+          choice=$(dialog --no-collapse --title "Meshtasticd Legacy Admin" --menu "Current state: $state" 10 40 5 \
             1 "Enable" \
             2 "Disable" 3>&1 1>&2 2>&3)
           exit_status=$? # This line checks the exit status of the dialog command
@@ -453,46 +502,46 @@ meshtasticd_settings() {
           esac
         done
       ;;
-      8) #check meshtasticd service status)
-        dialog --infobox "Getting Meshtasticd service status..." 5 45
-        dialog --title "Meshtasticd service status" --msgbox "$(systemctl status meshtasticd)" 0 0
+      9) #check meshtasticd service status)
+        dialog --no-collapse --infobox "Getting Meshtasticd service status..." 5 45
+        dialog --no-collapse --title "Meshtasticd service status" --msgbox "$(systemctl status meshtasticd)" 0 0
       ;;
-      9) #test mesh connectivity)
-        dialog --title "Meshtastic connectivity test" --yesno "Will send \"test\" to channel 0 and wait for acknowledgement. Will try up to 3 times.\n\nPerform test?" 10 45
+      10) #test mesh connectivity)
+        dialog --no-collapse --title "Meshtastic connectivity test" --yesno "Will send \"test\" to channel 0 and wait for acknowledgement. Will try up to 3 times.\n\nPerform test?" 10 45
         if [ $? -eq 0 ]; then #unless cancel/no
-          dialog --infobox "Performing mesh connectivity test.\n\nThis may take a while..." 6 45
-          dialog --title "Meshtasticd service status" --msgbox "$(femto-meshtasticd-config.sh -r)" 0 0
+          dialog --no-collapse --infobox "Performing mesh connectivity test.\n\nThis may take a while..." 6 45
+          dialog --no-collapse --colors --title "Meshtasticd service status" --msgbox "$(replace_colors "$(femto-meshtasticd-config.sh -r)")" 0 0
         fi
       ;;
-      10) #start/restart meshtasticd)
-        dialog --title "$title" --yesno "Start/restart Meshtasticd service?" 5 45
+      11) #start/restart meshtasticd)
+        dialog --no-collapse --title "$title" --yesno "Start/restart Meshtasticd service?" 5 45
         if [ $? -eq 0 ]; then #unless cancel/no
           femto-meshtasticd-config.sh -s
-          dialog --msgbox "Meshtasticd service started/restarted." 5 45
+          dialog --no-collapse --msgbox "Meshtasticd service started/restarted." 5 45
         fi
       ;;
-      11) #stop meshtasticd)
-        dialog --title "$title" --yesno "Stop Meshtasticd service?" 5 45
+      12) #stop meshtasticd)
+        dialog --no-collapse --title "$title" --yesno "Stop Meshtasticd service?" 5 45
         if [ $? -eq 0 ]; then #unless cancel/no
           femto-meshtasticd-config.sh -t
-          dialog --msgbox "Meshtasticd service stopped." 5 45
+          dialog --no-collapse --msgbox "Meshtasticd service stopped." 5 45
         fi
       ;;
-      12) #Upgrade meshtasticd)
-        dialog --title "$title" --yesno "Upgrade Meshtasticd?\nRequires internet connection." 0 0
+      13) #Upgrade meshtasticd)
+        dialog --no-collapse --title "$title" --yesno "Upgrade Meshtasticd?\nRequires internet connection." 0 0
         if [ $? -eq 0 ]; then #unless cancel/no
           femto-meshtasticd-config.sh -u
           pause
         fi
       ;;
-      13) #uninstall meshtasticd)
-        dialog --title "$title" --yesno "Uninstall Meshtasticd?\n\nFoxbuntu was designed with Meshtasticd integration in mind, and may behave unexpectedly if Meshtasticd is removed." 0 0
+      14) #uninstall meshtasticd)
+        dialog --no-collapse --title "$title" --yesno "Uninstall Meshtasticd?\n\nFoxbuntu was designed with Meshtasticd integration in mind, and may behave unexpectedly if Meshtasticd is removed." 0 0
         if [ $? -eq 0 ]; then
           femto-meshtasticd-config.sh -x
-          dialog --msgbox "Meshtasticd uninstalled. To purge all remnants, run \`sudo apt purge\`.\nAfter reinstallation but before first launch, run the \"first boot script\" from the misc menu." 8 40
+          dialog --no-collapse --msgbox "Meshtasticd uninstalled. To purge all remnants, run \`sudo apt purge\`.\nAfter reinstallation but before first launch, run the \"first boot script\" from the misc menu." 8 40
         fi
       ;;
-      14)
+      15)
         return
       ;;
     esac
@@ -504,7 +553,7 @@ help_menu() {
   while true; do
   local title="Help / About"
     local option=""
-    option=$(dialog --cancel-label "Back" --menu "$title" 0 0 7 \
+    option=$(dialog --no-collapse --cancel-label "Back" --menu "$title" 0 0 7 \
       1 "About Femtofox" \
       2 "Display pinout" \
       3 "Femtofox licensing info - short" \
@@ -522,13 +571,13 @@ help_menu() {
     
     case $option in
       1) #About Femtofox)
-        dialog --title "About Femtofox" --backtitle "Foxbuntu $(grep -oP 'major=\K[0-9]+' /etc/foxbuntu-release).$(grep -oP 'minor=\K[0-9]+' /etc/foxbuntu-release).$(grep -oP 'patch=\K[0-9]+' /etc/foxbuntu-release)$(grep -oP 'hotfix=\K[a-z]+' /etc/foxbuntu-release)" --msgbox "$(femto-license.sh -a)" 18 65
+        dialog --no-collapse --title "About Femtofox" --backtitle "Foxbuntu $(grep -oP 'major=\K[0-9]+' /etc/foxbuntu-release).$(grep -oP 'minor=\K[0-9]+' /etc/foxbuntu-release).$(grep -oP 'patch=\K[0-9]+' /etc/foxbuntu-release)$(grep -oP 'hotfix=\K[a-z]+' /etc/foxbuntu-release)" --msgbox "$(femto-license.sh -a)" 18 65
       ;;
       2) #Display pinout)
         femto_pinouts
       ;;
       3) #Femtofox licensing info - short)
-        dialog --title "Femtofox license" --msgbox "$(femto-license.sh -f)" 28 60
+        dialog --no-collapse --title "Femtofox license" --msgbox "$(femto-license.sh -f)" 28 60
       ;;
       4) #Femtofox licensing info - long)
         clear
@@ -536,13 +585,13 @@ help_menu() {
         pause
       ;;
       5) #Meshtastic licensing info)
-        dialog --title "Meshtastic license" --msgbox "$(femto-license.sh -m)" 0 0
+        dialog --no-collapse --title "Meshtastic license" --msgbox "$(femto-license.sh -m)" 0 0
       ;;
       6) #About Luckfox)
-        dialog --title "About Luckfox" --msgbox "$(femto-license.sh -l)" 0 0
+        dialog --no-collapse --title "About Luckfox" --msgbox "$(femto-license.sh -l)" 0 0
       ;;
       7) #About Ubuntu)
-        dialog --title "About Ubuntu" --msgbox "$(femto-license.sh -u)" 0 0
+        dialog --no-collapse --title "About Ubuntu" --msgbox "$(femto-license.sh -u)" 0 0
       ;;
       8)
         return
@@ -589,7 +638,7 @@ if [ -n "$1" ]; then
 fi
 # Main menu
 while true; do
-  choice=$(dialog --title "$(date)" --cancel-label "Exit" --menu "Femtofox Config" 15 40 5 \
+  choice=$(dialog --no-collapse --title "$(date)" --cancel-label "Exit" --menu "Femtofox Config" 15 40 5 \
     1 "Settings wizard" \
     2 "Networking" \
     3 "Meshtasticd" \
