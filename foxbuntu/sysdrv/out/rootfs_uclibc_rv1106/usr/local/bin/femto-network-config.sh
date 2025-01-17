@@ -77,7 +77,7 @@ while getopts ":hx:Ts:p:c:ewn:tr" opt; do
       ;;
     e) # Option -e (ethernet settings)
 status=$(ip link show eth0 | grep -o 'state [A-Za-z]*' | awk '{print $2}')
-echo -e "Ethernet status: $([ "$status" == "UP" ] && echo -e "\033[4m\033[0;32mconnected\033[0m" || echo -e "\033[0;31mdisconnected\033[0m")"
+echo -e "Ethernet status: $([ "$status" == "UP" ] && echo -e "\033[4m\033[0;34mconnected\033[0m" || echo -e "\033[0;31mdisconnected\033[0m")"
 if [ "$status" == "UP" ]; then
   echo "\nIPv4 Address:    $(ifconfig eth0 | grep 'inet ' | awk '{print $2}')\n\
 IPv6 Address:    $(ifconfig eth0 | grep 'inet6 ' | awk '{print $2}')"

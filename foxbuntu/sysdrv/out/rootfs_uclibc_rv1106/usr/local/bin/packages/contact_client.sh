@@ -44,14 +44,14 @@ EOF
 # Everything following `user_message: ` will be displayed prominently to the user, so it must the last thing echoed
 
 
-name="Curses Client for Meshtastic"   # software name
+name="Contact"   # software name
 author="pdxlocations"   # software author - OPTIONAL
-description="Command line client using the curses library, powered by Meshtastic.org.\nAfter install, run \`curses\` to launch."   # software description - OPTIONAL (but strongly recommended!)
-URL="https://github.com/pdxlocations/curses-client-for-meshtastic/"   # software URL. Can contain multiple URLs - OPTIONAL
+description="A Text-Based Console UI for Meshtastic Nodes.\nAfter install, run \`contact\` to launch."   # software description - OPTIONAL (but strongly recommended!)
+URL="https://github.com/pdxlocations/contact/"   # software URL. Can contain multiple URLs - OPTIONAL
 options="xiuglNADUOLIto"   # script options in use by software package. For example, for a package with no service, exclude `edsr`
-launch="python /opt/curses-client-for-meshtastic/main.py --host"   # command to launch software, if applicable
+launch="python /opt/contact/main.py --host"   # command to launch software, if applicable
 service_name=""   # the name of the service/s, such as `chrony`. REQUIRED if service options are in use. If multiple services, separate by spaces "service1 service2"
-location="/opt/curses-client-for-meshtastic"   # install location REQUIRED if not apt installed. Generally, we use `/opt/software-name`
+location="/opt/contact"   # install location REQUIRED if not apt installed. Generally, we use `/opt/software-name`
 conflicts=""   # comma delineated plain-text list of packages with which this package conflicts. Blank if none. Use the name as it appears in the $name field of the other package. Extra plaintext is allowed, such as "packageA, packageB, any other software that uses the Meshtastic CLI"
 
 
@@ -64,20 +64,20 @@ fi
 
 # install script
 install() {
-  if ! git clone https://github.com/pdxlocations/curses-client-for-meshtastic.git /opt/curses-client-for-meshtastic; then
+  if ! git clone https://github.com/pdxlocations/contact.git /opt/contact; then
     echo "user_message: Git clone failed. Is internet connected?"
     exit 1
   fi
   chown -R femto $location #give ownership of installation directory to $user
   git config --global --add safe.directory $location # prevents git error when updating
-  echo "Creating \`curses\` shortcut."
+  echo "Creating \`contact\` shortcut."
   echo -e "#!/bin/bash\n\
 export NCURSES_NO_UTF8_ACS=1\n\
 export TERM=xterm-256color\n\
 export LANG=C.UTF-8\n\
-$launch" | sudo tee /usr/local/bin/curses > /dev/null
-  chmod +x /usr/local/bin/curses
-  echo "user_message: To launch, run \`curses\`."
+$launch" | sudo tee /usr/local/bin/contact > /dev/null
+  chmod +x /usr/local/bin/contact
+  echo "user_message: To launch, run \`contact\`."
   exit 0 # should be `exit 1` if the installation failed
 }
 
@@ -85,7 +85,7 @@ $launch" | sudo tee /usr/local/bin/curses > /dev/null
 # uninstall script
 uninstall() {
   rm -rf $location
-  rm /usr/local/bin/curses
+  rm /usr/local/bin/contact
   echo "user_message: All files removed."
   exit 0 # should be `exit 1` if the installation failed
 }

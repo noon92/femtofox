@@ -68,9 +68,9 @@ package_intro() {
         $(if $package_dir/$1.sh -O | grep -q 'A'; then echo -e "by $($package_dir/$1.sh -A)"; fi)\n\
 $(if $package_dir/$1.sh -O | grep -q 'D'; then echo "\n$($package_dir/$1.sh -D)"; fi)\n\
 \n\
-$(echo "Currently:      " && $package_dir/$1.sh -I && echo "\Zuinstalled\Zn" || echo "\Zunot installed\Zn")\n\
-$(if output=$($package_dir/$1.sh -L); [ -n "$output" ]; then echo "Installs to:    \Zu$output\Zn"; fi)\
-$(if output=$($package_dir/$1.sh -C); [ -n "$output" ]; then echo "Installs to:    \Zu$output\Zn"; fi)\
+$(echo "Currently:      " && $package_dir/$1.sh -I && echo "\Zuinstalled\Zn" || echo " \Zunot installed\Zn")\n\
+$(if output=$($package_dir/$1.sh -L); [ -n "$output" ]; then echo "Installs to:     \Zu$output\Zn\n"; fi)\
+$(if output=$($package_dir/$1.sh -C); [ -n "$output" ]; then echo "Conflicts with:  \Zu$output\Zn\n"; fi)\
 An internet connection is required for installation.\n\
 $(if $package_dir/$1.sh -O | grep -q 'U'; then echo "\nFor more information, visit $($package_dir/$1.sh -U)"; fi)" 0 0
   package_menu $1 # after user hits "OK", move on to package menu
@@ -121,7 +121,7 @@ title="$title"
   option=""
   option=$(dialog --cancel-label "Back" --menu "$title" 0 0 6 \
     1 "The Comms Channel BBS, TC²BBS" \
-    2 "Curses Client for Meshtastic" \
+    2 "Contact (Meshtastic client)" \
     3 "Meshing Around by Spud" \
     4 "Mosquitto MQTT Broker" \
     5 "Mosquitto MQTT Client" \
@@ -135,7 +135,7 @@ title="$title"
   
   case $option in
     1) package_intro "tc2_bbs" ;;
-    2) package_intro "curses_client" ;;
+    2) package_intro "contact_client" ;;
     3) package_intro "meshing_around" ;;
     4) package_intro "mosquitto_mqtt_broker" ;;
     5) package_intro "mosquitto_mqtt_client" ;;
