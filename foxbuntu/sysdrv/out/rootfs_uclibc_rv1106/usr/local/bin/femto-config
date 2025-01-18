@@ -210,10 +210,10 @@ system_info() {
   local cpu_model="$(dmesg | grep "soc_id" | sed -n 's/.*soc_id: //p')"
   local cpu_temp="$(echo "scale=1; $(cat /sys/class/thermal/thermal_zone0/temp) / 1000" | bc)°C"
   local cpu_serial="$(awk '/Serial/ {print $3}' /proc/cpuinfo)"
-  local cpu_speed="$(lscpu | grep "CPU min MHz" | awk '{print int($4)}') - $(lscpu | grep "CPU max MHz" | awk '{print int($4)}')mhz"
-  local microsd_size="$(df -h / | awk 'NR==2 {printf "%s       (%.0f%% free)", $4, (100 - $5+0)}')"
-  local memory="$(free -m | awk 'NR==2{printf "%d MB     (%.2f%% free)", $2, ($4/$2)*100}')"
-  local swap="$(free -m | awk 'NR==3{printf "%d MB   (%.2f%% free)", $2, ($4/$2)*100}')"
+  local cpu_speed="$(lscpu | grep "CPU min MHz" | awk '{print int($4)}')-$(lscpu | grep "CPU max MHz" | awk '{print int($4)}')mhz"
+  local microsd_size="$(df --block-size=1 / | awk 'NR==2 {total=$2; avail=$4; total_human=sprintf("%.2f", total/1024/1024/1024); avail_human=sprintf("%.2f", avail/1024/1024/1024); printf "%.2f GB   (%.2f%% free)", total_human, (avail/total)*100}')"
+  local memory="$(free -m | awk 'NR==2{printf "%d MB      (%.2f%% free)\n", $2, 100 - (($3/$2)*100)}')"
+  local swap="$(free -m | awk 'NR==3 {if ($2 > 1000) {printf "%.2f GB    (%.2f%% free)", $2/1024, ($4/$2)*100} else {printf "%d MB    (%.2f%% free)", $2, ($4/$2)*100}}')"
   local mounted_drives="$([ "$(for dir in /mnt/*/; do echo -n "/mnt${dir#"/mnt"} "; done)" ] && echo "Mounted drives:   $(for dir in /mnt/*; do echo -n "/mnt${dir#"/mnt"} "; done | sed 's/\/$//')")"
   local os_version="Foxbuntu v$(grep -oP 'major=\K[0-9]+' /etc/foxbuntu-release).$(grep -oP 'minor=\K[0-9]+' /etc/foxbuntu-release)$(output=$(grep -o 'patch=[1-9][0-9]*' /etc/foxbuntu-release | cut -d= -f2) && [ -n "$output" ] && echo ".$output")$(grep -oP 'hotfix=\K[a-z]+' /etc/foxbuntu-release) ($(lsb_release -d | awk -F'\t' '{print $2}') $(lsb_release -c | awk -F'\t' '{print $2}'))"
   local system_uptime="$(uptime -p | awk '{$1=""; print $0}' | sed -e 's/ day\b/d/g' -e 's/ hour\b/h/g' -e 's/ hours\b/h/g' -e 's/ minute\b/m/g' -e 's/ minutes\b/m/g' | sed 's/,//g')"
@@ -250,8 +250,7 @@ K boot modules:   $boot_modules\n\
 Architecture:     $cpu_architecture\n\
 Model:            $cpu_model\n\
 Serial #          $cpu_serial\n\
-Cores:            $(nproc)\n\
-Speed:            $cpu_speed\n\
+Speed:            $cpu_speed x $(nproc) cores\n\
 Temperature:      $cpu_temp
 \n\
     Storage:\n\
