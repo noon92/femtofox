@@ -1,6 +1,6 @@
 major=0
-minor=96
-patch=1
+minor=97
+patch=0
 hotfix=
 
-# major, minor and patch must be numbers. hotfix must be letters.
+# major, minor and patch must be numbers and populated. hotfix must be letters and can be blank.

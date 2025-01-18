@@ -206,8 +206,9 @@ logging() {
 
 # at some point this will be moved to a different script, and have many functions instead of one giant dump
 system_info() {
-  local cpu_architecture="armv7l (armhf 32bit)"
-  local cpu_model="Rockchip rv1103 (rev$(awk '/CPU revision/ {print $4}' /proc/cpuinfo))"
+  local cpu_architecture="$(uname -m) ($(dpkg --print-architecture) $(python3 -c "import platform; print(platform.architecture()[0])"))"
+  local cpu_model="$(dmesg | grep "soc_id" | sed -n 's/.*soc_id: //p')"
+  local cpu_temp="$(echo "scale=1; $(cat /sys/class/thermal/thermal_zone0/temp) / 1000" | bc)°C"
   local cpu_serial="$(awk '/Serial/ {print $3}' /proc/cpuinfo)"
   local cpu_speed="$(lscpu | grep "CPU min MHz" | awk '{print int($4)}') - $(lscpu | grep "CPU max MHz" | awk '{print int($4)}')mhz"
   local microsd_size="$(df -h / | awk 'NR==2 {printf "%s       (%.0f%% free)", $4, (100 - $5+0)}')"
@@ -236,7 +237,7 @@ system_info() {
  
   echo -e "\
             Femtofox\n\
-Core:             Luckfox Pico Mini\n\
+Core:             $(cat /sys/firmware/devicetree/base/model)\n\
 Operating System: $os_version\n\
 Kernel version:   $(uname -r)\n\
 Uptime:          $system_uptime\n\
@@ -249,8 +250,9 @@ K boot modules:   $boot_modules\n\
 Architecture:     $cpu_architecture\n\
 Model:            $cpu_model\n\
 Serial #          $cpu_serial\n\
-Cores:            1\n\
+Cores:            $(nproc)\n\
 Speed:            $cpu_speed\n\
+Temperature:      $cpu_temp
 \n\
     Storage:\n\
 microSD size:     $microsd_size\n\
