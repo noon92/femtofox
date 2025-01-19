@@ -20,13 +20,14 @@ log_message() {
   if [ $arg_count -eq 0 ]; then
     dialog --msgbox "$1" 12 50
   else
-    echo $1
+    echo -e $1
   fi
 }
 
 set_timezone() {
   if timedatectl set-timezone "$1"; then
     log_message "\nTime zone set to $1 (UTC$(date +%z)) successfully."
+    exit 0
   else
     log_message "\nFailed to set the time zone to $1."
     exit 1
