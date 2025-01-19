@@ -1,6 +1,7 @@
 [Unit]
 Description=Meshtastic control of wifi
-After=network.target
+After=meshtasticd.service
+Requires=meshtasticd.service
 
 [Service]
 ExecStart=/usr/local/bin/wifi-mesh-control.sh
