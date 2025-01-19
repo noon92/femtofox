@@ -415,12 +415,12 @@ set_lora_radio() {
 }
 
 # Function to handle Meshtasticd settings
-meshtasticd_settings() {
+meshtastic_settings() {
   local title="Meshtastic Settings"
   while true; do
       echo "Checking Meshtasticd service state..."
     local option=""
-    option=$(dialog --no-collapse --colors --title "$title" --cancel-label "Back" --menu "Meshtasticd service is $(replace_colors "$(femto-meshtasticd-config.sh -S)")$(femto-meshtasticd-config.sh -k | grep -q 'simulated' && echo '\n\Z1Using simulated radio\Zn')" 23 50 4 \
+    option=$(dialog --no-collapse --colors --title "$title" --cancel-label "Back" --menu "Meshtasticd service is $(replace_colors "$(femto-meshtasticd-config.sh -S)")$(femto-meshtasticd-config.sh -k | grep -q 'simulated' && echo '\n\Z1Using simulated radio\Zn')" 22 50 4 \
       1 "View node info" \
       2 "View configuration URL & QR code" \
       3 "Set new configuration URL" \
@@ -429,14 +429,12 @@ meshtasticd_settings() {
       6 "Set admin key" \
       7 "Clear admin keys" \
       8 "Legacy admin channel" \
-      9 "Detailed Meshtasticd service status" \
-      10 "Mesh connectivity test" \
-      11 "Start/restart Meshtasticd service" \
-      12 "Stop Meshtasticd service" \
-      13 "Upgrade/install Meshtasticd" \
-      14 "Uninstall Meshtasticd" \
+      9 "Mesh connectivity test" \
+      10 "Manage Meshtasticd service" \
+      11 "Upgrade/install Meshtasticd" \
+      12 "Uninstall Meshtasticd" \
       "" "" \
-    15 "Back to Main Menu" 3>&1 1>&2 2>&3)
+    13 "Back to Main Menu" 3>&1 1>&2 2>&3)
     
     exit_status=$? # This line checks the exit status of the dialog command
     if [ $exit_status -ne 0 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
@@ -508,46 +506,83 @@ meshtasticd_settings() {
           esac
         done
       ;;
-      9) #check meshtasticd service status)
-        dialog --no-collapse --infobox "Getting Meshtasticd service status..." 5 45
-        dialog --no-collapse --title "Meshtasticd service status" --msgbox "$(systemctl status meshtasticd)" 0 0
-      ;;
-      10) #test mesh connectivity)
+      9) #test mesh connectivity)
         dialog --no-collapse --title "Meshtastic connectivity test" --yesno "Will send \"test\" to channel 0 and wait for acknowledgement. Will try up to 3 times.\n\nPerform test?" 10 45
         if [ $? -eq 0 ]; then #unless cancel/no
           dialog --no-collapse --infobox "Performing mesh connectivity test.\n\nThis may take a while..." 6 45
           dialog --no-collapse --colors --title "Meshtasticd service status" --msgbox "$(replace_colors "$(femto-meshtasticd-config.sh -r)")" 0 0
         fi
       ;;
-      11) #start/restart meshtasticd)
-        dialog --no-collapse --title "$title" --yesno "Start/restart Meshtasticd service?" 5 45
-        if [ $? -eq 0 ]; then #unless cancel/no
-          femto-meshtasticd-config.sh -s
-          dialog --no-collapse --msgbox "Meshtasticd service started/restarted." 5 45
-        fi
+      10) #manage meshtasticd service)
+        while true; do
+          echo "Checking Meshtasticd service state..."
+          local service_state="$(replace_colors "$(femto-meshtasticd-config.sh -S)")"
+          choice=$(dialog --no-collapse --colors --cancel-label "Back" --title "Meshtasticd Service" --menu "Meshtasticd service is $service_state$(femto-meshtasticd-config.sh -k | grep -q 'simulated' && echo '\n\Z1Using simulated radio\Zn')" 17 52 5 \
+            "View detailed service status" "x" \
+            " " " " \
+            $(if echo "$service_state" | grep -q 'enabled'; then echo "Start/restart service x"; fi) \
+            $(if echo "$service_state" | grep -q 'enabled and running'; then echo "Stop service x"; fi) \
+            $(if echo "$service_state" | grep -q 'enabled'; then echo "   "; fi) \
+            $(if echo "$service_state" | grep -q 'disabled'; then echo "Enable service x"; fi) \
+            $(if echo "$service_state" | grep -q 'enabled'; then echo "Disable service x"; fi) \
+            " " " " \
+            "Back to previous menu" "x" 3>&1 1>&2 2>&3)
+          exit_status=$? # This line checks the exit status of the dialog command
+          if [ $exit_status -ne 0 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
+            break
+          fi
+          case $choice in
+            "View detailed service status") 
+              dialog --no-collapse --infobox "Getting Meshtasticd service status..." 5 45
+              dialog --no-collapse --title "Meshtasticd service status" --msgbox "$(systemctl status meshtasticd)" 0 0
+            ;;
+            "Start/restart service") 
+              dialog --no-collapse --title "$title" --yesno "Start/restart Meshtasticd service?" 5 45
+              if [ $? -eq 0 ]; then #unless cancel/no
+                femto-meshtasticd-config.sh -s
+                dialog --no-collapse --msgbox "Meshtasticd service started/restarted." 5 45
+              fi
+            ;;
+            "Stop service")
+              dialog --no-collapse --colors --title "$title" --yesno "Stop Meshtasticd service?\n\nThis will take the node \Zu\Z1OFFLINE\Zn." 8 50
+              if [ $? -eq 0 ]; then #unless cancel/no
+                femto-meshtasticd-config.sh -t
+                dialog --no-collapse --msgbox "Meshtasticd service stopped." 5 45
+              fi
+            ;;
+            "Enable service")
+              dialog --no-collapse --title "$title" --yesno "Enable Meshtasticd service?" 5 45
+              if [ $? -eq 0 ]; then #unless cancel/no
+                femto-meshtasticd-config.sh -M "enable"
+                dialog --no-collapse --msgbox "Sent \"systemctl enable meshtasticd\" command to system.\n\nMeshtasticd should be running." 8 50
+              fi
+            ;;
+            "Disable service")
+              dialog --no-collapse --colors --title "$title" --yesno "Disable Meshtasticd service?\n\nThis will take the node \Zu\Z1OFFLINE\Zn and will not restart!" 9 50
+              if [ $? -eq 0 ]; then #unless cancel/no
+                femto-meshtasticd-config.sh -M "disable"
+                dialog --no-collapse --msgbox "Sent \"systemctl disable meshtasticd\" command to system.\n\nMeshtasticd should be disabled and stopped." 8 50
+              fi
+            ;;
+            "Back to previous menu") break ;; 
+          esac
+        done
       ;;
-      12) #stop meshtasticd)
-        dialog --no-collapse --title "$title" --yesno "Stop Meshtasticd service?" 5 45
-        if [ $? -eq 0 ]; then #unless cancel/no
-          femto-meshtasticd-config.sh -t
-          dialog --no-collapse --msgbox "Meshtasticd service stopped." 5 45
-        fi
-      ;;
-      13) #Upgrade meshtasticd)
+      11) #Upgrade meshtasticd)
         dialog --no-collapse --title "$title" --yesno "Upgrade Meshtasticd?\nRequires internet connection." 0 0
         if [ $? -eq 0 ]; then #unless cancel/no
           femto-meshtasticd-config.sh -u
           pause
         fi
       ;;
-      14) #uninstall meshtasticd)
+      12) #uninstall meshtasticd)
         dialog --no-collapse --title "$title" --yesno "Uninstall Meshtasticd?\n\nFoxbuntu was designed with Meshtasticd integration in mind, and may behave unexpectedly if Meshtasticd is removed." 0 0
         if [ $? -eq 0 ]; then
           femto-meshtasticd-config.sh -x
           dialog --no-collapse --msgbox "Meshtasticd uninstalled. To purge all remnants, run \`sudo apt purge\`.\nAfter reinstallation but before first launch, run the \"first boot script\" from the misc menu." 8 40
         fi
       ;;
-      15)
+      13)
         return
       ;;
     esac
@@ -647,7 +682,7 @@ while true; do
   choice=$(dialog --no-collapse --title "$(date)" --cancel-label "Exit" --menu "Femtofox Config" 15 40 5 \
     1 "Settings wizard" \
     2 "Networking" \
-    3 "Meshtasticd" \
+    3 "Meshtastic" \
     4 "Software manager" \
     5 "Utilities" \
     6 "Help" \
@@ -657,13 +692,13 @@ while true; do
   exit_status=$? # This line checks the exit status of the dialog command
   
   if [ $exit_status -ne 0 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
-    break
+    exit 0
   fi
   
   case $choice in
     1) femto-install-wizard.sh ;;
     2) networking_settings ;;
-    3) meshtasticd_settings ;;
+    3) meshtastic_settings ;;
     4) femto-software.sh ;;
     5) utilities ;;
     6) help_menu ;;
