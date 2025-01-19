@@ -3,7 +3,7 @@
 <service-group>
   <name>Meshtastic</name>
   <service protocol="ipv4">
-    <type>_meshtastic._tcp</type>
-    <port>4403</port>
+    <type>_http._tcp</type>
+    <port>80</port>
   </service>
 </service-group>
