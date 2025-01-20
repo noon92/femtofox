@@ -1,0 +1,17 @@
+[Unit]
+Description=Foxbuntu USB Configuration Tool
+After=femto-runonce.service meshtasticd.service
+Before=serial-getty@ttyFIQ0.service
+DefaultDependencies=no
+
+[Service]
+ExecStart=/usr/local/bin/femto-usb-config-tool.sh
+Type=oneshot
+RemainAfterExit=true
+StandardOutput=journal+console
+StandardError=journal+console
+TTYPath=/dev/console
+
+[Install]
+WantedBy=serial-getty@ttyFIQ0.service
+

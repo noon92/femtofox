@@ -4,13 +4,11 @@
 #/etc/init.d/S50usbdevice start
 
 #run only on first boot
-if [ -e "/etc/.firstboot" ]; then
-  /usr/local/bin/femto-runonce.sh
-fi
+#if [ -e "/etc/.firstboot" ]; then
+#  /usr/local/bin/femto-runonce.sh
+#fi
 
 luckfox-config load
-
-systemctl restart meshtasticd #TEMPORARY bugfix
 
 # try enable RTC
 echo 'ds1307 0x68' | sudo tee /sys/class/i2c-adapter/i2c-3/new_device > /dev/null 2>&1
@@ -25,14 +23,14 @@ echo 34 > /sys/class/gpio/export && echo out > /sys/class/gpio/gpio34/direction
 #(sleep 5 && cpufreq-set -u 408000 && echo "Boot complete, setting CPU frequency to 408mhz.") &
 
 # run USB automount and config tool
-/usr/local/bin/femto-usb-config-tool.sh
+#/usr/local/bin/femto-usb-config-tool.sh
 
 # boot complete
 (
   echo "Disabling ACT LED..."
   echo "none" > /sys/class/leds/work/trigger &
   sleep 1
-  
+
   # blink successful boot code
   for i in $(seq 1 5); do
     echo 1 > /sys/class/gpio/gpio34/value;

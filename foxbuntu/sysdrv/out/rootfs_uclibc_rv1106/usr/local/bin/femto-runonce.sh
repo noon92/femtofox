@@ -5,6 +5,9 @@ log_message() {
 }
 
 if [ ! -e "/etc/.firstboot" ]; then
+
+  who | grep -q . || exit 1
+
   # prevents weirdness over tty
   export NCURSES_NO_UTF8_ACS=1
   export TERM=xterm-256color
