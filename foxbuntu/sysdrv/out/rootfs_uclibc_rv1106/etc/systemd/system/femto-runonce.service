@@ -9,8 +9,9 @@ DefaultDependencies=no
 ExecStart=/usr/local/bin/femto-runonce.sh
 Type=oneshot
 RemainAfterExit=true
-StandardOutput=tty
-StandardError=tty
+StandardOutput=journal+console
+StandardError=journal+console
+TTYPath=/dev/console
 
 [Install]
 WantedBy=serial-getty@ttyFIQ0.service
