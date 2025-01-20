@@ -6,7 +6,7 @@ log_message() {
 
 if [ ! -e "/etc/.firstboot" ]; then
 
-  who | grep -q . || exit 1
+  who | grep -q . || exit 0
 
   # prevents weirdness over tty
   export NCURSES_NO_UTF8_ACS=1
