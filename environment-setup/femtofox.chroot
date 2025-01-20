@@ -52,6 +52,7 @@ echo "femtofox" | tee /etc/hostname > /dev/null
 
 echo "Configuring autostart of systemd services..."
 
+systemctl enable button
 systemctl enable femto-runonce.service
 systemctl enable femto-usb-config-tool.service
 systemctl enable wifi-mesh-control
