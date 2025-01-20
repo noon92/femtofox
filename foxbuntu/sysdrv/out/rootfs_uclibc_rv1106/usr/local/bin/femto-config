@@ -517,7 +517,6 @@ meshtastic_settings() {
         while true; do
           echo "Checking Meshtasticd service state..."
           local service_state="$(replace_colors "$(femto-meshtasticd-config.sh -S)")"
-          echo $service_state
           choice=$(dialog --no-collapse --colors --cancel-label "Back" --title "Meshtasticd Service" --menu "Meshtasticd service is $service_state$(femto-meshtasticd-config.sh -k | grep -q 'simulated' && echo '\n\Z1Using simulated radio\Zn')" 17 52 5 \
             "View detailed service status" "x" \
             " " " " \
