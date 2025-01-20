@@ -24,6 +24,9 @@ Proceed?" 14 60
   fi
 fi
 
+# Disable LED to prevent boot codes from showing during this boot
+echo 34 > /sys/class/gpio/unexport
+
 # Perform filesystem resize
   log_message "Resizing filesystem. This can take up to 10 minutes, depending on microSD card size and speed"
   sudo resize2fs /dev/mmcblk1p5
