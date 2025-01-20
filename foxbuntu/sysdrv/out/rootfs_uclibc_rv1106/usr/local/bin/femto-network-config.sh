@@ -155,7 +155,7 @@ done
 
 if [ "$updated_wifi" = true ]; then
   ip link set wlan0 up
-  systemctl restart wpa_supplicant
+  #systemctl restart wpa_supplicant
   wpa_cli -i wlan0 reconfigure # <-------- add watch for FAIL response, error out
-  timeout 30s dhclient -v
+  #timeout 30s dhclient -v
 fi

@@ -1,0 +1,14 @@
+[Unit]
+Description=Boot Complete
+After=serial-getty@ttyFIQ0.service
+DefaultDependencies=no
+
+[Service]
+ExecStart=/usr/local/bin/femto-boot-complete.sh
+Type=oneshot
+Restart=no
+StandardOutput=journal+console
+StandardError=journal+console
+
+[Install]
+WantedBy=default.target
