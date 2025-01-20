@@ -1,7 +1,10 @@
 #!/bin/bash
 
-if [ ! -e "/etc/.firstboot" ]; then
+if [ -e "/etc/.firstboot" ]; then
+  echo "First boot, skipping USB Configuration Tool."
+  logger "First boot, skipping USB Configuration Tool."
   exit 0
+fi
 
 mount_point="/mnt/usb" # Set the mount point
 
