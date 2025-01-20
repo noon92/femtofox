@@ -18,9 +18,10 @@ Options are:
 -p             Get legacy admin channel state
 -o "true"      Set legacy admin channel state (true/false = enabled/disabled), case sensitive
 -r             Test mesh connectivity by sending "test" to channel 0 and waiting for. Will attempt 3 times
--s             Start/restart Meshtasticd Service
--t             Stop Meshtasticd Service
--S             Get Meshtasticd Service state
+-s             Start/restart Meshtasticd service
+-t             Stop Meshtasticd service
+-M "enable"    Enable/disable Meshtasticd service. Options: "enable" "disable"
+-S             Get Meshtasticd service state
 -u             Upgrade Meshtasticd
 -x             Uninstall Meshtasticd
 -m             Meshtastic update tool. Syntax: \`femto-meshtasticd-config.sh -m \"--set security.admin_channel_enabled false\" 10 \"Disable legacy admin\"\`
@@ -70,7 +71,7 @@ meshtastic_update() {
 }
 
 # Parse options
-while getopts ":higkl:q:va:cpo:sStruxm" opt; do
+while getopts ":higkl:q:va:cpo:sM:Struxm" opt; do
   case ${opt} in
     h) # Option -h (help)
       echo -e "$help"
@@ -168,13 +169,29 @@ Nodes in nodedb:  $(echo "$output" | grep -oP '"![a-zA-Z0-9]+":\s*\{' | wc -l)\
       systemctl restart meshtasticd
       echo "Meshtasticd service started/restarted."
       ;;
-    S) # Option -S (Get Meshtasticd Service state)
-      if echo "$(systemctl status meshtasticd)" | grep -q "active (running)"; then
-        echo -e "\033[4m\033[0;34mrunning\033[0m"
-      elif echo "$(systemctl status meshtasticd)" | grep -q "inactive (dead)"; then
-        echo -e "\033[4m\033[0;31mnot running\033[0m"
+    M) # Option -M (Meshtasticd Service disable/enable)
+      if [ "$OPTARG" = "enable" ]; then
+        systemctl enable meshtasticd
+        systemctl restart meshtasticd
+      elif [ "$OPTARG" = "disable" ]; then
+        systemctl disable meshtasticd
+        systemctl stop meshtasticd
       else
-        echo "unknown"
+        echo "-M argument requires either \"enable\" or \"disable\""
+        echo $help
+      fi
+      ;;
+    S) # Option -S (Get Meshtasticd Service state)
+      if systemctl is-enabled meshtasticd &>/dev/null; then
+        if echo "$(systemctl status meshtasticd)" | grep -q "active (running)"; then
+          echo -e "\033[4m\033[0;34menabled and running\033[0m"
+        elif echo "$(systemctl status meshtasticd)" | grep -q "inactive (dead)"; then
+          echo -e "\033[4m\033[0;31mdnabled but not running\033[0m"
+        else
+          echo "unknown"
+        fi
+      else
+        echo -e "\033[4m\033[0;31mdisabled\033[0m"
       fi
       ;;
     t) # Option -t (stop Meshtasticd service)
