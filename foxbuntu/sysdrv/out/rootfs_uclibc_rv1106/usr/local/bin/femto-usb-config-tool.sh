@@ -12,6 +12,12 @@ log_message() {
   echo "$(date +"%Y-%m-%d %H:%M:%S") $1" >> /tmp/femtofox-config.log
 }
 
+if [ -e "/etc/.firstboot" ]; then
+  echo "First boot, skipping USB Configuration Tool."
+  logger "First boot, skipping USB Configuration Tool."
+  exit 0
+fi
+
 exit_script() {
   if [ ! -z "$usb_path" ]; then #if usb path is populated
     if ! df -T /mnt/usb 2>/dev/null | grep -qw 'ntfs'; then
@@ -150,7 +156,8 @@ if [ -f "$mount_point/femtofox-config.txt" ]; then
   if [[ -n "$wifi_psk" ]]; then
     # Update the psk in the network block
     wifi_command="$wifi_command -p \"$wifi_psk\""
-    log_message "Updating Wi-Fi PSK in wpa_supplicant.conf to \`$wifi_psk\`."
+    #log_message "Updating Wi-Fi PSK in wpa_supplicant.conf to \`$wifi_psk\`."
+    log_message "Updating Wi-Fi PSK in wpa_supplicant.conf to *HIDDEN*."
     found_config="true"
     update_wifi="true"
   fi
