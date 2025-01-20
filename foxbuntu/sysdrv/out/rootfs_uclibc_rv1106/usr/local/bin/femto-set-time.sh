@@ -25,11 +25,8 @@ log_message() {
 }
 
 set_timezone() {
-  if timedatectl set-timezone "$1"; then
-    log_message "\nTime zone set to $1 (UTC$(date +%z)) successfully."
-    exit 0
-  else
-    log_message "\nFailed to set the time zone to $1."
+  if ! timedatectl set-timezone "$1"; then
+      log_message "\nFailed to set the time zone to $1."
     exit 1
   fi
 }
