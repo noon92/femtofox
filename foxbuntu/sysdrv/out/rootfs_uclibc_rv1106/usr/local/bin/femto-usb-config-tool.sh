@@ -1,4 +1,8 @@
 #!/bin/bash
+
+if [ ! -e "/etc/.firstboot" ]; then
+  exit 0
+
 mount_point="/mnt/usb" # Set the mount point
 
 # Function to log to screen, syslog and logfile to be saved to usb drive
