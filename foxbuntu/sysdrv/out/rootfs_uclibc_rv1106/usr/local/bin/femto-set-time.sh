@@ -29,25 +29,28 @@ log_message() {
 }
 
 set_timezone() {
-  if ! timedatectl set-timezone "$1"; then
-    log_message "\nFailed to set the time zone to $1."
-    exit 1
-  fi
+  for i in {1..5}; do
+    timedatectl set-timezone "$1" >/dev/null 2>&1 && break
+    sleep 1
+  done
+  [ "$i" -eq 5 ] && log_message "\nFailed to set the time zone to $1 after 5 attempts." && exit 1
 }
 
 set_timestamp() {
+for i in {1..5}; do
   if date -s "@$1" >/dev/null 2>&1; then
     if hwclock --systohc >/dev/null 2>&1; then
-      rtc="New time successfully saved to RTC.\n"
+      echo "System time updated to:\n$(date)\n\nNew time successfully saved to RTC.\nTime & date are also set automatically from internet."
+      return 0
     else
-      rtc="Unable to communicate with RTC module. An RTC module can save system time between reboots/power outages.\n"
+      echo "System time updated to:\n$(date)\n\nUnable to communicate with RTC module. An RTC module can save system time between reboots/power outages.\nTime & date are also set automatically from internet."
+      return 0
     fi
-    echo "System time updated to:\n$(date)\n\n${rtc}Time & date are also set automatically from internet."
-    return 0
-  else
-    echo "Failed to set system time."
-    return 1
   fi
+done
+
+echo "Failed to set system time to $(date -d @$1) after 5 attempts."
+return 1
 }
 
 
@@ -91,15 +94,15 @@ if [ $arg_count -eq 0 ]; then # if the script was launched with no arguments, th
     exit 1
   fi
 
-  DATE=$(echo "$(dialog --title "Select Date" --calendar "Choose a date:\nCurrent date: $(date "+%B %d, %Y")\nPress [TAB] to select." 0 0 $(date +%d) $(date +%m) $(date +%Y) 3>&1 1>&2 2>&3)" | awk -F/ '{printf "%04d-%02d-%02d", $3, $2, $1}')
-  if [ $? -eq 1 ]; then #if cancel/no
+  DATE=$(dialog --title "Select Date" --calendar "Choose a date:\nCurrent date: $(date "+%B %d, %Y")\nPress [TAB] to select." 0 0 $(date +%d) $(date +%m) $(date +%Y) 3>&1 1>&2 2>&3)
+  if [ $? -ne 0 ]; then
     exit 1
   fi
+  DATE=$(echo "$DATE" | awk -F'/' '{print $3"-"$2"-"$1}') #reformat to YYYY-MM-DD
   TIME=$(dialog --title "Set Time" --timebox "Select time:\nCurrent time: $(date +%H:%M:%S)\nPress [TAB] to select." 0 0 3>&1 1>&2 2>&3) # Dialog timebox for time
   if [ $? -eq 1 ]; then #if cancel/no
     exit 1
   fi
-
   log_message "$(set_timestamp $(date -d "$DATE $TIME" +%s))"
   exit $? #exit status matches set_timestamp exit status
 
