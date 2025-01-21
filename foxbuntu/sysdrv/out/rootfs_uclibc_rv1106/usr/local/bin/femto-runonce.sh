@@ -5,13 +5,16 @@ log_message() {
 }
 
 if [ ! -e "/etc/.firstboot" ]; then
+
+  who | grep -q . || exit 0
+
   # prevents weirdness over tty
   export NCURSES_NO_UTF8_ACS=1
   export TERM=xterm-256color
   export LANG=C.UTF-8
   dialog --title "Femtofox run once utility" --yesno "\
 This does not appear to be this system's first boot.\n\
-Re-running this script will restore RTC support, set the Meshtastic nodeid and eth0 MAC address to be derivative of the CPU serial number, set the Meshtastic wifi status to \`enabled\` and then reboot.\n\
+Re-running this script will resize the filesystem to fit the SD card, allocate a swap file, add RTC support, add terminal type to .bashrc, set the eth0 MAC address to be derivative of the CPU serial number and then reboot.\n\
 \n\
 Re-running this script after first boot should not cause any harm, but may not work as expected.\n\
 \n\
@@ -21,6 +24,9 @@ Proceed?" 14 60
   fi
 fi
 
+# Disable LED to prevent boot codes from showing during this boot
+echo 34 > /sys/class/gpio/unexport
+
 # Perform filesystem resize
   log_message "Resizing filesystem. This can take up to 10 minutes, depending on microSD card size and speed"
   sudo resize2fs /dev/mmcblk1p5
@@ -28,13 +34,13 @@ fi
   sudo resize2fs /dev/mmcblk1p7
 
 	# allocate swap file
-if [ ! -f /etc/.filesystem_swap ]; then # check if swap file already exists
+if [ ! -f /swapfile ]; then # check if swap file already exists
   sudo fallocate -l 1G /swapfile
   sudo chmod 600 /swapfile
   sudo mkswap /swapfile > /dev/null
   sudo swapon /swapfile > /dev/null
   echo '/swapfile none swap sw 0 0' | tee -a /etc/fstab > /dev/null
-  touch /etc/.filesystem_swap
+#  touch /etc/.filesystem_swap # no longer used
   log_message "Swap file allocated."
 else
 	log_message "Swap file already allocated, skipping."
@@ -61,9 +67,7 @@ fi
 lines="export NCURSES_NO_UTF8_ACS=1
 export TERM=xterm-256color
 export LANG=C.UTF-8"
-
-# Check if the lines are already in .bashrc
-if ! grep -Fxq "$lines" /home/femto/.bashrc; then
+if ! grep -Fxq "$lines" /home/femto/.bashrc; then # Check if the lines are already in .bashrc
     echo "$lines" >> /home/femto/.bashrc
     echo "Added TERM, LANG and NCURSES_NO_UTF8_ACS to .bashrc"
 else
@@ -71,13 +75,13 @@ else
 fi
 
 # set meshtastic nodeid to derivative of CPU serial number (unique to this board)
-seed=$(sed -n '/Serial/ s/^.*: \(.*\)$/\U\1/p' /proc/cpuinfo | bc | tail -c 9)
+#seed=$(sed -n '/Serial/ s/^.*: \(.*\)$/\U\1/p' /proc/cpuinfo | bc | tail -c 9)
 #seed=$((0x$(awk '/Serial/ {print $3}' /proc/cpuinfo) & 0x3B9AC9FF)) #alternate method for generating seed - not in use
-sed -i "s|^ExecStart=/usr/sbin/meshtasticd.*|ExecStart=/usr/sbin/meshtasticd -h $seed|" /usr/lib/systemd/system/meshtasticd.service
-log_message "Using Luckfox CPU S/N to generate nodeid for Meshtastic."
-systemctl daemon-reload
-systemctl enable meshtasticd
-systemctl restart meshtasticd
+#sed -i "s|^ExecStart=/usr/sbin/meshtasticd.*|ExecStart=/usr/sbin/meshtasticd -h $seed|" /usr/lib/systemd/system/meshtasticd.service
+#log_message "Using Luckfox CPU S/N to generate nodeid for Meshtastic."
+#systemctl daemon-reload
+#systemctl enable meshtasticd
+#systemctl restart meshtasticd
 
 # remove first boot flag
 rm /etc/.firstboot
