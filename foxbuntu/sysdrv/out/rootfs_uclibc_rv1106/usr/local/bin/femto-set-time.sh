@@ -15,6 +15,7 @@ help=$(cat <<EOF
 If no argument is specified, a menu system will be used. Options are:
 -h             This message
 -t "TIMEZONE"  Set timezone
+-T "TIMESTAMP" Set timestamp (unix timestamp)
 EOF
 )
 
@@ -34,10 +35,29 @@ set_timezone() {
   fi
 }
 
-while getopts ":t:h" opt; do
+set_timestamp() {
+  if date -s "@$1" >/dev/null 2>&1; then
+    if hwclock --systohc >/dev/null 2>&1; then
+      rtc="New time successfully saved to RTC.\n"
+    else
+      rtc="Unable to communicate with RTC module. An RTC module can save system time between reboots/power outages.\n"
+    fi
+    echo "System time updated to:\n$(date)\n\n${rtc}Time & date are also set automatically from internet."
+    return 0
+  else
+    echo "Failed to set system time."
+    return 1
+  fi
+}
+
+
+while getopts ":t:T:h" opt; do
   case ${opt} in
     t)  # Option -t (timezone)
       set_timezone "$OPTARG"
+    ;;
+    T)  # Option -t (timestamp)
+      set_timestamp "$OPTARG"
     ;;
     h)  # Option -h (help)
       echo -e "$help"
@@ -79,15 +99,8 @@ if [ $arg_count -eq 0 ]; then # if the script was launched with no arguments, th
   if [ $? -eq 1 ]; then #if cancel/no
     exit 1
   fi
-  if date -s "$DATE $TIME"; then # set time
-    if hwclock --systohc; then
-      rtc="New time successfully saved to RTC."
-    else
-      rtc="Unable to communicate with RTC module. An RTC module can save system time between reboots/power outages."
-    fi
-    log_message "System time updated to:\n$(date)\n\n$rtc\nTime & date are also set automatically from internet."
-  else
-    log_message "Failed to set system time."
-    exit 1
-  fi
+
+  log_message "$(set_timestamp $(date -d "$DATE $TIME" +%s))"
+  exit $? #exit status matches set_timestamp exit status
+
 fi
