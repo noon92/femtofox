@@ -67,8 +67,8 @@ monitor_changes() {
 
     while true; do
         PID=$(ps -C meshtasticd -o pid= | tr -d ' ')
-        if [[ -n "$PID" ]] && sudo lsof /dev/spidev0.0 | grep -q "$PID"; then
-        #if sudo lsof /dev/spidev0.0 | grep -q "meshtasticd"; then
+        #if [[ -n "$PID" ]] && sudo lsof /dev/spidev0.0 | grep -q "$PID"; then
+        if [[ -n "$PID" ]] && sudo lsof /dev/spidev0.0 | grep -q "$PID" && [[ -d /sys/class/net/wlan0 ]]; then
           local current_mobile_state current_wlan_state
           current_mobile_state=$(get_mobile_wifi_state)
           current_wlan_state=$(cat /sys/class/net/wlan0/operstate)
