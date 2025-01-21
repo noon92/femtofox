@@ -1,23 +1,16 @@
 #!/bin/bash
 
-if [ -e "/etc/.firstboot" ]; then
-  echo "First boot, skipping USB Configuration Tool."
-  logger "First boot, skipping USB Configuration Tool."
-  exit 0
-fi
-
 mount_point="/mnt/usb" # Set the mount point
 
 # Function to log to screen, syslog and logfile to be saved to usb drive
 log_message() {
-  echo "USB config: $1"
+  echo -e "\e[32mUSB config\e[0m: $1"
   logger "USB config: $1"
   echo "$(date +"%Y-%m-%d %H:%M:%S") $1" >> /tmp/femtofox-config.log
 }
 
 if [ -e "/etc/.firstboot" ]; then
-  echo "First boot, skipping USB Configuration Tool."
-  logger "First boot, skipping USB Configuration Tool."
+  log_message "First boot, skipping USB Configuration Tool."
   exit 0
 fi
 
@@ -63,6 +56,8 @@ if [ ! -d "$mount_point" ]; then
   mkdir -p "$mount_point"
 fi
 
+echo -e "\e[32m******* USB configuration tool *******\e[0m"
+
 # Debugging: Log and echo the extracted device name
 log_message "USB device found: $full_device_path"
 
@@ -75,7 +70,7 @@ else
   if [ $? -eq 0 ]; then
     log_message "USB drive mounted successfully at $mount_point."
   else
-    log_message "Failed to mount USB drive."
+    log_message "\e[31mFailed to mount USB drive.\e[0m"
     blink "5" && sleep "0.5" #boot code
     exit_script 1
   fi
@@ -132,7 +127,7 @@ if [ -f "$mount_point/femtofox-config.txt" ]; then
   
   # Check if the log exits and if the dont_run_if_log_exists line is set in the script
   if $log_exists && [[ $dont_run_if_log_exists = "true" ]]; then
-	log_message "\`dont_run_if_log_exists\` is set to \"true\" and log exists, ignoring."
+	log_message "\e[31m\`dont_run_if_log_exists\` is set to \"true\" and log exists, ignoring.\e[0m"
     for _ in {1..2}; do #boot code
       blink "1.5" && sleep 0.5
     done
@@ -271,7 +266,7 @@ if [ -f "$mount_point/femtofox-config.txt" ]; then
       blink "0.125" && sleep 0.125
     done
   else #if no valid data in config file
-    log_message "femtofox-config.txt does not contain valid configuration info, ignoring."
+    log_message "\e[31mfemtofox-config.txt does not contain valid configuration info, ignoring.\e[0m"
     for _ in {1..5}; do #boot code
       blink "1.5" && sleep 0.5
     done
@@ -279,7 +274,7 @@ if [ -f "$mount_point/femtofox-config.txt" ]; then
   fi
   
 else
-  log_message "USB drive mounted but femtofox-config.txt not found, ignoring."
+  log_message "\e[31mUSB drive mounted but femtofox-config.txt not found, ignoring.\e[0m"
   for _ in {1..3}; do #boot code
     blink "1.5" && sleep 0.5
   done

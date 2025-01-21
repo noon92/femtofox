@@ -1,6 +1,6 @@
 #!/bin/bash
 log_message() {
-  echo "First boot: $1"  # Echo to the screen
+  echo -e "\e[32mFirst boot\e[0m: $1"  # Echo to the screen
   logger "First boot: $1"  # Log to the system log
 }
 
@@ -24,8 +24,10 @@ Proceed?" 14 60
   fi
 fi
 
+echo -e "\e[32m******* First boot *******\e[0m"
+
 # Disable LED to prevent boot codes from showing during this boot
-echo 34 > /sys/class/gpio/unexport
+sh -c "echo 34 > /sys/class/gpio/unexport"
 
 # Perform filesystem resize
   log_message "Resizing filesystem. This can take up to 10 minutes, depending on microSD card size and speed"
