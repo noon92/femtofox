@@ -12,17 +12,21 @@ Options are:
 -k             Get current LoRa radio selection
 -l "RADIO"     Choose LoRa radio model. Options are \`lr1121_tcxo\`, \`sx1262_tcxo\`, \`sx1262_xtal\`, \`none\` (simradio)
 -q "URL"       Set configuration URL
--v             View current admin keys
--a "KEY"       Set admin key
+-u             Get current public key
+-U "KEY"       Set public key
+-r             Get current private key
+-R "KEY"       Set private key
+-a             View current admin keys
+-A "KEY"       Set admin key
 -c             Clear admin keys
 -p             Get legacy admin channel state
 -o "true"      Set legacy admin channel state (true/false = enabled/disabled), case sensitive
--r             Test mesh connectivity by sending "test" to channel 0 and waiting for. Will attempt 3 times
+-w             Test mesh connectivity by sending "test" to channel 0 and waiting for. Will attempt 3 times
 -s             Start/restart Meshtasticd service
 -t             Stop Meshtasticd service
 -M "enable"    Enable/disable Meshtasticd service. Options: "enable" "disable"
 -S             Get Meshtasticd service state
--u             Upgrade Meshtasticd
+-z             Upgrade Meshtasticd
 -x             Uninstall Meshtasticd
 -m             Meshtastic update tool. Syntax: \`femto-meshtasticd-config.sh -m \"--set security.admin_channel_enabled false\" 10 \"Disable legacy admin\"\`
                Will retry the \`--set security.admin_channel_enabled false\` command until successful or up to 10 times, and tag status reports with \`Disable legacy admin\` via echo and to system log.
@@ -71,7 +75,7 @@ meshtastic_update() {
 }
 
 # Parse options
-while getopts ":higkl:q:va:cpo:sM:Struxm" opt; do
+while getopts ":higkl:q:uU:rR:aA:cpo:sM:Stwuxm" opt; do
   case ${opt} in
     h) # Option -h (help)
       echo -e "$help"
@@ -137,16 +141,28 @@ Nodes in nodedb:  $(echo "$output" | grep -oP '"![a-zA-Z0-9]+":\s*\{' | wc -l)\
     q) # Option -q (set config URL)
       meshtastic_update "--seturl $OPTARG" 3 "Set URL"
       ;;
-    v) # Option -v (view admin keys)
+    u) # Option -u (get public key)
+      meshtastic_update " --get security.public_key" 3 "Get public key" | sed -n 's/.*base64:\([A-Za-z0-9+/=]*\).*/\1/p'
+      ;;
+    U) # Option -U (set public key)
+      meshtastic_update " --set security.public_key base64:$OPTARG" 3 "Set public key"
+      ;;
+    r) # Option -r (get private key)
+      meshtastic_update " --get security.private_key" 3 "Get private key" | sed -n 's/.*base64:\([A-Za-z0-9+/=]*\).*/\1/p'
+      ;;
+    R) # Option -R (set private key)
+      meshtastic_update " --set security.private_key base64:$OPTARG" 3 "Set private key"
+      ;;
+    a) # Option -a (view admin keys)
       echo "Getting admin keys..."
       keys=$(meshtastic --host --get security.admin_key | grep -oP '(?<=base64:)[^,"]+' | sed "s/'//g" | sed "s/]//g" | nl -w1 -s'. ' | sed 's/^/|n/' | tr '\n' ' ')  #add look for errors
       echo "${keys:- none}"
       ;;
-    a) # Option -a (add admin key)
+    A) # Option -A (add admin key)
       meshtastic_update "--set security.admin_key base64:$OPTARG" 3 "Set admin key"
       ;;
     c) # Option -c (clear admin key list)
-      meshtastic_update "--set security.admin_key 0" 3 "Set admin key"
+      meshtastic_update "--set security.admin_key 0" 3 "Clear admin keys"
       ;;
     p) # Option -p (view current legacy admin state)
       meshtastic_update "--get security.admin_channel_enabled" 3 "Get legacy admin state"
@@ -154,7 +170,7 @@ Nodes in nodedb:  $(echo "$output" | grep -oP '"![a-zA-Z0-9]+":\s*\{' | wc -l)\
     o) # Option -o (set legacy admin true/false)
       meshtastic_update "--set security.admin_channel_enabled $OPTARG" 3 "Set legacy admin state"
       ;;
-    r) # Option -r (mesh connectivity test)
+    w) # Option -w (mesh connectivity test)
       for ((i=0; i<=2; i++)); do
         if meshtastic --host --ch-index 0 --sendtext "test" --ack 2>/dev/null | grep -q "ACK"; then
           echo -e "Received acknowledgement...\n\n\033[0;34mMesh connectivity confirmed!\033[0m"
@@ -178,7 +194,7 @@ Nodes in nodedb:  $(echo "$output" | grep -oP '"![a-zA-Z0-9]+":\s*\{' | wc -l)\
         systemctl stop meshtasticd
       else
         echo "-M argument requires either \"enable\" or \"disable\""
-        echo $help
+        echo -e "$help"
       fi
       ;;
     S) # Option -S (Get Meshtasticd Service state)
@@ -198,7 +214,7 @@ Nodes in nodedb:  $(echo "$output" | grep -oP '"![a-zA-Z0-9]+":\s*\{' | wc -l)\
       systemctl stop meshtasticd
       echo "Meshtasticd service stopped."
       ;;
-    u) # Option -u (upgrade meshtasticd)
+    z) # Option -z (upgrade meshtasticd)
       apt update
       apt install --only-upgrade meshtasticd
       ;;

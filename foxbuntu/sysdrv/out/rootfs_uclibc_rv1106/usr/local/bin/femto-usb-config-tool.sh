@@ -233,7 +233,7 @@ if [ -f "$mount_point/femtofox-config.txt" ]; then
       log_message "Updating Meshtastic admin key."
     fi
     found_config="true"
-    meshtastic_security_command+=" -a \"$meshtastic_admin_key\"" # add to the command list
+    meshtastic_security_command+=" -A \"$meshtastic_admin_key\"" # add to the command list
   fi
   
   if [[ -n "$meshtastic_legacy_admin" ]]; then
