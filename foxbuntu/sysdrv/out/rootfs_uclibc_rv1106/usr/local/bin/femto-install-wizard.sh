@@ -47,25 +47,42 @@ wizard() {
       femto-meshtasticd-config.sh -a "$key"
       pause
     fi
-    
+
+    dialog --no-collapse --infobox "Getting current legacy admin state..." 5 45
+    state=$(sudo femto-meshtasticd-config.sh -p)
+    if echo "$state" | grep -q "True"; then
+      state="\Z4Enabled\Zn"
+    elif echo "$state" | grep -q "False"; then
+      state="\Z1Disabled\Zn"
+    elif echo "$state" | grep -q "Error"; then
+      state="\Z1Error\Zn"
+    fi
     while true; do
-      choice=$(dialog --title "$title" --cancel-label "Skip" --menu "Enable/disable Meshtastic Legacy admin channel?" 12 40 5 \
+      choice=$(dialog --no-collapse --colors --cancel-label "Skip" --title "Meshtasticd Legacy Admin" --menu "Current state: $state" 12 40 5 \
         1 "Enable" \
         2 "Disable (default)" \
         "" "" \
         3 "Skip" 3>&1 1>&2 2>&3)
-      
       exit_status=$? # This line checks the exit status of the dialog command
-      
       if [ $exit_status -ne 0 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
         break
       fi
-      
       case $choice in
-        1) femto-meshtasticd-config.sh -o "true" && break ;;
-        2) femto-meshtasticd-config.sh -o "false" && break ;;
+        1) # enable legacy admin)
+          dialog --no-collapse --title "$title" --yesno "Enable legacy admin channel?\n" 0 0
+          if [ $? -eq 0 ]; then #unless cancel/no
+            dialog --no-collapse --infobox "Sending command..." 5 45
+            dialog --no-collapse --colors --title "$title" --msgbox "$(femto-meshtasticd-config.sh -o "true" && echo -e "\n\Z4Command successful!\Zn\n" || echo -e "\n\Z1Command failed.\Zn\n")" 0 0
+          fi
+        ;;
+        2) # disable legacy admin)
+          dialog --no-collapse --title "$title" --yesno "Disable legacy admin channel?\n" 0 0
+          if [ $? -eq 0 ]; then #unless cancel/no
+            dialog --no-collapse --infobox "Sending command..." 5 45
+            dialog --no-collapse --colors --title "$title" --msgbox "$(femto-meshtasticd-config.sh -o "false" && echo -e "\n\Z4Command successful!\Zn\n" || echo -e "\n\Z1Command failed.\Zn\n")" 0 0
+          fi
+        ;;
         3) break ;;
-        *) dialog --msgbox "Invalid choice, please try again." 8 40 ;;
       esac
     done
   fi
@@ -76,8 +93,8 @@ wizard() {
 dialog --title "$title" --yesno "\
 The install wizard will allow you to configure all the settings necessary to run your Femtofox.\n\
 \n\
-Running this wizard will overwrite some current settings.\n\
-Proceed?" 0 0
+Running this wizard will overwrite some current settings.\n\n\
+Proceed?" 13 50
 if [ $? -eq 0 ]; then #unless cancel/no
   wizard
 fi

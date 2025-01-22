@@ -135,24 +135,24 @@ Nodes in nodedb:  $(echo "$output" | grep -oP '"![a-zA-Z0-9]+":\s*\{' | wc -l)\
       fi
       ;;
     q) # Option -q (set config URL)
-      meshtastic_update "--seturl $OPTARG" 10 "Set URL"
+      meshtastic_update "--seturl $OPTARG" 3 "Set URL"
       ;;
     v) # Option -v (view admin keys)
       echo "Getting admin keys..."
       keys=$(meshtastic --host --get security.admin_key | grep -oP '(?<=base64:)[^,"]+' | sed "s/'//g" | sed "s/]//g" | nl -w1 -s'. ' | sed 's/^/|n/' | tr '\n' ' ')  #add look for errors
-      echo "${keys:-none}"
+      echo "${keys:- none}"
       ;;
     a) # Option -a (add admin key)
-      meshtastic_update "--set security.admin_key base64:$OPTARG" 10 "Set admin key"
+      meshtastic_update "--set security.admin_key base64:$OPTARG" 3 "Set admin key"
       ;;
     c) # Option -c (clear admin key list)
-      meshtastic_update "--set security.admin_key 0" 10 "Set admin key"
+      meshtastic_update "--set security.admin_key 0" 3 "Set admin key"
       ;;
     p) # Option -p (view current legacy admin state)
       meshtastic_update "--get security.admin_channel_enabled" 3 "Get legacy admin state"
       ;;
     o) # Option -o (set legacy admin true/false)
-      meshtastic_update "--set security.admin_channel_enabled $OPTARG" 10 "Set legacy admin state"
+      meshtastic_update "--set security.admin_channel_enabled $OPTARG" 3 "Set legacy admin state"
       ;;
     r) # Option -r (mesh connectivity test)
       for ((i=0; i<=2; i++)); do
@@ -186,7 +186,7 @@ Nodes in nodedb:  $(echo "$output" | grep -oP '"![a-zA-Z0-9]+":\s*\{' | wc -l)\
         if echo "$(systemctl status meshtasticd)" | grep -q "active (running)"; then
           echo -e "\033[4m\033[0;34menabled and running\033[0m"
         elif echo "$(systemctl status meshtasticd)" | grep -q "inactive (dead)"; then
-          echo -e "\033[4m\033[0;31mdnabled but not running\033[0m"
+          echo -e "\033[4m\033[0;31menabled but not running\033[0m"
         else
           echo "unknown"
         fi
