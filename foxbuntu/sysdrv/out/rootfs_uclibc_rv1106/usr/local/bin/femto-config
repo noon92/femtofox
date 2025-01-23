@@ -83,9 +83,11 @@ networking_settings() {
           dialog --no-collapse --colors --msgbox "\Z1Network adapter wlan0 does not exist.\Zn\n\nIs a wifi adapter connected?" 8 40
         else
           while true; do
-            choice=$(dialog --no-collapse --cancel-label "Back" --title "Enable/disable Wi-Fi" --menu "Tip: Wi-Fi can also be toggled by short-pressing the BOOT button on the Luckfox." 11 50 5 \
+            choice=$(dialog --no-collapse --cancel-label "Back" --title "Enable/disable Wi-Fi" --menu "Tip: Wi-Fi can also be toggled by short-pressing the BOOT button on the Luckfox." 13 50 5 \
               1 "Turn Wi-Fi on" \
-              2 "Turn Wi-Fi off" 3>&1 1>&2 2>&3)
+              2 "Turn Wi-Fi off" \
+              "" ""
+              3 "Return to previous menu" 3>&1 1>&2 2>&3)
             exit_status=$? # This line checks the exit status of the dialog command
             if [ $exit_status -ne 0 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
               break
@@ -93,6 +95,7 @@ networking_settings() {
             case $choice in
               1) femto-network-config.sh -x "up" && break ;;
               2) femto-network-config.sh -x "down" && break ;;
+              3) break ;;
             esac
           done
         fi
@@ -420,18 +423,20 @@ meshtastic_settings() {
   while true; do
       echo "Checking Meshtasticd service state..."
     local option=""
-    option=$(dialog --no-collapse --colors --title "$title" --cancel-label "Back" --menu "Meshtasticd service is $(replace_colors "$(femto-meshtasticd-config.sh -S)")$(femto-meshtasticd-config.sh -k | grep -q 'simulated' && echo '\n\Z1Using simulated radio\Zn')" 19 50 4 \
+    option=$(dialog --no-collapse --colors --title "$title" --cancel-label "Back" --menu "Meshtasticd service is $(replace_colors "$(femto-meshtasticd-config.sh -S)")$(femto-meshtasticd-config.sh -k | grep -q 'simulated' && echo '\n\Z1Using simulated radio\Zn')" 21 50 4 \
       1 "View node info" \
       2 "View configuration URL & QR code" \
       3 "Set new configuration URL" \
       4 "Set LoRa radio" \
-      5 "Remote node administration" \
-      6 "Mesh connectivity test" \
-      7 "Manage Meshtasticd service" \
-      8 "Upgrade/install Meshtasticd" \
-      9 "Uninstall Meshtasticd" \
+      5 "View/change public key" \
+      6 "View/change private key" \
+      7 "Remote node administration" \
+      8 "Mesh connectivity test" \
+      9 "Manage Meshtasticd service" \
+      10 "Upgrade/install Meshtasticd" \
+      11 "Uninstall Meshtasticd" \
       "" "" \
-    10 "Back to Main Menu" 3>&1 1>&2 2>&3)
+    12 "Back to Main Menu" 3>&1 1>&2 2>&3)
     
     exit_status=$? # This line checks the exit status of the dialog command
     if [ $exit_status -ne 0 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
@@ -449,9 +454,9 @@ meshtastic_settings() {
         pause
       ;;
       3) # set URL)
-        newurl=$(dialog --no-collapse --title "Meshtastic URL" --inputbox "New Meshtasticd URL (SHIFT+INS to paste):" 8 60 3>&1 1>&2 2>&3)
+        newurl=$(dialog --no-collapse --title "Meshtastic URL" --inputbox "New Meshtastic LoRa configuration URL (SHIFT+INS to paste):" 8 60 3>&1 1>&2 2>&3)
         if [ -n "$newurl" ]; then #if a URL was entered
-          dialog --no-collapse --title "$title" --yesno "New Meshtasticd URL:\n$newurl\n\nConfirm?" 15 60
+          dialog --no-collapse --title "$title" --yesno "New Meshtastic LoRa configuration URL:\n$newurl\n\nConfirm?" 15 60
           if [ $? -eq 0 ]; then #unless cancel/no
             dialog --no-collapse --infobox "Sending command..." 5 45
             dialog --no-collapse --colors --title "Meshtastic URL" --msgbox "$(femto-meshtasticd-config.sh -q "$newurl" && echo -e "\n\Z4Command successful!\Zn\n" || echo -e "\n\Z1Command failed.\Zn\n")" 0 0
@@ -461,7 +466,39 @@ meshtastic_settings() {
       4) # set radio)
         set_lora_radio
       ;;
-      5) # remote admin)
+      5) # view/change public key)
+        dialog --no-collapse --infobox "Getting current public key..." 5 45
+        key=$(femto-meshtasticd-config.sh -u)
+        if [ -n "$key" ]; then
+          dialog --no-collapse --title "Meshtastic public key" --yesno "Current public key:\n$key\n\nSet new key?" 9 55
+          if [ $? -eq 0 ]; then #unless cancel/no
+            key=$(dialog --no-collapse --title "Meshtastic public key" --inputbox "New Meshtastic public key (SHIFT+INS to paste):" 8 60 3>&1 1>&2 2>&3)
+            if [ $? -eq 0 ]; then #unless cancel/no
+              dialog --no-collapse --infobox "Sending command..." 5 45
+              dialog --no-collapse --colors --title "Meshtastic public key" --msgbox "$(femto-meshtasticd-config.sh -U "$key" && echo -e "\n\Z4Command successful!\Zn\n" || echo -e "\n\Z1Command failed.\Zn\n")" 0 0
+            fi
+          fi
+        else
+          dialog --no-collapse --colors --title "Meshtastic public key" --msgbox "\Z1Failed to communicate with Meshtasticd.\Zn\n\nIs the service running?\n" 0 0
+        fi
+        ;;
+      6) # view/change private key)
+        dialog --no-collapse --infobox "Getting current private key..." 5 45
+        key=$(femto-meshtasticd-config.sh -u)
+        if [ -n "$key" ]; then
+          dialog --no-collapse --title "Meshtastic private key" --yesno "Current private key:\n$key\n\nSet new key?" 9 55
+          if [ $? -eq 0 ]; then #unless cancel/no
+            key=$(dialog --no-collapse --title "Meshtastic private key" --inputbox "New Meshtastic private key (SHIFT+INS to paste):" 8 60 3>&1 1>&2 2>&3)
+            if [ $? -eq 0 ]; then #unless cancel/no
+              dialog --no-collapse --infobox "Sending command..." 5 45
+              dialog --no-collapse --colors --title "Meshtastic private key" --msgbox "$(femto-meshtasticd-config.sh -R "$key" && echo -e "\n\Z4Command successful!\Zn\n" || echo -e "\n\Z1Command failed.\Zn\n")" 0 0
+            fi
+          fi
+        else
+          dialog --no-collapse --colors --title "Meshtastic private key" --msgbox "\Z1Failed to communicate with Meshtasticd.\Zn\n\nIs the service running?\n" 0 0
+        fi
+        ;;
+      7) # remote admin)
         while true; do
           choice=$(dialog --no-collapse --title "Meshtasticd Remote Admin" --menu "" 13 40 5 \
             1 "View admin keys" \
@@ -477,13 +514,13 @@ meshtastic_settings() {
           case $choice in
             1) # view admin keys)
               dialog --no-collapse --infobox "Getting Admin Keys..." 5 45
-              dialog --no-collapse --title "Admin keys" --msgbox "Up to 3 admin keys are permitted, more will be ignored.\n\nKeys:$(femto-meshtasticd-config.sh -v | tail -n 1 | sed 's/|n/\\n/g')" 0 0
+              dialog --no-collapse --title "Admin keys" --msgbox "Up to 3 admin keys are permitted, more will be ignored.\n\nKeys:$(femto-meshtasticd-config.sh -a | tail -n 1 | sed 's/|n/\\n/g')" 0 0
             ;;
             2) # set admin key)
               key=$(dialog --no-collapse --title "Admin Keys" --inputbox "Meshtastic admin key - up to 3, more will be ignored.\n\n(SHIFT+INS to paste):" 11 40 3>&1 1>&2 2>&3)
               if [ -n "$key" ]; then #if a key was entered
                 dialog --no-collapse --infobox "Sending command..." 5 45
-                dialog --no-collapse --colors --title "Admin Keys" --msgbox "$(femto-meshtasticd-config.sh -a "$key" && echo -e "\n\Z4Command successful!\Zn\n" || echo -e "\n\Z1Command failed.\Zn\n")" 0 0
+                dialog --no-collapse --colors --title "Admin Keys" --msgbox "$(femto-meshtasticd-config.sh -A "$key" && echo -e "\n\Z4Command successful!\Zn\n" || echo -e "\n\Z1Command failed.\Zn\n")" 0 0
               fi
             ;;
             3) # clear admin keys)
@@ -538,14 +575,14 @@ meshtastic_settings() {
           esac
         done
       ;;
-      6) #test mesh connectivity)
+      8) #test mesh connectivity)
         dialog --no-collapse --title "Meshtastic Connectivity Test" --yesno "Will send \"test\" to channel 0 and wait for acknowledgement. Will try up to 3 times.\n\nPerform test?" 10 45
         if [ $? -eq 0 ]; then #unless cancel/no
           dialog --no-collapse --infobox "Performing mesh connectivity test.\n\nThis may take a while..." 6 45
-          dialog --no-collapse --colors --title "Meshtasticd service status" --msgbox "$(replace_colors "$(femto-meshtasticd-config.sh -r)")" 0 0
+          dialog --no-collapse --colors --title "Meshtasticd service status" --msgbox "$(replace_colors "$(femto-meshtasticd-config.sh -w)")" 0 0
         fi
       ;;
-      7) #manage meshtasticd service)
+      9) #manage meshtasticd service)
         while true; do
           echo "Checking Meshtasticd service state..."
           local service_state="$(replace_colors "$(femto-meshtasticd-config.sh -S)")"
@@ -600,21 +637,21 @@ meshtastic_settings() {
           esac
         done
       ;;
-      8) #Upgrade meshtasticd)
+      10) #Upgrade meshtasticd)
         dialog --no-collapse --title "$title" --yesno "Upgrade Meshtasticd?\nRequires internet connection." 0 0
         if [ $? -eq 0 ]; then #unless cancel/no
-          femto-meshtasticd-config.sh -u
+          femto-meshtasticd-config.sh -z
           pause
         fi
       ;;
-      9) #uninstall meshtasticd)
+      11) #uninstall meshtasticd)
         dialog --no-collapse --colors --title "$title" --yesno "Uninstall Meshtasticd?\n\nFoxbuntu was designed with Meshtasticd integration in mind, and may behave unexpectedly if Meshtasticd is removed.\n\nThis will take the node \Zu\Z1OFFLINE\Zn and will not restart!" 0 0
         if [ $? -eq 0 ]; then
           femto-meshtasticd-config.sh -x
           dialog --no-collapse --msgbox "Meshtasticd uninstalled. To purge all remnants, run \`sudo apt purge\`." 8 40
         fi
       ;;
-      10)
+      12)
         return
       ;;
     esac
