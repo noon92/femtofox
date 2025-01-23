@@ -163,141 +163,12 @@ femto_pinouts() {
   done
 }
 
-# enable/disable system logging
-logging() {
-  enable_logging() {
-    chattr -i /var/log
-    msg="Enabling system logging by making /var/log writable."
-    logger $msg
-    echo $msg
-    return 0
-  }
-  disable_logging() {
-    msg="Disabling system logging by making /var/log immutable."
-    logger $msg
-    echo $msg
-    chattr +i /var/log
-    return 0
-  }
-  check_logging() {
-    lsattr -d /var/log | grep -q 'i' && echo -e "\033[0;31mdisabled\033[0m" || echo -e "\033[0;34menabled\033[0m"
-  }
-  if [ "$1" = "true" ]; then
-    disable_logging
-  elif [ "$1" = "false" ]; then
-    enable_logging
-  elif [ "$1" = "check" ]; then
-    check_logging
-  elif [ -z "$1" ]; then
-    while true; do
-      choice=$(dialog --no-collapse --colors --title "Logging" --menu "Before deploying a Femtofox, it is advisable to disable logging to reduce SD card wear.\nCurrent state: $(replace_colors "$(check_logging)")" 12 50 2 \
-        1 "Enable (default)" \
-        2 "Disable" 3>&1 1>&2 2>&3)
-      exit_status=$? # This line checks the exit status of the dialog command
-      if [ $exit_status -ne 0 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
-        break
-      fi
-      case $choice in
-        1) enable_logging ;;
-        2) disable_logging ;;
-      esac
-    done
-  else
-    echo "$1 is not a valid argument for -L. Options are \"true\" and \"false\"."
-  fi
-}
-
-# at some point this will be moved to a different script, and have many functions instead of one giant dump
-system_info() {
-  local cpu_model="$(dmesg | grep "soc_id" | sed -n 's/.*soc_id: //p')"
-  local cpu_architecture="$(uname -m) ($(dpkg --print-architecture) $(python3 -c "import platform; print(platform.architecture()[0])"))"
-  local cpu_temp="$(echo "scale=1; $(cat /sys/class/thermal/thermal_zone0/temp) / 1000" | bc)°C"
-  local cpu_speed="$(lscpu | grep "CPU min MHz" | awk '{print int($4)}')-$(lscpu | grep "CPU max MHz" | awk '{print int($4)}')mhz"
-  local cpu_serial="$(awk '/Serial/ {print $3}' /proc/cpuinfo)"
-
-  local microsd_size="$(df --block-size=1 / | awk 'NR==2 {total=$2; avail=$4; total_human=sprintf("%.2f", total/1024/1024/1024); avail_human=sprintf("%.2f", avail/1024/1024/1024); printf "%.2f GB   (%.2f%% free)", total_human, (avail/total)*100}')"
-  local memory="$(free -m | awk 'NR==2{printf "%d MB      (%.2f%% free)\n", $2, 100 - (($3/$2)*100)}')"
-  local swap="$(free -m | awk 'NR==3 {if ($2 > 1000) {printf "%.2f GB    (%.2f%% free)", $2/1024, ($4/$2)*100} else {printf "%d MB    (%.2f%% free)", $2, ($4/$2)*100}}')"
-  local mounted_drives="$([ "$(for dir in /mnt/*/; do echo -n "/mnt${dir#"/mnt"} "; done)" ] && echo "Mounted drives:   $(for dir in /mnt/*; do echo -n "/mnt${dir#"/mnt"} "; done | sed 's/\/$//')")"
-
-  local os_version="Foxbuntu v$(grep -oP 'major=\K[0-9]+' /etc/foxbuntu-release).$(grep -oP 'minor=\K[0-9]+' /etc/foxbuntu-release)$(output=$(grep -o 'patch=[1-9][0-9]*' /etc/foxbuntu-release | cut -d= -f2) && [ -n "$output" ] && echo ".$output")$(grep -oP 'hotfix=\K[a-z]+' /etc/foxbuntu-release) ($(lsb_release -d | awk -F'\t' '{print $2}') $(lsb_release -c | awk -F'\t' '{print $2}'))"
-  local system_uptime="$(uptime -p | awk '{$1=""; print $0}' | sed -e 's/ day\b/d/g' -e 's/ hour\b/h/g' -e 's/ hours\b/h/g' -e 's/ minute\b/m/g' -e 's/ minutes\b/m/g' | sed 's/,//g')"
-  local logging_enabled="$(logging "check" | sed 's/\x1b\[[0-9;]*m//g')"
-  local kernel_active_modules="$(lsmod | awk 'NR>1 {print $1}' | tr '\n' ' ' && echo)"
-  local kernel_boot_modules="$(modules=$(sed -n '6,$p' /etc/modules | sed ':a;N;$!ba;s/\n/, /g;s/, $//'); [ -z "$modules" ] && echo "none" || echo "$modules")"
-
-  local wifi_status="$(replace_colors "$(femto-network-config.sh -w | grep -v '^$' | grep -v '^Hostname')")" #remove hostname line, as it's identical to the one in ethernet settings
-  local eth_status="$(replace_colors "$(femto-network-config.sh -e)")"
-
-  local usb_mode="$(cat /sys/devices/platform/ff3e0000.usb2-phy/otg_mode)"
-  local spi0_state="$([ "$(awk -F= '/^SPI0_M0_STATUS/ {print $2}' /etc/luckfox.cfg)" -eq 1 ] && echo "enabled" || echo "disabled")"
-  local spi0_speed="$((0x$(xxd -p /sys/firmware/devicetree/base/spi@ff500000/spidev@0/spi-max-frequency | tr -d '\n')))"
-  local i2c3_state="$([ "$(awk -F= '/^I2C3_M1_STATUS/ {print $2}' /etc/luckfox.cfg)" -eq 1 ] && echo "enabled" || echo "disabled")"
-  local i2c3_speed="$(awk -F= '/^I2C3_M1_SPEED/ {print $2}' /etc/luckfox.cfg)"
-  local uart3_state="$([ "$(awk -F= '/^UART3_M1_STATUS/ {print $2}' /etc/luckfox.cfg)" -eq 1 ] && echo "enabled" || echo "disabled")"
-  local uart4_state="$([ "$(awk -F= '/^UART4_M1_STATUS/ {print $2}' /etc/luckfox.cfg)" -eq 1 ] && echo "enabled" || echo "disabled")"
-
-  local lora_radio="$(replace_colors "$(femto-meshtasticd-config.sh -k)")"
-  local usb_devices="$(lsusb | grep -v 'root hub' | awk 'NR>0{printf "USB:              "; for(i=7;i<=NF;i++) printf "%s ", $i; print ""} END {if (NR == 0) printf "USB:              None detected"}')"
-  local i2c_addresses="$(i2cdetect -y 3 | awk 'NR>1 {for(i=2;i<=17;i++) if ($i == "ff" || $i == "UU") { printf "0x%02x ", (i-2) + (NR-2)*16} }' | tr -d '\n' )"
-
-  local meshtasticd_service_status="$(replace_colors "$(femto-meshtasticd-config.sh -S)")"
-  local meshtasticd_info="$(replace_colors "$(femto-meshtasticd-config.sh -i)")" 
-  echo -e "\
-            Femtofox\n\
-Core:             $(cat /sys/firmware/devicetree/base/model)\n\
-Operating System: $os_version\n\
-Kernel version:   $(uname -r)\n\
-Uptime:          $system_uptime\n\
-Logging:          $logging_enabled\n\
-System time:      $(date)\n\
-K modules active: $kernel_active_modules\n\
-K boot modules:   $kernel_boot_modules\n\
-\n\
-    CPU:\n\
-Model:            $cpu_model\n\
-Architecture:     $cpu_architecture\n\
-Speed:            $cpu_speed x $(nproc) cores\n\
-Temperature:      $cpu_temp\n\
-Serial #          $cpu_serial\n\
-\n\
-    Storage:\n\
-microSD size:     $microsd_size\n\
-Memory:           $memory\n\
-Swap:             $swap\n\
-$mounted_drives\n\
-\n\
-    Networking (wlan0 & eth0):\n\
-$wifi_status\n\
----
-$eth_status\n\
-\n\
-    Interfaces:\n\
-USB mode:         $usb_mode\n\
-SPI-0 state:      $spi0_state\n\
-SPI-0 speed:      $spi0_speed\n\
-i2c-3 state:      $i2c3_state\n\
-i2c-3 speed:      $i2c3_speed\n\
-UART-3 state:     $uart3_state\n\
-UART-4 state:     $uart4_state\n\
-\n\
-    Attached devices:\n\
-LoRa radio:       $lora_radio\n\
-$usb_devices\n\
-i2c devices:      $i2c_addresses\n\
-\n\
-    Meshtasticd:\n\
-Service status:   $meshtasticd_service_status\n\
-$meshtasticd_info\
-"
-}
-
 # utilities
 utilities() {
   local title="Utilities"
   while true; do
     local option=""
-    option=$(dialog --no-collapse --cancel-label "Back" --menu "$title" 19 40 4 \
+    option=$(dialog --no-collapse --cancel-label "Back" --menu "$title" 21 50 4 \
       1 "System info" \
       2 "Set system time" \
       3 "Kernel modules" \
@@ -306,10 +177,11 @@ utilities() {
       6 "Run OEM luckfox-config" \
       7 "Process viewer/manager" \
       8 "Disable/enable logging" \
-      9 "Reboot" \
-      10 "Shutdown" \
+      9 "Disable/enable activity LED" \
+      10 "Reboot" \
+      11 "Shutdown" \
       "" "" \
-      11 "Back to Main Menu" 3>&1 1>&2 2>&3)
+      12 "Back to Main Menu" 3>&1 1>&2 2>&3)
     
     exit_status=$? # This line checks the exit status of the dialog command
     if [ $exit_status -ne 0 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
@@ -319,7 +191,7 @@ utilities() {
     case $option in
       1)
         dialog --no-collapse --infobox "Loading system info..." 5 45
-        dialog --no-collapse --colors --title "System info" --msgbox "$(system_info)" 0 0
+        dialog --no-collapse --colors --title "System info" --msgbox "$(femto-utils.sh -i)" 0 0
       ;;
       2) femto-set-time.sh ;; # set timezone)
       3) # Kernel modules)
@@ -328,7 +200,7 @@ utilities() {
       ;;
       4) femto-runonce.sh ;; # Re-run first-boot script)
       5) # USB config)
-        dialog --no-collapse --title "$title" --yesno "The USB configuration tool allows you to set critical Femtofox settings with a text file on a USB flash drive.\n\nFor more information, visit\ngithub.com/noon92/femtofox/blob/main/usb_config.md\n\nThis tool is run automatically at boot.\n\nRun now?" 14 60
+        dialog --no-collapse --title "$title" --yesno "The USB configuration tool allows you to set critical Femtofox settings with a text file on a USB flash drive.\n\nFor more information, visit\ngithub.com/femtofox/femtofox/blob/main/usb_config.md\n\nThis tool is run automatically at boot.\n\nRun now?" 14 60
         if [ $? -eq 0 ]; then #unless cancel/no
           femto-usb-config-tool.sh
           pause
@@ -336,23 +208,57 @@ utilities() {
       ;;
       6) luckfox-config ;;
       7) htop ;;
-      8) logging ;;
-      9) # reboot)
+      8) # logging)
+        while true; do
+          choice=$(dialog --no-collapse --colors --title "Logging" --menu "Before deploying a Femtofox, it is advisable to disable logging to reduce SD card wear.\nCurrent state: $(replace_colors "$(femto-utils.sh -l "check")")" 14 50 2 \
+            1 "Enable (default)" \
+            2 "Disable" \
+            "" "" \
+            3 "Return to previous menu" 3>&1 1>&2 2>&3)
+          exit_status=$? # This line checks the exit status of the dialog command
+          if [ $exit_status -ne 0 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
+            break
+          fi
+          case $choice in
+            1) femto-utils.sh -l "enable" ;;
+            2) femto-utils.sh -l "disable" ;;
+            3) break ;;
+          esac
+        done
+      ;;
+      9) # logging)
+        while true; do
+          choice=$(dialog --no-collapse --colors --title "Logging" --menu "Before deploying a Femtofox, it is advisable to disable the Activity LED to save power.\nCurrent state: $(replace_colors "$(femto-utils.sh -a "check")")" 14 50 2 \
+            1 "Enable (default)" \
+            2 "Disable" \
+            "" "" \
+            3 "Return to previous menu" 3>&1 1>&2 2>&3)
+          exit_status=$? # This line checks the exit status of the dialog command
+          if [ $exit_status -ne 0 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
+            break
+          fi
+          case $choice in
+            1) femto-utils.sh -a "enable" ;;
+            2) femto-utils.sh -a "disable" ;;
+            3) break ;;
+          esac
+        done
+      ;;
+      10) # reboot)
         dialog --no-collapse --title "$title" --yesno "Reboot now?\n\nTip: Reboot can also be triggered by long-pressing the BOOT button on the luckfox." 10 45
         if [ $? -eq 0 ]; then #unless cancel/no
           dialog --no-collapse --infobox "Rebooting..." 5 45
-          reboot
+          femto-utils.sh -r
         fi
       ;;
-      10) # shutdown)
+      11) # shutdown)
         dialog --no-collapse --title "$title" --yesno "Shut down now?\n\nTo power system back on, disconnect/reconnect power.\n\nThe system shutdown command prevents damage to the filesystem from power interrupts, but does not stop power consumption.\n\nTip: You can also shut down the Femtofox by pressing the BOOT button for 5 seconds or by running \`sudo halt\`." 14 60
         if [ $? -eq 0 ]; then #unless cancel/no
           dialog --no-collapse --infobox "Shutting down...\n\nPower consumption will not stop." 5 45
-          logger "User requested system halt"
-          halt
+          femto-utils.sh -s
         fi
       ;;
-      11) return ;;
+      12) return ;;
     esac
   done
 }
@@ -715,9 +621,8 @@ help="If script is run without arguments, femto-config menu will load.\n\
 Options are:\n\
 -h           This message\n\
 -l           Set LoRa radio cpu_model menu\n\
--w           Set Wi-Fi config menu\n\
--L \"true\"  Set system logging true/false/check
--i           Get system info"
+-w           Set Wi-Fi config menu\
+"
 while getopts ":hlwL:i" opt; do
   case ${opt} in
     h) # Option -h (help)
@@ -729,23 +634,15 @@ while getopts ":hlwL:i" opt; do
     w) # Option -w (Wi-Fi config)
       wifi_config
     ;;
-    L) # Option -L (Logging)
-      logging $OPTARG
-    ;;
-    i) system_info ;;
     \?) # Unknown option)
       echo -e "Unknown argument $1.\n$help"
-    ;;
-    :) # Missing argument for option)
-      echo "Option -$OPTARG requires a setting."
-      echo -e "$help"
-      exit 1
     ;;
   esac
 done
 if [ -n "$1" ]; then
   exit
 fi
+
 # Main menu
 while true; do
   choice=$(dialog --no-collapse --title "$(date)" --cancel-label "Exit" --menu "Femtofox Config" 15 40 5 \

@@ -1,9 +1,13 @@
 ## femtofox-config.txt
-## Help: https://github.com/noon92/femtofox/usbconfig.md
+## Help: https://github.com/femtofox/femtofox/usbconfig.md
 ## To set a setting, uncomment a line by removing its preceeding `#`
 ## All settings are optional - remove any you don't want to set.
 
 ### Foxbuntu settings
+
+## Activity LED setting. CaSe SeNsItIvE
+## Options are "enable" and "disable"
+#act_led="disable"
 
 ## Localization settings. CaSe SeNsItIvE
 ## List of timezones: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
@@ -18,23 +22,26 @@
 ### Meshtastic settings
 
 ## Radio module to use. Options are:
-##  `ebyte-e22-900m30s`
-##  `ebyte-e22-900m22s`
-##  `ebyte-e80-900m22s` (experimental)
-##  `heltec-ht-ra62`
-##  `seeed-wio-sx1262`
-##  `waveshare-sx126x-xxxm`
-##  `ai-thinker-ra-01sh`
-##  `sx1262_tcxo` (for Ebyte E22-900M30SM, Ebyte E22-900M22S, Heltec HT-RA62, Seeed Wio SX1262)
-##  `sx1262_xtal` (for AiThinker RA01SH, and Waveshare Pi hat)
-##  `lr1121_tcxo` (experimental, for Ebyte E80-900M2213S)
-##  `none` (for simulated radio)
+##  "ebyte-e22-900m30s"
+##  "ebyte-e22-900m22s"
+##  "ebyte-e80-900m22s" (experimental)
+##  "heltec-ht-ra62"
+##  "seeed-wio-sx1262"
+##  "waveshare-sx126x-xxxm"
+##  "ai-thinker-ra-01sh"
+##  "sx1262_tcxo" (for Ebyte E22-900M30SM, Ebyte E22-900M22S, Heltec HT-RA62, Seeed Wio SX1262)
+##  "sx1262_xtal" (for AiThinker RA01SH, and Waveshare Pi hat)
+##  "lr1121_tcxo" (experimental, for Ebyte E80-900M2213S)
+##  "none" (for simulated radio)
 #meshtastic_lora_radio="radio_name"
 
 ## URL from Meshtastic QR code to configure channels
 #meshtastic_url="https://meshtastic.org/e/..."
 
 ## Meshtastic security settings. CaSe SeNsItIvE
+#meshtastic_public_key="XX="
+#meshtastic_private_key="XX="
+
 ## The admin key list can contain up to three keys - if more are added they will be ignored.
 ## The USB configuration tool supports clearing the admin key list, after which you will need to re-add your admin key/s in a second operation.
 ## To clear the admin key list, enter `meshtastic_admin_key="clear"`

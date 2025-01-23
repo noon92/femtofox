@@ -1,5 +1,10 @@
 #!/bin/bash
 
+if [[ $EUID -ne 0 ]]; then
+  echo "This script must be run as root. Try \`sudo femto-meshtasticd-config\`."
+  exit 1
+fi
+
 mount_point="/mnt/usb" # Set the mount point
 
 # Function to log to screen, syslog and logfile to be saved to usb drive
@@ -113,6 +118,7 @@ if [ -f "$mount_point/femtofox-config.txt" ]; then
     fi
     value=$(echo "$value" | tr -d '"')
     case "$key" in
+      act_led) act_led=$(escape_sed "$value") ;;
       wifi_ssid) wifi_ssid=$(escape_sed "$value") ;;
       wifi_psk) wifi_psk=$(escape_sed "$value") ;;
       wifi_country) wifi_country=$(escape_sed "$value") ;;
@@ -125,7 +131,7 @@ if [ -f "$mount_point/femtofox-config.txt" ]; then
       meshtastic_admin_key) meshtastic_admin_key=$(escape_sed "$value") ;;
       dont_run_if_log_exists) dont_run_if_log_exists=$(escape_sed "$value") ;;
     esac
-  done < <(grep -E '^(wifi_ssid|wifi_psk|wifi_country|meshtastic_lora_radio|timezone|meshtastic_url|meshtastic_legacy_admin|meshtastic_public_key|meshtastic_private_key|meshtastic_admin_key|dont_run_if_log_exists)=' "$usb_config")
+  done < <(grep -E '^(act_led|wifi_ssid|wifi_psk|wifi_country|meshtastic_lora_radio|timezone|meshtastic_url|meshtastic_legacy_admin|meshtastic_public_key|meshtastic_private_key|meshtastic_admin_key|dont_run_if_log_exists)=' "$usb_config")
   
   # Check if the log exits and if the dont_run_if_log_exists line is set in the script
   if $log_exists && [[ $dont_run_if_log_exists = "true" ]]; then
@@ -135,14 +141,11 @@ if [ -f "$mount_point/femtofox-config.txt" ]; then
     done
     exit_script 1
   fi
-  
-  # Update wpa_supplicant.conf with the new values, if specified
-  if [[ -n "$wifi_country" ]]; then
-    # Update country field
-    wifi_command="$wifi_command -c \"$wifi_country\""
-    log_message "Updating Wi-Fi country in wpa_supplicant.conf to $wifi_country."
-    found_config="true"
-    update_wifi="true"
+
+  if [[ -n "$act_led" ]]; then
+    # Update the ssid in the network block
+    log_message "Updating Activity LED status to \`$act_led\`."
+    femto-utils.sh -a "$act_led"
   fi
   
   if [[ -n "$wifi_ssid" ]]; then
@@ -161,7 +164,15 @@ if [ -f "$mount_point/femtofox-config.txt" ]; then
     found_config="true"
     update_wifi="true"
   fi
-  
+    
+  # Update wpa_supplicant.conf with the new values, if specified
+  if [[ -n "$wifi_country" ]]; then
+    # Update country field
+    wifi_command="$wifi_command -c \"$wifi_country\""
+    log_message "Updating Wi-Fi country in wpa_supplicant.conf to $wifi_country."
+    found_config="true"
+    update_wifi="true"
+  fi
   
   #get meshtastic_lora_radio model, if specified, and copy appropriate yaml to /etc/meshtasticd/config.d/
   if [[ -n "$meshtastic_lora_radio" ]]; then
@@ -225,21 +236,21 @@ if [ -f "$mount_point/femtofox-config.txt" ]; then
     found_config="true"
   fi
 
-  if [[ -n "$meshtastic_public_key" ]]; then
+  if [[ -n "$meshtastic_public_key" ]]; then # public key
     meshtastic_public_key="$(echo "$meshtastic_public_key" | sed 's/\\//g')" # remove weirdo windows characters
     log_message "Updating Meshtastic public key."
     found_config="true"
     meshtastic_security_command+=" -U \"$meshtastic_public_key\"" # add to the command list
   fi
 
-  if [[ -n "$meshtastic_private_key" ]]; then
+  if [[ -n "$meshtastic_private_key" ]]; then # private key
     meshtastic_private_key="$(echo "$meshtastic_private_key" | sed 's/\\//g')" # remove weirdo windows characters
     log_message "Updating Meshtastic private key."
     found_config="true"
     meshtastic_security_command+=" -R \"$meshtastic_private_key\"" # add to the command list
   fi
 
-  if [[ -n "$meshtastic_admin_key" ]]; then
+  if [[ -n "$meshtastic_admin_key" ]]; then # admin key
     meshtastic_admin_key=$(echo "$meshtastic_admin_key" | sed 's/\\//g') # remove weirdo windows characters
     if [ "$meshtastic_admin_key" = "clear" ]; then
       log_message "Clearing Meshtastic admin key list."
@@ -252,7 +263,7 @@ if [ -f "$mount_point/femtofox-config.txt" ]; then
     meshtastic_security_command+=" -A \"$meshtastic_admin_key\"" # add to the command list
   fi
   
-  if [[ -n "$meshtastic_legacy_admin" ]]; then
+  if [[ -n "$meshtastic_legacy_admin" ]]; then # legacy admin
     meshtastic_legacy_admin=$(echo "$meshtastic_legacy_admin" | sed 's/\\//g') # remove weirdo windows characters
     log_message "Updating Meshtastic legacy admin."
     found_config="true"
@@ -260,7 +271,6 @@ if [ -f "$mount_point/femtofox-config.txt" ]; then
   fi
   
   if [ "$found_config" = true ]; then #if we found a config file containing valid data
-    
     if [ "$update_wifi" = true ]; then #if wifi config found, restart wifi
       log_message "Making changes to wifi settings and restarting wifi."
       wifi_command="$wifi_command -r"
@@ -288,7 +298,6 @@ if [ -f "$mount_point/femtofox-config.txt" ]; then
     done
     exit_script 1
   fi
-  
 else
   log_message "\e[31mUSB drive mounted but femtofox-config.txt not found, ignoring.\e[0m"
   for _ in {1..3}; do #boot code
