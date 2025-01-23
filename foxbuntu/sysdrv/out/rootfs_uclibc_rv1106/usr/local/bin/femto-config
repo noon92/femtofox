@@ -191,7 +191,7 @@ utilities() {
     case $option in
       1) # sysinfo)
         dialog --no-collapse --infobox "Loading system info..." 5 45
-        dialog --no-collapse --colors --title "System info" --msgbox "$(femto-utils.sh -i)" 0 0
+        dialog --no-collapse --colors --title "System info" --msgbox "$(replace_colors "$(femto-utils.sh -i)")" 0 0
       ;;
       2) femto-set-time.sh ;; # set timezone
       3) # Kernel modules)
