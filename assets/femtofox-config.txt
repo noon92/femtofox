@@ -1,5 +1,5 @@
 ## femtofox-config.txt
-## Help: https://github.com/noon92/femtofox/usbconfig.md
+## Help: https://github.com/femtofox/femtofox/usbconfig.md
 ## To set a setting, uncomment a line by removing its preceeding `#`
 ## All settings are optional - remove any you don't want to set.
 
