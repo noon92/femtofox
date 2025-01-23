@@ -62,7 +62,7 @@ clone_repos() {
   }
 
   clone_with_retries "https://github.com/LuckfoxTECH/luckfox-pico.git" || return 1
-  clone_with_retries "https://github.com/noon92/femtofox.git" || return 1
+  clone_with_retries "https://github.com/femtofox/femtofox.git" || return 1
 
   return 0
 }
