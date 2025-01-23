@@ -22,12 +22,6 @@ if [ $# -eq 0 ]; then
   exit 1
 fi
 
-# Function to log to screen, syslog and logfile to be saved to usb drive
-log_message() {
-  echo -e "\e[32mUtilities\e[0m: $1"
-  logger "Utilities: $1"
-}
-
 act_led() {
   if [ "$1" = "disable" ]; then
     echo "none" > /sys/class/leds/work/trigger
@@ -74,11 +68,12 @@ system_info() {
   local os_version="Foxbuntu v$(grep -oP 'major=\K[0-9]+' /etc/foxbuntu-release).$(grep -oP 'minor=\K[0-9]+' /etc/foxbuntu-release)$(output=$(grep -o 'patch=[1-9][0-9]*' /etc/foxbuntu-release | cut -d= -f2) && [ -n "$output" ] && echo ".$output")$(grep -oP 'hotfix=\K[a-z]+' /etc/foxbuntu-release) ($(lsb_release -d | awk -F'\t' '{print $2}') $(lsb_release -c | awk -F'\t' '{print $2}'))"
   local system_uptime="$(uptime -p | awk '{$1=""; print $0}' | sed -e 's/ day\b/d/g' -e 's/ hour\b/h/g' -e 's/ hours\b/h/g' -e 's/ minute\b/m/g' -e 's/ minutes\b/m/g' | sed 's/,//g')"
   local logging_enabled="$(logging "check" | sed 's/\x1b\[[0-9;]*m//g')"
+  local act_led="$(femto-utils.sh -l "check" | sed -r 's/\x1B\[[0-9;]*[mK]//g')" #remove color from output
   local kernel_active_modules="$(lsmod | awk 'NR>1 {print $1}' | tr '\n' ' ' && echo)"
   local kernel_boot_modules="$(modules=$(sed -n '6,$p' /etc/modules | sed ':a;N;$!ba;s/\n/, /g;s/, $//'); [ -z "$modules" ] && echo "none" || echo "$modules")"
 
-  local wifi_status="$(replace_colors "$(femto-network-config.sh -w | grep -v '^$' | grep -v '^Hostname')")" #remove hostname line, as it's identical to the one in ethernet settings
-  local eth_status="$(replace_colors "$(femto-network-config.sh -e)")"
+  local wifi_status="$(femto-network-config.sh -w | grep -v '^$' | grep -v '^Hostname')" #remove hostname line, as it's identical to the one in ethernet settings
+  local eth_status="$(femto-network-config.sh -e)"
 
   local usb_mode="$(cat /sys/devices/platform/ff3e0000.usb2-phy/otg_mode)"
   local spi0_state="$([ "$(awk -F= '/^SPI0_M0_STATUS/ {print $2}' /etc/luckfox.cfg)" -eq 1 ] && echo "enabled" || echo "disabled")"
@@ -88,12 +83,12 @@ system_info() {
   local uart3_state="$([ "$(awk -F= '/^UART3_M1_STATUS/ {print $2}' /etc/luckfox.cfg)" -eq 1 ] && echo "enabled" || echo "disabled")"
   local uart4_state="$([ "$(awk -F= '/^UART4_M1_STATUS/ {print $2}' /etc/luckfox.cfg)" -eq 1 ] && echo "enabled" || echo "disabled")"
 
-  local lora_radio="$(replace_colors "$(femto-meshtasticd-config.sh -k)")"
+  local lora_radio="$(femto-meshtasticd-config.sh -k)"
   local usb_devices="$(lsusb | grep -v 'root hub' | awk 'NR>0{printf "USB:              "; for(i=7;i<=NF;i++) printf "%s ", $i; print ""} END {if (NR == 0) printf "USB:              None detected"}')"
   local i2c_addresses="$(i2cdetect -y 3 | awk 'NR>1 {for(i=2;i<=17;i++) if ($i == "ff" || $i == "UU") { printf "0x%02x ", (i-2) + (NR-2)*16} }' | tr -d '\n' )"
 
-  local meshtasticd_service_status="$(replace_colors "$(femto-meshtasticd-config.sh -S)")"
-  local meshtasticd_info="$(replace_colors "$(femto-meshtasticd-config.sh -i)")" 
+  local meshtasticd_service_status="$(femto-meshtasticd-config.sh -S)"
+  local meshtasticd_info="$(femto-meshtasticd-config.sh -i)"
   echo -e "\
             Femtofox\n\
 Core:             $(cat /sys/firmware/devicetree/base/model)\n\
@@ -101,6 +96,7 @@ Operating System: $os_version\n\
 Kernel version:   $(uname -r)\n\
 Uptime:          $system_uptime\n\
 Logging:          $logging_enabled\n\
+Activity LED:     $act_led\n\
 System time:      $(date)\n\
 K modules active: $kernel_active_modules\n\
 K boot modules:   $kernel_boot_modules\n\
