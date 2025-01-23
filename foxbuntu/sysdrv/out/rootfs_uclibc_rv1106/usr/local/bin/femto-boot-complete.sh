@@ -1,8 +1,7 @@
 #!/bin/bash
 echo "Boot complete"
 
-echo "Disabling ACT LED..."
-echo "none" > /sys/class/leds/work/trigger &
+femto-utils.sh -a &
 sleep 1
 
 # blink successful boot code
