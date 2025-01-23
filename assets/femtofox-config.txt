@@ -36,7 +36,7 @@
 #meshtastic_lora_radio="radio_name"
 
 ## URL from Meshtastic QR code to configure channels
-#meshtastic_url="https://meshtastic.org/e/..."
+#meshtastic_url="https://meshtastic.org/e/XX..."
 
 ## Meshtastic security settings. CaSe SeNsItIvE
 #meshtastic_public_key="XX="
