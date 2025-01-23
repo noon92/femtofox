@@ -86,7 +86,7 @@ networking_settings() {
             choice=$(dialog --no-collapse --cancel-label "Back" --title "Enable/disable Wi-Fi" --menu "Tip: Wi-Fi can also be toggled by short-pressing the BOOT button on the Luckfox." 13 50 5 \
               1 "Turn Wi-Fi on" \
               2 "Turn Wi-Fi off" \
-              "" ""
+              "" "" \
               3 "Return to previous menu" 3>&1 1>&2 2>&3)
             exit_status=$? # This line checks the exit status of the dialog command
             if [ $exit_status -ne 0 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
