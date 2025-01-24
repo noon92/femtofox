@@ -7,9 +7,12 @@ Configurable settings are:
  - Wifi PSK (password)
  - Wifi country
  - Timezone
+ - Activity LED (blinky light - disable for minor power savings)
  - Meshtastic:
      - LoRa radio model
 	 - [URL](https://meshtastic.org/docs/software/python/cli/#--seturl-seturl) (used to configure LoRa settings and channels)
+	 - Security: public key
+	 - Security: private key
 	 - Security: Add Admin Key
 	 - Security: Clear Admin Key List
 	 - Security: [Legacy Admin Channel](https://meshtastic.org/docs/configuration/radio/security/#admin-channel-enabled) enable/disable
@@ -23,9 +26,12 @@ wifi_ssid="Your SSID name"
 wifi_psk="wifipassword"
 wifi_country="US"
 timezone="America/New_York"
+act_led="enable"
 meshtastic_lora_radio="ebyte-e22-900m30s"
 meshtastic_url="https://meshtastic.org/e/#CgMSAQESCAgBOAFAA0gB"
-meshtastic_admin_key="T/b8EGvi/Nqi6GyGefJt/jOQr+5uWHHZuBavkNcUwWQ="
+#meshtastic_public_key="XX="
+#meshtastic_private_key="XX="
+meshtastic_admin_key="XX="
 meshtastic_legacy_admin="true"
 dont_run_if_log_exists="true"
 ```
@@ -56,7 +62,7 @@ dont_run_if_log_exists="true"
 > [!NOTE]
 > `dont_run_if_log_exists="true"` will prevent the USB configuration tool from working if there's a log present on the USB drive, indicating it has already been run. There is also an LED boot code for this, described below.
 
-**To apply your configuration, reboot the Femtofox with the USB drive plugged in. No other USB drives can be plugged in at the same time.**
+**To apply your configuration, reboot the Femtofox with the USB drive plugged in, or run `sudo femto-config` -> `Utilites` -> `Run USB configuration tool`. No other USB drives can be plugged in at the same time.**
 A log (`femtofox-config.log`) is saved to `/home/femto` and the USB drive (except on NTFS, which is read only).
 <br>
 ### Boot codes
@@ -74,6 +80,3 @@ When the Femtofox is finished booting, it will blink its User LED (see below) in
  
 > [!NOTE]
 > Boot codes can appear in sequence - for example: one long (4 second) blink, followed by 5 medium (half second) blinks means the USB drive failed to mount, and that the boot sequence is complete.
-<!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE3MzAwMTU5Nl19
--->
