@@ -4,9 +4,9 @@ log_message() {
   logger "First boot: $1"  # Log to the system log
 }
 
-if grep -qE '^first_boot=false' /etc/femto.conf; then
+if grep -qE '^first_boot=false' /etc/femto.conf; then # if not the first boot
 
-  who | grep -q . || exit 0
+  who | grep -q . || exit 0 # if not logged in, exit script. May not deal well with future web UI
 
   # prevents weirdness over tty
   export NCURSES_NO_UTF8_ACS=1
