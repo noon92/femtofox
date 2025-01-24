@@ -26,6 +26,14 @@ fi
 
 echo -e "\e[32m******* First boot *******\e[0m"
 
+# pulse LED during firstboot
+while true; do
+  echo 1 > /sys/class/gpio/gpio34/value;
+  sleep 0.5;
+  echo 0 > /sys/class/gpio/gpio34/value;
+  sleep 0.5;
+done
+
 # Disable LED to prevent boot codes from showing during this boot
 #sh -c "echo 34 > /sys/class/gpio/unexport"
 
