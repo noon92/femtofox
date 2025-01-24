@@ -21,10 +21,8 @@ To install Foxbuntu, you'll need the following:
 	* Use a USB UART serial adapter to connect to UART2 (serial debug pins).
 	* Use an ethernet cable and SSH in. Femtofox's default hostname is femtofox.local.
 5. Connect the Femtofox to power, either via the *power USB-C port* (Pro model only, on the same side as the ethernet port) or via the power-in JST power plug.
-6. The Femtofox will perform its first boot. This can take up to 5 minutes (subsequent boots ~40 seconds). When boot is complete, the USR LED will blink 5 times, 1/2 a second each. At this point, Meshtastic should be running and if you plug in a wifi adapter it should work.
-7. To connect to your Femtofox via SSH, open [PuTTY](https://www.putty.org/) or your favorite SSH client and connect to your Femtofox via `femtofox.local` or its IP (check your router).
-	* Username: `femto`
-	* Password: `fox`
+6. The Femtofox will perform its first boot. This can take up to 5 minutes (subsequent boots ~40 seconds). When boot is complete, the USR LED will blink 5 times, 1/2 a second each.
+7. Default username and password is `femto`:`femto`. You are required to change the password on first login.
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE0Mjg3MDkzMzldfQ==
+eyJoaXN0b3J5IjpbNTI3ODkwMDRdfQ==
 -->
