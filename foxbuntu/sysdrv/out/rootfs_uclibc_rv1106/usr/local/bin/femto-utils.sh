@@ -42,7 +42,6 @@ act_led() {
       echo "unknown"
     fi
   elif [ -z $1 ]; then
-  echo "check state"
     local state=$(act_led "check" 2>/dev/null)
     if [[ "$state" =~ "enabled" ]]; then
       act_led "enable"
