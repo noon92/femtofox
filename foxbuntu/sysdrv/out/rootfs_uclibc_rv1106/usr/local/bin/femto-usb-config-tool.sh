@@ -14,7 +14,7 @@ log_message() {
   echo "$(date +"%Y-%m-%d %H:%M:%S") $1" >> /tmp/femtofox-config.log
 }
 
-if [ -e "/etc/.firstboot" ]; then
+if grep -qE '^first_boot=true' /etc/femto.conf; then
   log_message "First boot, skipping USB Configuration Tool."
   exit 0
 fi
