@@ -21,7 +21,6 @@ Proceed?" 14 60
   if [ $? -eq 1 ]; then #if cancel/no
     exit 0
   fi
-else
 fi
 
 echo -e "\e[32m******* First boot *******\e[0m"
