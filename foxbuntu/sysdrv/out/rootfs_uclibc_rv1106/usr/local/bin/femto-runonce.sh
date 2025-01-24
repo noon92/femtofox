@@ -3,8 +3,7 @@ log_message() {
   echo -e "\e[32mFirst boot\e[0m: $1"  # Echo to the screen
   logger "First boot: $1"  # Log to the system log
 }
-
-if grep -qE '^first_boot=false' /etc/femto.conf; then # if not the first boot
+if ! grep -qE '^first_boot=true' /etc/femto.conf; then # if not the first boot
 
   who | grep -q . || exit 0 # if not logged in, exit script. May not deal well with future web UI
 
