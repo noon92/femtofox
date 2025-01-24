@@ -4,7 +4,7 @@ log_message() {
   logger "First boot: $1"  # Log to the system log
 }
 
-if grep -qE '^first_boot=true' /etc/femto.conf; then
+if grep -qE '^first_boot=false' /etc/femto.conf; then
 
   who | grep -q . || exit 0
 
