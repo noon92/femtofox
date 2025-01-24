@@ -5,6 +5,9 @@ log_message() {
 }
 
 if grep -qE '^first_boot=false' /etc/femto.conf; then # if not the first boot
+echo "*****************************************"
+echo "boot flag is false"
+echo "*****************************************"
 
   who | grep -q . || exit 0 # if not logged in, exit script. May not deal well with future web UI
 
@@ -22,6 +25,10 @@ Proceed?" 14 60
   if [ $? -eq 1 ]; then #if cancel/no
     exit 0
   fi
+else
+  echo "*****************************************"
+echo "boot flag is true?"
+echo "*****************************************"
 fi
 
 echo -e "\e[32m******* First boot *******\e[0m"
@@ -96,7 +103,13 @@ fi
 #systemctl restart meshtasticd
 
 # remove first boot flag
+echo "*****************************************"
+cat /etc/femto.conf
+echo "*****************************************"
 sed -i -E 's/^first_boot=.*/first_boot=false/' /etc/femto.conf
+echo "*****************************************"
+cat /etc/femto.conf
+echo "*****************************************"
 log_message "Removing first boot flag and rebooting in 5 seconds..."
 sleep 5
 reboot
