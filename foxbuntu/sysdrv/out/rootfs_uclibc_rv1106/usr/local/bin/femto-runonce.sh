@@ -4,7 +4,7 @@ log_message() {
   logger "First boot: $1"  # Log to the system log
 }
 
-if [ ! -e "/etc/.firstboot" ]; then
+if grep -qE '^first_boot=false' /etc/femto.conf; then
 
   who | grep -q . || exit 0
 
@@ -20,14 +20,14 @@ Re-running this script after first boot should not cause any harm, but may not w
 \n\
 Proceed?" 14 60
   if [ $? -eq 1 ]; then #if cancel/no
-    exit 1
+    exit 0
   fi
 fi
 
 echo -e "\e[32m******* First boot *******\e[0m"
 
 # Disable LED to prevent boot codes from showing during this boot
-sh -c "echo 34 > /sys/class/gpio/unexport"
+#sh -c "echo 34 > /sys/class/gpio/unexport"
 
 # Perform filesystem resize
   log_message "Resizing filesystem. This can take up to 10 minutes, depending on microSD card size and speed"
@@ -86,7 +86,7 @@ fi
 #systemctl restart meshtasticd
 
 # remove first boot flag
-rm /etc/.firstboot
+sed -i -E 's/^first_boot=.*/first_boot=false/' /etc/femto.conf
 log_message "Removing first boot flag and rebooting in 5 seconds..."
 sleep 5
 reboot

@@ -25,12 +25,12 @@ fi
 act_led() {
   if [ "$1" = "disable" ]; then
     echo "none" > /sys/class/leds/work/trigger
-    grep -qE '^act_led=' /etc/femto.conf && sudo sed -i -E 's/^act_led=.*/act_led=disable/' /etc/femto.conf || echo 'act_led=disable' | sudo tee -a /etc/femto.conf > /dev/null 
+    grep -qE '^act_led=' /etc/femto.conf && sed -i -E 's/^act_led=.*/act_led=disable/' /etc/femto.conf || echo 'act_led=disable' | tee -a /etc/femto.conf > /dev/null 
     echo "Disabled activity LED."
     exit 0
   elif [ "$1" = "enable" ]; then
     echo "activity" > /sys/class/leds/work/trigger
-    grep -qE '^act_led=' /etc/femto.conf && sudo sed -i -E 's/^act_led=.*/act_led=enable/' /etc/femto.conf || echo 'act_led=enable' | sudo tee -a /etc/femto.conf > /dev/null 
+    grep -qE '^act_led=' /etc/femto.conf && sed -i -E 's/^act_led=.*/act_led=enable/' /etc/femto.conf || echo 'act_led=enable' | tee -a /etc/femto.conf > /dev/null 
     echo "Enabled activity LED."
     exit 0
   elif [ "$1" = "check" ]; then
@@ -68,7 +68,7 @@ system_info() {
   local os_version="Foxbuntu v$(grep -oP 'major=\K[0-9]+' /etc/foxbuntu-release).$(grep -oP 'minor=\K[0-9]+' /etc/foxbuntu-release)$(output=$(grep -o 'patch=[1-9][0-9]*' /etc/foxbuntu-release | cut -d= -f2) && [ -n "$output" ] && echo ".$output")$(grep -oP 'hotfix=\K[a-z]+' /etc/foxbuntu-release) ($(lsb_release -d | awk -F'\t' '{print $2}') $(lsb_release -c | awk -F'\t' '{print $2}'))"
   local system_uptime="$(uptime -p | awk '{$1=""; print $0}' | sed -e 's/ day\b/d/g' -e 's/ hour\b/h/g' -e 's/ hours\b/h/g' -e 's/ minute\b/m/g' -e 's/ minutes\b/m/g' | sed 's/,//g')"
   local logging_enabled="$(logging "check" | sed 's/\x1b\[[0-9;]*m//g')"
-  local act_led="$(femto-utils.sh -l "check" | sed -r 's/\x1B\[[0-9;]*[mK]//g')" #remove color from output
+  local act_led="$(femto-utils.sh -a "check" | sed -r 's/\x1B\[[0-9;]*[mK]//g')" #remove color from output
   local kernel_active_modules="$(lsmod | awk 'NR>1 {print $1}' | tr '\n' ' ' && echo)"
   local kernel_boot_modules="$(modules=$(sed -n '6,$p' /etc/modules | sed ':a;N;$!ba;s/\n/, /g;s/, $//'); [ -z "$modules" ] && echo "none" || echo "$modules")"
 
