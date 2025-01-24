@@ -20,9 +20,6 @@ To install Foxbuntu, you'll need the following:
 	* On Femtofox Pro, connect the *Power USB-C port* to your PC with a cable, and open a serial console application such as PuTTY for windows. Select your the Femtofox's COM port (find the correct COM port in Windows hitting <kbd>WIN</kbd>+<kbd>R</kbd> and entering `cmd /k wmic path Win32_SerialPort get DeviceID, Description && pause`. The port should be named "USB-SERIAL CH340".
 	* Use a USB UART serial adapter to connect to UART2 (serial debug pins).
 	* Use an ethernet cable and SSH in. Femtofox's default hostname is femtofox.local.
-5. Connect the Femtofox to power, either via the *power USB-C port* (Pro model only, on the same side as the ethernet port) or via the power-in JST power plug.
+5. Connect the Femtofox to power, either via the *power USB-C port* (Pro model only, on the same side as the ethernet port) or via the power-in JST power plug. Using the USB-C port on the Luckfox is possible, but will prevent usage of USB peripherals.
 6. The Femtofox will perform its first boot. This can take up to 5 minutes (subsequent boots ~40 seconds). When boot is complete, the USR LED will blink 5 times, 1/2 a second each.
 7. Default username and password is `femto`:`femto`. You are required to change the password on first login.
-<!--stackedit_data:
-eyJoaXN0b3J5IjpbNTI3ODkwMDRdfQ==
--->
