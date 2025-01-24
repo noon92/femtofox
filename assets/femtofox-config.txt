@@ -5,18 +5,18 @@
 
 ### Foxbuntu settings
 
-## Activity LED setting. CaSe SeNsItIvE
-## Options are "enable" and "disable"
-#act_led="disable"
-
-## Localization settings. CaSe SeNsItIvE
-## List of timezones: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
-#wifi_country="US"
-#timezone="UTC"
-
 ## Wifi settings / wpa_supplicant. CaSe SeNsItIvE
 #wifi_ssid="wifi network name"
 #wifi_psk="password"
+#wifi_country="US"
+
+## Localization settings. CaSe SeNsItIvE
+## List of timezones: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+#timezone="UTC"
+
+## Activity LED setting. CaSe SeNsItIvE
+## Options are "enable" and "disable"
+#act_led="disable"
 
 
 ### Meshtastic settings
