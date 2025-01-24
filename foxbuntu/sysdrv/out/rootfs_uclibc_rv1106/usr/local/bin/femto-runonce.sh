@@ -3,7 +3,7 @@ log_message() {
   echo -e "\e[32mFirst boot\e[0m: $1"  # Echo to the screen
   logger "First boot: $1"  # Log to the system log
 }
-
+set -x
 if grep -qE '^first_boot=false' /etc/femto.conf; then # if not the first boot
 echo "*****************************************"
 echo "boot flag is false"
