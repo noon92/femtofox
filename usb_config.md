@@ -73,7 +73,7 @@ A log (`femtofox-config.log`) is saved to `/home/femto` and the USB drive (excep
 
 ### Boot codes
 
-When the Femtofox is finished booting, it will blink its User LED (see below) in a pattern which can be used to gather info on its status or help diagnose issues.
+When the Femtofox is finished booting, it will blink its User LED (see below) in a  which can be used to gather info on its status or help diagnose issues.
 
 ![LEDs](assets/images/leds.png)
 
