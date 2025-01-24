@@ -20,7 +20,7 @@ Configurable settings are:
 ### Instructions
 The USB drive must be formatted with a single FAT32, exFAT, NTFS (read only - log will not be saved to drive) or ext4 partition. Add a file named `femtofox-config.txt` and whichever settings you would like to change (CaSe sEnSiTiVe).
 
-&emsp;&emsp;&emsp;&emsp;			**<a href download="assets/femtofox-config.txt">[Get an example USB configuration file here](assets/femtofox-config.txt)
+&emsp;&emsp;&emsp;&emsp;    			**<a href download="assets/femtofox-config.txt">[Get an example USB configuration file here](assets/femtofox-config.txt)
 ```
 wifi_ssid="Your SSID name"
 wifi_psk="wifipassword"
@@ -42,7 +42,7 @@ dont_run_if_log_exists="true"
 > 
 > Use a timezone as it appears in [the tz database](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones).
 >
-> &emsp;&emsp;**Meshtastic**
+> &emsp;&emsp;  **Meshtastic**
 > For `meshtastic_lora_radio`, choose your radio from the supported hardware list.
 > Options are:
 >   `ebyte-e22-900m30s`
@@ -76,7 +76,7 @@ When the Femtofox is finished booting, it will blink its User LED (see below) in
 | <p align="| Config file missing. | Create configuration file as described above. |
 |<center">⚠️<br>**───\_\_\_\_\_&nbsp;&nbsp;\_\_\_\_\_&nbsp;───&nbsp;\_\_\_\_\_&nbsp;&nbsp;───\_\_\_\_\_&nbsp;&nbsp;&nbsp;───&nbsp;&nbsp;&nbsp;───**\_\_\_\_\_<br>5 long blinks, each lasting 1.5 seconds             | USB drive mounted successfully and femtofox-config.txt was found but did not contain readable configuration data. Ignoring.                                                                                 | Configuration file improperly formatted or contains no data. |                                                                                                                                                                                           | Check configuration file contents as described above.                                                                                                                                                |
 | <p align="| Configuration file improperly formatted or contains no data. | Check configuration file contents as described above.|
-|center">⚠️<br>**──\_\_\_&nbsp;&nbsp;\_\_\_&nbsp;&nbsp;\_&nbsp;&nbsp;\_&nbsp;──&nbsp;\_\_\_&nbsp;&nbsp;-\_\_\_&nbsp;&nbsp;\_&nbsp;-**&nbsp;\_<br>2 longcenter>⚠️<br>nbspnbsnbspnspnbspnbspnbspnbsp<br> long blinks, each lasting 1 second, then 2 short blinks, each lasting 1/4 of a second. Repeats twice | Error while trying to implement a Meshtastic setting after 3 attempts. Some settings may have been implemented successfully.                                                                                | <li>The error may be transient.<>Configuration file may contain improper data. <li>Try again.<>Check configuration file contents as described above.<>Check the log.<br>This pattern may flash before other patterns. The pattern will repeat once for each failed setting. |
+|center">⚠️<br>**──\_\_\_&nbsp;&nbsp;\_\_\_&nbsp;&nbsp;\_n&nbsp;&nbsp;\_&nbsp;──&nbsp;\_\_\_&nbsp;&nbsp;-\_\_\_&nbsp;&nbsp;\_&nbsp;-**&nbsp;\_<br>2 longcenter>⚠️<br>nbspnbsnbspnspnbspnbspnbspnbsp<br> long blinks, each lasting 1 second, then 2 short blinks, each lasting 1/4 of a second. Repeats twice | Error while trying to implement a Meshtastic setting after 3 attempts. Some settings may have been implemented successfully.                                                                                | <li>The error may be transient.<>Configuration file may contain improper data.                                                                                                                                                                        | <li>Try again.<>Check configuration file contents as described above.<>Check the log.<br>This pattern may flash before other patterns. The pattern will repeat once for each failed setting. |
 | <p align="<center">✅<br>**. . . . . . . . . .**<br>10 very fast blinks, each lasting 1/8th of a second</br>                          | USB drive mounted successfully, and femtofox-config.txt was found and contained configuration data which was sent for deployment. Any affected services will now restart. You can disconnect the USB drive. | This does not mean that the information in the config file is correct - only that it was readable.<br>Note that the "success" boot code will flash if at least one setting is successfully read - even if the setting was not implemented successfully. |                                                                                                                                                                                                      |
 | <p align="|
 |<center">✅<br>**─\_\_&nbsp;&nbsp;\_\_&nbsp;─&nbsp;\_\_&nbsp;&nbsp;─&nbsp;&nbsp;&nbsp;─&nbsp;&nbsp;&nbsp;─**<br>5 medium blinks, each lasting 0.5 seconds                           | Boot complete. Appears on every successful boot and always appears last.                                                                                                                                    |                                                                                                                                                                                                                                                         |                                                                                                                                                                                                      |
@@ -176,5 +176,5 @@ When the Femtofox is finished booting, it will blink its User LED (see below) in
 > \[!NOTE\]
 > Boot codes can appear in sequence - for example: one long (4 second) blink, followed by 5 medium (half second) blinks means the USB drive failed to mount, and that the boot sequence is complete.
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTI2MjkzMjQ5XX0=
+eyJoaXN0b3J5IjpbLTE5OTAxODA3OSwtMjYyOTMyNDldfQ==
 -->
