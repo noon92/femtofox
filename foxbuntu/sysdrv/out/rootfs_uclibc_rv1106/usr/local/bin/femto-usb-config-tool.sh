@@ -16,7 +16,7 @@ log_message() {
 
 if grep -qE '^first_boot=true' /etc/femto.conf; then
   log_message "First boot, skipping USB Configuration Tool."
-  exit 0
+  #exit 0
 fi
 
 exit_script() {
