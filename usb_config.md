@@ -10,8 +10,8 @@ Configurable settings are:
 - Timezone
 - Activity LED (blinky light - disable for minor power savings)
 - Meshtastic:
-  - LoRa radio model
- - [URL](https://meshtastic.org/docs/software/python/cli/#--seturl-seturl) (used to configure LoRa settings and channels)
+ - [LoRa radio model](https://github.com/femtofox/femtofox/blob/main/supported_hardware.md)
+ - [URL](https://meshtastic.org/docs/software/python/cli/#--seturl-seturl) (used to configure LoRa settings/channels and generate the QR code)
  - Security: [public key](https://meshtastic.org/docs/configuration/radio/security/#public-key)
  - Security: [private key](https://meshtastic.org/docs/configuration/radio/security/#private-key)
  - Security: Add [Admin Key](https://meshtastic.org/docs/configuration/radio/security/#admin-key)
@@ -79,5 +79,5 @@ When the Femtofox is finished booting, it will blink its User LED (see below) in
 > \[!NOTE\]
 > Boot codes can appear in sequence - for example: one long (4 second) blink, followed by 5 medium (half second) blinks means the USB drive failed to mount, and that the boot sequence is complete.
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTYzMzkyODA1OSw1NDc4NzEyNDFdfQ==
+eyJoaXN0b3J5IjpbMTA1MDMwODEwNyw1NDc4NzEyNDFdfQ==
 -->
