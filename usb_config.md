@@ -14,7 +14,7 @@ Configurable settings are:
  - [URL](https://meshtastic.org/docs/software/python/cli/#--seturl-seturl) (used to configure LoRa settings and channels)
  - Security: [public key](https://meshtastic.org/docs/configuration/radio/security/#public-key)
  - Security: [private key](https://meshtastic.org/docs/configuration/radio/security/#private-key)
- - Security: Add Admin Key
+ - Security: Add [Admin Key](https://meshtastic.org/docs/configuration/radio/security/#admin-key)
  - Security: Clear Admin Key List
  - Security: [Legacy Admin Channel](https://meshtastic.org/docs/configuration/radio/security/#admin-channel-enabled) enable/disable
 
@@ -79,5 +79,5 @@ When the Femtofox is finished booting, it will blink its User LED (see below) in
 > \[!NOTE\]
 > Boot codes can appear in sequence - for example: one long (4 second) blink, followed by 5 medium (half second) blinks means the USB drive failed to mount, and that the boot sequence is complete.
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE1OTA0MjM2MDMsNTQ3ODcxMjQxXX0=
+eyJoaXN0b3J5IjpbLTYzMzkyODA1OSw1NDc4NzEyNDFdfQ==
 -->
