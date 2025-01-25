@@ -87,6 +87,3 @@ eyJoaXN0b3J5IjpbLTE5OTAxODA3OSwtMjYyOTMyNDldfQ==
 
 > \[!NOTE\]
 > Boot codes can appear in sequence - for example: one long (4 second) blink, followed by 5 medium (half second) blinks means the USB drive failed to mount, and that the boot sequence is complete.
-<!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE0Mzk1MTcyMTEsNTQ3ODcxMjQxXX0=
--->
