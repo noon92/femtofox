@@ -165,7 +165,14 @@ Nodes in nodedb:  $(echo "$output" | grep -oP '"![a-zA-Z0-9]+":\s*\{' | wc -l)\
       meshtastic_update "--set security.admin_key 0" 3 "Clear admin keys"
       ;;
     p) # Option -p (view current legacy admin state)
-      meshtastic_update "--get security.admin_channel_enabled" 3 "Get legacy admin state"
+        state=$(meshtastic_update "--get security.admin_channel_enabled" 3 "Get legacy admin state" 2>/dev/null)
+        if echo "$state" | grep -q "True"; then
+          echo -e "\033[0;34menabled\033[0m"
+        elif echo "$state" | grep -q "False"; then
+          echo -e "\033[0;31mdisabled\033[0m"
+        elif echo "$state" | grep -q "Error"; then
+          echo -e "\033[0;31merror\033[0m"
+        fi
       ;;
     o) # Option -o (set legacy admin true/false)
       meshtastic_update "--set security.admin_channel_enabled $OPTARG" 3 "Set legacy admin state"
