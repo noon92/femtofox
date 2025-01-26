@@ -33,6 +33,10 @@ replace_colors() {
   echo "$input"
 }
 
+loading() {
+  dialog --no-collapse --infobox "$1" 5 45
+}
+
 wifi_config() {
   local wifi_ssid=""
   local wifi_psk=""
@@ -125,40 +129,12 @@ networking_settings() {
         fi
       ;;
       7) # Test internet connection)
-        dialog --no-collapse --infobox "Testing internet connection..." 5 45
+        loading "Testing internet connection..."
         dialog --no-collapse --title "Internet connectivity test" --colors --msgbox "$(replace_colors "$(femto-network-config.sh -t)")" 8 40
       ;;
       8)
         return
       ;;
-    esac
-  done
-}
-
-  # pinout menu
-femto_pinouts() {
-  while true; do
-    local option=""
-    option=$(dialog --no-collapse --cancel-label "Back" --menu "Pinouts" 15 40 5 \
-      1 "Femtofox Pro/CE" \
-      2 "Femtofox Zero" \
-      3 "Femtofox Tiny" \
-      4 "Luckfox Pico Mini" \
-      "" "" \
-      5 "Back to Help Menu" 3>&1 1>&2 2>&3)
-    
-    exit_status=$? # This line checks the exit status of the dialog command
-    
-    if [ $exit_status -ne 0 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
-      break
-    fi
-    
-    case $option in
-      1) dialog --no-collapse --title "Femtofox" --msgbox "$(femto-pinout.sh -f)" 43 68 ;;
-      2) dialog --no-collapse --title "Femtofox Zero" --msgbox "$(femto-pinout.sh -z)" 34 48 ;;
-      3) dialog --no-collapse --title "Femtofox Tiny" --msgbox "$(femto-pinout.sh -t)" 38 70 ;;
-      4) dialog --no-collapse --title "Luckfox Pico Mini" --msgbox "$(femto-pinout.sh -l)" 23 65 ;;
-      5) return ;;
     esac
   done
 }
@@ -190,7 +166,7 @@ utilities() {
     
     case $option in
       1) # sysinfo)
-        dialog --no-collapse --infobox "Loading system info..." 5 45
+        loading "Loading system info..."
         dialog --no-collapse --colors --title "System info" --msgbox "$(replace_colors "$(femto-utils.sh -i)")" 0 0
       ;;
       2) femto-set-time.sh ;; # set timezone
@@ -247,14 +223,14 @@ utilities() {
       10) # reboot)
         dialog --no-collapse --title "$title" --yesno "Reboot now?\n\nTip: Reboot can also be triggered by long-pressing the BOOT button on the luckfox." 10 45
         if [ $? -eq 0 ]; then #unless cancel/no
-          dialog --no-collapse --infobox "Rebooting..." 5 45
+          loading "Rebooting..."
           femto-utils.sh -r
         fi
       ;;
       11) # shutdown)
         dialog --no-collapse --title "$title" --yesno "Shut down now?\n\nTo power system back on, disconnect/reconnect power.\n\nThe system shutdown command prevents damage to the filesystem from power interrupts, but does not stop power consumption.\n\nTip: You can also shut down the Femtofox by pressing the BOOT button for 5 seconds or by running \`sudo halt\`." 14 60
         if [ $? -eq 0 ]; then #unless cancel/no
-          dialog --no-collapse --infobox "Shutting down...\n\nPower consumption will not stop." 5 45
+          loading "Shutting down...\n\nPower consumption will not stop."
           femto-utils.sh -s
         fi
       ;;
@@ -269,7 +245,7 @@ set_lora_radio() {
     echo "Checking LoRa radio..."
     local option=""
     #Display filename, if exists: $(files=$(ls /etc/meshtasticd/config.d/* 2>/dev/null) && [ -n "$files" ] && echo "\n\nConfiguration files in use:\n$files" | paste -sd, -))
-    option=$(dialog --no-collapse --colors --cancel-label "Back" --title "Meshtastic LoRa radio" --menu "Currently configured LoRa radio:\n$(replace_colors "$(femto-meshtasticd-config.sh -k)")$(ls -1 /etc/meshtasticd/config.d 2>/dev/null | paste -sd ', ' - | sed 's/^/ (/; s/$/)/; s/,/, /g' | grep -v '^ ()$')" 18 50 10 \
+    option=$(dialog --no-collapse --colors --cancel-label "Back" --title "Meshtastic LoRa radio" --menu "Currently configured LoRa radio:\n$(replace_colors "$(femto-meshtasticd-config.sh -k)")$(ls -1 /etc/meshtasticd/config.d 2>/dev/null | paste -sd ', ' - | sed 's/^/ (/; s/$/)/; s/,/, /g' | grep -v '^ ()$')" 19 50 10 \
        "Ebyte e22-900m30s" "(SX1262_TCXO)" \
        "Ebyte e22-900m22s" "(SX1262_TCXO)"\
        "Ebyte e80-900m22s" "(SX1262_XTAL)"\
@@ -349,11 +325,11 @@ meshtastic_settings() {
     
     case $option in
       1) # view node info)
-        dialog --no-collapse --infobox "Getting Node info..." 5 45
+        loading "Getting Node info..."
         dialog --no-collapse --colors --title "Node Info" --msgbox "$(replace_colors "$(femto-meshtasticd-config.sh -i)")" 0 0
         ;;
       2) # get current configuration URL & QR code)
-        dialog --no-collapse --infobox "Getting Meshtastic QR code and URL..." 5 45
+        loading "Getting Meshtastic QR code and URL..."
         femto-meshtasticd-config.sh -g
         pause
       ;;
@@ -362,7 +338,7 @@ meshtastic_settings() {
         if [ -n "$newurl" ]; then #if a URL was entered
           dialog --no-collapse --title "$title" --yesno "New Meshtastic LoRa configuration URL:\n$newurl\n\nConfirm?" 15 60
           if [ $? -eq 0 ]; then #unless cancel/no
-            dialog --no-collapse --infobox "Sending command..." 5 45
+            loading "Sending command..."
             dialog --no-collapse --colors --title "Meshtastic URL" --msgbox "$(femto-meshtasticd-config.sh -q "$newurl" && echo -e "\n\Z4Command successful!\Zn\n" || echo -e "\n\Z1Command failed.\Zn\n")" 0 0
           fi
         fi
@@ -372,7 +348,7 @@ meshtastic_settings() {
       ;;
       5) # remote admin)
         while true; do
-          choice=$(dialog --no-collapse --title "Meshtastic Security Settings" --menu "" 16 40 5 \
+          choice=$(dialog --no-collapse --cancel-label "Back" --title "Meshtastic Security Settings" --menu "" 16 40 5 \
             1 "View/change public key" \
             2 "View/change private key" \
             "" "" \
@@ -388,14 +364,14 @@ meshtastic_settings() {
           fi
           case $choice in
             1) # view/change public key)
-              dialog --no-collapse --infobox "Getting current public key..." 5 45
+              loading "Getting current public key..."
               key=$(femto-meshtasticd-config.sh -u)
               if [ -n "$key" ]; then
                 dialog --no-collapse --title "Meshtastic public key" --yesno "Current public key:\n$key\n\nSet new key?" 9 55
                 if [ $? -eq 0 ]; then #unless cancel/no
                   key=$(dialog --no-collapse --title "Meshtastic public key" --inputbox "New Meshtastic public key (SHIFT+INS to paste):" 8 60 3>&1 1>&2 2>&3)
                   if [ $? -eq 0 ]; then #unless cancel/no
-                    dialog --no-collapse --infobox "Sending command..." 5 45
+                    loading "Sending command..."
                     dialog --no-collapse --colors --title "Meshtastic public key" --msgbox "$(femto-meshtasticd-config.sh -U "$key" && echo -e "\n\Z4Command successful!\Zn\n" || echo -e "\n\Z1Command failed.\Zn\n")" 0 0
                   fi
                 fi
@@ -404,14 +380,14 @@ meshtastic_settings() {
               fi
             ;;
             2) # view/change private key)
-              dialog --no-collapse --infobox "Getting current private key..." 5 45
+              loading "Getting current private key..."
               key=$(femto-meshtasticd-config.sh -u)
               if [ -n "$key" ]; then
                 dialog --no-collapse --title "Meshtastic private key" --yesno "Current private key:\n$key\n\nSet new key?" 9 55
                 if [ $? -eq 0 ]; then #unless cancel/no
                   key=$(dialog --no-collapse --title "Meshtastic private key" --inputbox "New Meshtastic private key (SHIFT+INS to paste):" 8 60 3>&1 1>&2 2>&3)
                   if [ $? -eq 0 ]; then #unless cancel/no
-                    dialog --no-collapse --infobox "Sending command..." 5 45
+                    loading "Sending command..."
                     dialog --no-collapse --colors --title "Meshtastic private key" --msgbox "$(femto-meshtasticd-config.sh -R "$key" && echo -e "\n\Z4Command successful!\Zn\n" || echo -e "\n\Z1Command failed.\Zn\n")" 0 0
                   fi
                 fi
@@ -420,35 +396,27 @@ meshtastic_settings() {
               fi
             ;;
             3) # view admin keys)
-              dialog --no-collapse --infobox "Getting Admin Keys..." 5 45
+              loading "Getting Admin Keys..."
               dialog --no-collapse --title "Admin keys" --msgbox "Up to 3 admin keys are permitted, more will be ignored.\n\nKeys:$(femto-meshtasticd-config.sh -a | tail -n 1 | sed 's/|n/\\n/g')" 0 0
             ;;
             4) # set admin key)
               key=$(dialog --no-collapse --title "Admin Keys" --inputbox "Meshtastic admin key - up to 3, more will be ignored.\n\n(SHIFT+INS to paste):" 11 40 3>&1 1>&2 2>&3)
               if [ -n "$key" ]; then #if a key was entered
-                dialog --no-collapse --infobox "Sending command..." 5 45
+                loading "Sending command..."
                 dialog --no-collapse --colors --title "Admin Keys" --msgbox "$(femto-meshtasticd-config.sh -A "$key" && echo -e "\n\Z4Command successful!\Zn\n" || echo -e "\n\Z1Command failed.\Zn\n")" 0 0
               fi
             ;;
             5) # clear admin keys)
               dialog --no-collapse --title "Admin Keys" --yesno "Meshtasticd can have up to 3 admin keys. If more are added, they will be ignored.\n\nClear admin key list?\n" 0 0
               if [ $? -eq 0 ]; then #unless cancel/no
-                dialog --no-collapse --infobox "Sending command..." 5 45
+                loading "Sending command..."
                 dialog --no-collapse --colors --title "Admin Keys" --msgbox "$(femto-meshtasticd-config.sh -c && echo -e "\n\Z4Command successful!\Zn\n" || echo -e "\n\Z1Command failed.\Zn\n")" 0 0
               fi
             ;;
             6) # legacy admin)
               while true; do
-                dialog --no-collapse --infobox "Getting current legacy admin state..." 5 45
-                state=$(sudo femto-meshtasticd-config.sh -p)
-                if echo "$state" | grep -q "True"; then
-                  state="\Z4Enabled\Zn"
-                elif echo "$state" | grep -q "False"; then
-                  state="\Z1Disabled\Zn"
-                elif echo "$state" | grep -q "Error"; then
-                  state="\Z1Error\Zn"
-                fi
-                choice=$(dialog --no-collapse --colors --title "Legacy Admin" --menu "Current state: $state" 12 40 5 \
+                loading "Getting current legacy admin state..."
+                choice=$(dialog --no-collapse --colors --title "Legacy Admin" --menu "Current state: $(replace_colors "$(femto-meshtasticd-config.sh -p)")" 12 40 5 \
                   1 "Enable" \
                   2 "Disable (default)" \
                   "" "" \
@@ -461,14 +429,14 @@ meshtastic_settings() {
                   1) # enable legacy admin)
                     dialog --no-collapse --title "Legacy Admin" --yesno "Enable legacy admin channel?\n" 0 0
                     if [ $? -eq 0 ]; then #unless cancel/no
-                      dialog --no-collapse --infobox "Sending command..." 5 45
+                      loading "Sending command..."
                       dialog --no-collapse --colors --title "Legacy admin" --msgbox "$(femto-meshtasticd-config.sh -o "true" && echo -e "\n\Z4Command successful!\Zn\n" || echo -e "\n\Z1Command failed.\Zn\n")" 0 0
                     fi
                   ;;
                   2) # disable legacy admin)
                     dialog --no-collapse --title "Legacy Admin" --yesno "Disable legacy admin channel?\n" 0 0
                     if [ $? -eq 0 ]; then #unless cancel/no
-                      dialog --no-collapse --infobox "Sending command..." 5 45
+                      loading "Sending command..."
                       dialog --no-collapse --colors --title "Legacy admin" --msgbox "$(femto-meshtasticd-config.sh -o "false" && echo -e "\n\Z4Command successful!\Zn\n" || echo -e "\n\Z1Command failed.\Zn\n")" 0 0
                     fi
                   ;;
@@ -509,7 +477,7 @@ meshtastic_settings() {
           fi
           case $choice in
             "View detailed service status") 
-              dialog --no-collapse --infobox "Getting Meshtasticd service status..." 5 45
+              loading "Getting Meshtasticd service status..."
               dialog --no-collapse --title "Meshtasticd service status" --msgbox "$(systemctl status meshtasticd)" 0 0
             ;;
             "Start/restart service") 
@@ -591,7 +559,30 @@ help_menu() {
         dialog --no-collapse --title "About Femtofox" --backtitle "Foxbuntu $(grep -oP 'major=\K[0-9]+' /etc/foxbuntu-release).$(grep -oP 'minor=\K[0-9]+' /etc/foxbuntu-release).$(grep -oP 'patch=\K[0-9]+' /etc/foxbuntu-release)$(grep -oP 'hotfix=\K[a-z]+' /etc/foxbuntu-release)" --msgbox "$(femto-license.sh -a)" 18 65
       ;;
       2) #Display pinout)
-        femto_pinouts
+        while true; do
+          local option=""
+          option=$(dialog --no-collapse --cancel-label "Back" --menu "Pinouts" 15 40 5 \
+            1 "Femtofox Pro/CE" \
+            2 "Femtofox Zero" \
+            3 "Femtofox Tiny" \
+            4 "Luckfox Pico Mini" \
+            "" "" \
+            5 "Back to Help Menu" 3>&1 1>&2 2>&3)
+          
+          exit_status=$? # This line checks the exit status of the dialog command
+          
+          if [ $exit_status -ne 0 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
+            break
+          fi
+          
+          case $option in
+            1) dialog --no-collapse --title "Femtofox" --msgbox "$(femto-pinout.sh -f)" 43 68 ;;
+            2) dialog --no-collapse --title "Femtofox Zero" --msgbox "$(femto-pinout.sh -z)" 34 48 ;;
+            3) dialog --no-collapse --title "Femtofox Tiny" --msgbox "$(femto-pinout.sh -t)" 38 70 ;;
+            4) dialog --no-collapse --title "Luckfox Pico Mini" --msgbox "$(femto-pinout.sh -l)" 23 65 ;;
+            5) break ;;
+          esac
+        done
       ;;
       3) #Femtofox licensing info - short)
         dialog --no-collapse --title "Femtofox license" --msgbox "$(femto-license.sh -f)" 28 60
@@ -646,7 +637,7 @@ fi
 
 # Main menu
 while true; do
-  choice=$(dialog --no-collapse --title "$(date)" --cancel-label "Exit" --menu "Femtofox Config" 15 40 5 \
+  choice=$(dialog --no-collapse --cancel-label "Exit" --menu "Femtofox Config" 16 40 5 \
     1 "Settings wizard" \
     2 "Networking" \
     3 "Meshtastic" \

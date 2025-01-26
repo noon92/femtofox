@@ -12,7 +12,12 @@ Options are:
 -r             Reboot
 -s             Shutdown
 -l "enable"    Enable/disable logging. Options: "enable" "disable" "check"
--i             System info
+-i             System info (all)
+-p             Peripherals info
+-c             CPU info
+-n             Networking info
+-o             OS info
+-s             Storage & RAM info
 EOF
 )
 
@@ -51,19 +56,34 @@ act_led() {
   fi
 }
 
-# at some point this will have many functions instead of one giant dump
-system_info() {
+cpu_info() {
   local cpu_model="$(dmesg | grep "soc_id" | sed -n 's/.*soc_id: //p')"
   local cpu_architecture="$(uname -m) ($(dpkg --print-architecture) $(python3 -c "import platform; print(platform.architecture()[0])"))"
   local cpu_temp="$(echo "scale=1; $(cat /sys/class/thermal/thermal_zone0/temp) / 1000" | bc)°C"
   local cpu_speed="$(lscpu | grep "CPU min MHz" | awk '{print int($4)}')-$(lscpu | grep "CPU max MHz" | awk '{print int($4)}')mhz"
   local cpu_serial="$(awk '/Serial/ {print $3}' /proc/cpuinfo)"
 
+  echo -e "Core:             $(cat /sys/firmware/devicetree/base/model)\n\
+Model:            $cpu_model\n\
+Architecture:     $cpu_architecture\n\
+Speed:            $cpu_speed x $(nproc) cores\n\
+Temperature:      $cpu_temp\n\
+Serial #          $cpu_serial"
+}
+
+storage_info() {
   local microsd_size="$(df --block-size=1 / | awk 'NR==2 {total=$2; avail=$4; total_human=sprintf("%.2f", total/1024/1024/1024); avail_human=sprintf("%.2f", avail/1024/1024/1024); printf "%.2f GB   (%.2f%% free)", total_human, (avail/total)*100}')"
   local memory="$(free -m | awk 'NR==2{printf "%d MB      (%.2f%% free)\n", $2, 100 - (($3/$2)*100)}')"
   local swap="$(free -m | awk 'NR==3 {if ($2 > 1000) {printf "%.2f GB    (%.2f%% free)", $2/1024, ($4/$2)*100} else {printf "%d MB    (%.2f%% free)", $2, ($4/$2)*100}}')"
   local mounted_drives="$([ "$(for dir in /mnt/*/; do echo -n "/mnt${dir#"/mnt"} "; done)" ] && echo "Mounted drives:   $(for dir in /mnt/*; do echo -n "/mnt${dir#"/mnt"} "; done | sed 's/\/$//')")"
 
+  echo -e "microSD size:     $microsd_size\n\
+Memory:           $memory\n\
+Swap:             $swap\n\
+$mounted_drives"
+}
+
+os_info() {
   local os_version="Foxbuntu v$(grep -oP 'major=\K[0-9]+' /etc/foxbuntu-release).$(grep -oP 'minor=\K[0-9]+' /etc/foxbuntu-release)$(output=$(grep -o 'patch=[1-9][0-9]*' /etc/foxbuntu-release | cut -d= -f2) && [ -n "$output" ] && echo ".$output")$(grep -oP 'hotfix=\K[a-z]+' /etc/foxbuntu-release) ($(lsb_release -d | awk -F'\t' '{print $2}') $(lsb_release -c | awk -F'\t' '{print $2}'))"
   local system_uptime="$(uptime -p | awk '{$1=""; print $0}' | sed -e 's/ day\b/d/g' -e 's/ hour\b/h/g' -e 's/ hours\b/h/g' -e 's/ minute\b/m/g' -e 's/ minutes\b/m/g' | sed 's/,//g')"
   local logging_enabled="$(logging "check" | sed 's/\x1b\[[0-9;]*m//g')"
@@ -71,9 +91,25 @@ system_info() {
   local kernel_active_modules="$(lsmod | awk 'NR>1 {print $1}' | tr '\n' ' ' && echo)"
   local kernel_boot_modules="$(modules=$(sed -n '6,$p' /etc/modules | sed ':a;N;$!ba;s/\n/, /g;s/, $//'); [ -z "$modules" ] && echo "none" || echo "$modules")"
 
+  echo -e "Operating System: $os_version\n\
+Kernel version:   $(uname -r)\n\
+Uptime:          $system_uptime\n\
+Logging:          $logging_enabled\n\
+Activity LED:     $act_led\n\
+System time:      $(date)\n\
+K modules active: $kernel_active_modules\n\
+K boot modules:   $kernel_boot_modules"
+}
+
+networking_info() {
   local wifi_status="$(femto-network-config.sh -w | grep -v '^$' | grep -v '^Hostname')" #remove hostname line, as it's identical to the one in ethernet settings
   local eth_status="$(femto-network-config.sh -e)"
+  echo -e "$wifi_status\n\
+---
+$eth_status"
+}
 
+peripherals_info() {
   local usb_mode="$(cat /sys/devices/platform/ff3e0000.usb2-phy/otg_mode)"
   local spi0_state="$([ "$(awk -F= '/^SPI0_M0_STATUS/ {print $2}' /etc/luckfox.cfg)" -eq 1 ] && echo "enabled" || echo "disabled")"
   local spi0_speed="$((0x$(xxd -p /sys/firmware/devicetree/base/spi@ff500000/spidev@0/spi-max-frequency | tr -d '\n')))"
@@ -86,56 +122,45 @@ system_info() {
   local usb_devices="$(lsusb | grep -v 'root hub' | awk 'NR>0{printf "USB:              "; for(i=7;i<=NF;i++) printf "%s ", $i; print ""} END {if (NR == 0) printf "USB:              None detected"}')"
   local i2c_addresses="$(i2cdetect -y 3 | awk 'NR>1 {for(i=2;i<=17;i++) if ($i == "ff" || $i == "UU") { printf "0x%02x ", (i-2) + (NR-2)*16} }' | tr -d '\n' )"
 
-  local meshtasticd_service_status="$(femto-meshtasticd-config.sh -S)"
-  local meshtasticd_info="$(femto-meshtasticd-config.sh -i)"
-  echo -e "\
-            Femtofox\n\
-Core:             $(cat /sys/firmware/devicetree/base/model)\n\
-Operating System: $os_version\n\
-Kernel version:   $(uname -r)\n\
-Uptime:          $system_uptime\n\
-Logging:          $logging_enabled\n\
-Activity LED:     $act_led\n\
-System time:      $(date)\n\
-K modules active: $kernel_active_modules\n\
-K boot modules:   $kernel_boot_modules\n\
-\n\
-    CPU:\n\
-Model:            $cpu_model\n\
-Architecture:     $cpu_architecture\n\
-Speed:            $cpu_speed x $(nproc) cores\n\
-Temperature:      $cpu_temp\n\
-Serial #          $cpu_serial\n\
-\n\
-    Storage:\n\
-microSD size:     $microsd_size\n\
-Memory:           $memory\n\
-Swap:             $swap\n\
-$mounted_drives\n\
-\n\
-    Networking (wlan0 & eth0):\n\
-$wifi_status\n\
----
-$eth_status\n\
-\n\
-    Interfaces:\n\
+  echo -e "LoRa radio:       $lora_radio\n\
+$usb_devices\n\
+i2c devices:      $i2c_addresses\n\
 USB mode:         $usb_mode\n\
 SPI-0 state:      $spi0_state\n\
 SPI-0 speed:      $spi0_speed\n\
 i2c-3 state:      $i2c3_state\n\
 i2c-3 speed:      $i2c3_speed\n\
 UART-3 state:     $uart3_state\n\
-UART-4 state:     $uart4_state\n\
+UART-4 state:     $uart4_state"
+}
+
+meshtastic_info() {
+  local meshtasticd_service_status="$(femto-meshtasticd-config.sh -S)"
+  local meshtasticd_info="$(femto-meshtasticd-config.sh -i)"
+  echo -e "Service status:   $meshtasticd_service_status\n\
+$meshtasticd_info"
+}
+# at some point this will have many functions instead of one giant dump
+system_info() {
+  echo -e "\
+            Femtofox\n\
+    CPU:\n\
+$(cpu_info)\n\
 \n\
-    Attached devices:\n\
-LoRa radio:       $lora_radio\n\
-$usb_devices\n\
-i2c devices:      $i2c_addresses\n\
+    OS:\n\
+$(os_info)\n\
+\n\
+    Storage:\n\
+$(storage_info)\n\)
+\n\
+    Networking (wlan0 & eth0):\n\
+$(networking_info)\n\
+\n\
+    Peripherals:\n\
+$(peripherals_info)\n\
 \n\
     Meshtasticd:\n\
-Service status:   $meshtasticd_service_status\n\
-$meshtasticd_info\
-"
+$(meshtastic_info)"
 }
 
 # enable/disable/check system logging
