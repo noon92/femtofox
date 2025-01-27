@@ -57,9 +57,9 @@ else
 	log_message "Swap file already allocated, skipping."
 fi
 
-# add RTC support
-bash -c 'echo ds1307 0x68 > /sys/class/i2c-adapter/i2c-3/new_device'
-log_message "Added ds1307/ds3231 RTC support."
+# add RTC support - looks unneeded?
+#bash -c 'echo ds1307 0x68 > /sys/class/i2c-adapter/i2c-3/new_device'
+#log_message "Added ds1307/ds3231 RTC support."
 
 # prevent randomized mac address for eth0. If `eth0`` is already present in /etc/network/interfaces, skip
 if ! grep -q "eth0" /etc/network/interfaces; then
