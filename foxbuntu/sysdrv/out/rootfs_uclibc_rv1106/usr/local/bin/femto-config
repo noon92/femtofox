@@ -74,10 +74,10 @@ networking_settings() {
       6 "Set hostname" \
       7 "Test internet connection" \
       "" "" \
-    8 "Back to Main Menu" 3>&1 1>&2 2>&3)
+    8 "Back to main menu" 3>&1 1>&2 2>&3)
     
     exit_status=$? # This line checks the exit status of the dialog command
-    if [ $exit_status -ne 0 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
+    if [ $exit_status -eq 1 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
       break
     fi
     
@@ -93,7 +93,7 @@ networking_settings() {
               "" "" \
               3 "Return to previous menu" 3>&1 1>&2 2>&3)
             exit_status=$? # This line checks the exit status of the dialog command
-            if [ $exit_status -ne 0 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
+            if [ $exit_status -eq 1 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
               break
             fi
             case $choice in
@@ -145,7 +145,7 @@ utilities() {
   while true; do
     local option=""
     option=$(dialog --no-collapse --cancel-label "Back" --menu "$title" 21 50 4 \
-      1 "System info" \
+      1 "View system info" \
       2 "Set system time" \
       3 "Kernel modules" \
       4 "Re-run first-boot script" \
@@ -157,17 +157,66 @@ utilities() {
       10 "Reboot" \
       11 "Shutdown" \
       "" "" \
-      12 "Back to Main Menu" 3>&1 1>&2 2>&3)
+      12 "Back to main menu" 3>&1 1>&2 2>&3)
     
     exit_status=$? # This line checks the exit status of the dialog command
-    if [ $exit_status -ne 0 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
+    if [ $exit_status -eq 1 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
       break
     fi
     
     case $option in
-      1) # sysinfo)
-        loading "Loading system info..."
-        dialog --no-collapse --colors --title "System info" --msgbox "$(replace_colors "$(femto-utils.sh -i)")" 0 0
+      1)
+        while true; do
+          choice=$(dialog --no-collapse --extra-button --extra-label "Help" --cancel-label "Back" --menu "System info" 17 40 5 \
+            1 "CPU" \
+            2 "Operating system" \
+            3 "Storage & memory" \
+            4 "Peripherals & devices" \
+            5 "Networking" \
+            6 "Meshtastic node info" \
+            7 "Complete system info" \
+            "" "" \
+            8 "Back to previous menu" 3>&1 1>&2 2>&3)
+          
+          exit_status=$? # This line checks the exit status of the dialog command
+          if [ $exit_status -eq 1 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
+            break
+          elif [ $exit_status -eq 3 ]; then # Help ("extra") button
+            dialog --no-collapse --colors --title "System info help" --msgbox "To get system info in terminal (where it can be copied), enter \`\Zusudo femto-utils.sh -i\Zn\`." 7 50
+          else
+            case $choice in
+              1) # CPU)
+                loading "Loading CPU info..."
+                dialog --no-collapse --colors --title "CPU info" --msgbox "$(replace_colors "$(femto-utils.sh -c)")" 0 0
+              ;;
+              2) # Operating system)
+                loading "Loading operating system info..."
+                dialog --no-collapse --colors --extra-button --title "Operating system" --msgbox "$(replace_colors "$(femto-utils.sh -o)")" 0 0
+              ;;
+              3) # Storage & memory)
+                loading "Loading storage & memory info..."
+                dialog --no-collapse --colors --title "Storage & memory" --msgbox "$(replace_colors "$(femto-utils.sh -S)")" 0 0
+              ;;
+              4) # Peripherals & devices)
+                loading "Loading peripherals & devices info..."
+                dialog --no-collapse --colors --title "Peripherals & devices" --msgbox "$(replace_colors "$(femto-utils.sh -p)")" 0 0
+              ;; 
+              5) # Networking)
+                loading "Loading networking info..."
+                dialog --no-collapse --colors --title "Networking" --msgbox "$(replace_colors "$(femto-utils.sh -n)")" 0 0
+              ;;
+              6) # Meshtastic node info)
+                loading "Loading Meshtastic node info..."
+                dialog --no-collapse --colors --title "Meshtastic node info" --msgbox "$(replace_colors "$(femto-utils.sh -m)")" 0 0
+              ;;
+              7) # Complete system info)
+                loading "Loading complete system info..."
+                dialog --no-collapse --colors --title "System info" --msgbox "$(replace_colors "$(femto-utils.sh -i)")" 0 0
+              ;;
+              8) break ;;
+            esac
+          fi
+        done
       ;;
       2) femto-set-time.sh ;; # set timezone
       3) # Kernel modules)
@@ -192,7 +241,7 @@ utilities() {
             "" "" \
             3 "Return to previous menu" 3>&1 1>&2 2>&3)
           exit_status=$? # This line checks the exit status of the dialog command
-          if [ $exit_status -ne 0 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
+          if [ $exit_status -eq 1 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
             break
           fi
           case $choice in
@@ -210,7 +259,7 @@ utilities() {
             "" "" \
             3 "Return to previous menu" 3>&1 1>&2 2>&3)
           exit_status=$? # This line checks the exit status of the dialog command
-          if [ $exit_status -ne 0 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
+          if [ $exit_status -eq 1 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
             break
           fi
           case $choice in
@@ -228,7 +277,7 @@ utilities() {
         fi
       ;;
       11) # shutdown)
-        dialog --no-collapse --title "$title" --yesno "Shut down now?\n\nTo power system back on, disconnect/reconnect power.\n\nThe system shutdown command prevents damage to the filesystem from power interrupts, but does not stop power consumption.\n\nTip: You can also shut down the Femtofox by pressing the BOOT button for 5 seconds or by running \`sudo halt\`." 14 60
+        dialog --no-collapse --colors --title "$title" --yesno "Shut down now?\n\nTo power system back on, disconnect/reconnect power.\n\nThe system shutdown command prevents damage to the filesystem from power interrupts, but does not stop power consumption.\n\nTip: You can also shut down the Femtofox by pressing the BOOT button for 5 seconds or by running \`\Zusudo halt\Zn\`." 14 60
         if [ $? -eq 0 ]; then #unless cancel/no
           loading "Shutting down...\n\nPower consumption will not stop."
           femto-utils.sh -s
@@ -258,7 +307,7 @@ set_lora_radio() {
     "Skip" "" 3>&1 1>&2 2>&3)
     
     exit_status=$? # This line checks the exit status of the dialog command
-    if [ $exit_status -ne 0 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
+    if [ $exit_status -eq 1 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
       break
     fi
     
@@ -316,17 +365,17 @@ meshtastic_settings() {
       8 "Upgrade/install Meshtasticd" \
       9 "Uninstall Meshtasticd" \
       "" "" \
-    10 "Back to Main Menu" 3>&1 1>&2 2>&3)
+    10 "Back to main menu" 3>&1 1>&2 2>&3)
     
     exit_status=$? # This line checks the exit status of the dialog command
-    if [ $exit_status -ne 0 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
+    if [ $exit_status -eq 1 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
       break
     fi
     
     case $option in
       1) # view node info)
         loading "Getting Node info..."
-        dialog --no-collapse --colors --title "Node Info" --msgbox "$(replace_colors "$(femto-meshtasticd-config.sh -i)")" 0 0
+        dialog --no-collapse --colors --title "Node Info" --msgbox "$(replace_colors "$(femto-meshtasticd-config.sh -m)")" 0 0
         ;;
       2) # get current configuration URL & QR code)
         loading "Getting Meshtastic QR code and URL..."
@@ -359,7 +408,7 @@ meshtastic_settings() {
             "" "" \
             7 "Return to previous menu" 3>&1 1>&2 2>&3)
           exit_status=$? # This line checks the exit status of the dialog command
-          if [ $exit_status -ne 0 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
+          if [ $exit_status -eq 1 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
             break
           fi
           case $choice in
@@ -422,7 +471,7 @@ meshtastic_settings() {
                   "" "" \
                   3 "Return to previous menu" 3>&1 1>&2 2>&3)
                 exit_status=$? # This line checks the exit status of the dialog command
-                if [ $exit_status -ne 0 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
+                if [ $exit_status -eq 1 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
                   break
                 fi
                 case $choice in
@@ -472,7 +521,7 @@ meshtastic_settings() {
             " " " " \
             "Back to previous menu" "x" 3>&1 1>&2 2>&3)
           exit_status=$? # This line checks the exit status of the dialog command
-          if [ $exit_status -ne 0 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
+          if [ $exit_status -eq 1 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
             break
           fi
           case $choice in
@@ -498,14 +547,14 @@ meshtastic_settings() {
               dialog --no-collapse --title "$title" --yesno "Enable Meshtasticd service?" 6 45
               if [ $? -eq 0 ]; then #unless cancel/no
                 femto-meshtasticd-config.sh -M "enable"
-                dialog --no-collapse --msgbox "Sent \`systemctl enable meshtasticd\` and \`systemctl start meshtasticd\` commands to system.\n\nMeshtasticd should be running." 10 50
+                dialog --no-collapse --colors --msgbox "Sent \`\Zusystemctl enable meshtasticd\Zn\` and \`\Zusystemctl start meshtasticd\Zn\` commands to system.\n\nMeshtasticd should be running." 10 50
               fi
             ;;
             "Disable service")
               dialog --no-collapse --colors --title "$title" --yesno "Disable Meshtasticd service?\n\nThis will take the node \Zu\Z1OFFLINE\Zn and will not restart!" 9 50
               if [ $? -eq 0 ]; then #unless cancel/no
                 femto-meshtasticd-config.sh -M "disable"
-                dialog --no-collapse --msgbox "Sent \`systemctl disable meshtasticd\` and \`systemctl stop meshtasticd\` commands to system.\n\nMeshtasticd is disabled and stopped." 10 50
+                dialog --no-collapse --colors --msgbox "Sent \`\Zusystemctl disable meshtasticd\Zn\` and \`\Zusystemctl stop meshtasticd\Zn\` commands to system.\n\nMeshtasticd is disabled and stopped." 10 50
               fi
             ;;
             "Back to previous menu") break ;; 
@@ -523,7 +572,7 @@ meshtastic_settings() {
         dialog --no-collapse --colors --title "$title" --yesno "Uninstall Meshtasticd?\n\nFoxbuntu was designed with Meshtasticd integration in mind, and may behave unexpectedly if Meshtasticd is removed.\n\nThis will take the node \Zu\Z1OFFLINE\Zn and will not restart!" 0 0
         if [ $? -eq 0 ]; then
           femto-meshtasticd-config.sh -x
-          dialog --no-collapse --msgbox "Meshtasticd uninstalled. To purge all remnants, run \`sudo apt purge\`." 8 40
+          dialog --no-collapse --colors --msgbox "Meshtasticd uninstalled. To purge all remnants, run \`\Zusudo apt purge\Zn\`." 8 40
         fi
       ;;
       10)
@@ -547,10 +596,10 @@ help_menu() {
       6 "About Luckfox" \
       7 "About Ubuntu" \
       "" "" \
-    8 "Back to Main Menu" 3>&1 1>&2 2>&3)
+    8 "Back to main menu" 3>&1 1>&2 2>&3)
     
     exit_status=$? # This line checks the exit status of the dialog command
-    if [ $exit_status -ne 0 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
+    if [ $exit_status -eq 1 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
       break
     fi
     
@@ -571,7 +620,7 @@ help_menu() {
           
           exit_status=$? # This line checks the exit status of the dialog command
           
-          if [ $exit_status -ne 0 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
+          if [ $exit_status -eq 1 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
             break
           fi
           
@@ -612,7 +661,7 @@ help_menu() {
 help="If script is run without arguments, femto-config menu will load.\n\
 Options are:\n\
 -h           This message\n\
--l           Set LoRa radio cpu_model menu\n\
+-l           Set LoRa radio model menu\n\
 -w           Set Wi-Fi config menu\
 "
 while getopts ":hlwL:i" opt; do
@@ -649,8 +698,8 @@ while true; do
   
   exit_status=$? # This line checks the exit status of the dialog command
   
-  if [ $exit_status -ne 0 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
-    exit 0
+  if [ $exit_status -eq 1 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
+    break
   fi
   
   case $choice in

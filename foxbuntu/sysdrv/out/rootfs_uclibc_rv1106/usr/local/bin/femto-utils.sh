@@ -16,8 +16,9 @@ Options are:
 -p             Peripherals info
 -c             CPU info
 -n             Networking info
+-m             Meshtastic node info
 -o             OS info
--s             Storage & RAM info
+-S             Storage & RAM info
 EOF
 )
 
@@ -57,13 +58,14 @@ act_led() {
 }
 
 cpu_info() {
-  local cpu_model="$(dmesg | grep "soc_id" | sed -n 's/.*soc_id: //p')"
+  local core="$(cat /sys/firmware/devicetree/base/model | tr -d '\0')"
+  local cpu_model="$(dmesg | grep "soc_id" | sed -n 's/.*soc_id: //p' | tr -d '\0')"; cpu_model="${cpu_model:-$(cat /proc/device-tree/compatible | sed 's/.*,\([^,]*\)$/\1/' | tr -d '\0')}"
   local cpu_architecture="$(uname -m) ($(dpkg --print-architecture) $(python3 -c "import platform; print(platform.architecture()[0])"))"
   local cpu_temp="$(echo "scale=1; $(cat /sys/class/thermal/thermal_zone0/temp) / 1000" | bc)°C"
   local cpu_speed="$(lscpu | grep "CPU min MHz" | awk '{print int($4)}')-$(lscpu | grep "CPU max MHz" | awk '{print int($4)}')mhz"
   local cpu_serial="$(awk '/Serial/ {print $3}' /proc/cpuinfo)"
 
-  echo -e "Core:             $(cat /sys/firmware/devicetree/base/model)\n\
+  echo -e "Core:             $core\n\
 Model:            $cpu_model\n\
 Architecture:     $cpu_architecture\n\
 Speed:            $cpu_speed x $(nproc) cores\n\
@@ -117,10 +119,23 @@ peripherals_info() {
   local i2c3_speed="$(awk -F= '/^I2C3_M1_SPEED/ {print $2}' /etc/luckfox.cfg)"
   local uart3_state="$([ "$(awk -F= '/^UART3_M1_STATUS/ {print $2}' /etc/luckfox.cfg)" -eq 1 ] && echo "enabled" || echo "disabled")"
   local uart4_state="$([ "$(awk -F= '/^UART4_M1_STATUS/ {print $2}' /etc/luckfox.cfg)" -eq 1 ] && echo "enabled" || echo "disabled")"
-
   local lora_radio="$(femto-meshtasticd-config.sh -k)"
-  local usb_devices="$(lsusb | grep -v 'root hub' | awk 'NR>0{printf "USB:              "; for(i=7;i<=NF;i++) printf "%s ", $i; print ""} END {if (NR == 0) printf "USB:              None detected"}')"
-  local i2c_addresses="$(i2cdetect -y 3 | awk 'NR>1 {for(i=2;i<=17;i++) if ($i == "ff" || $i == "UU") { printf "0x%02x ", (i-2) + (NR-2)*16} }' | tr -d '\n' )"
+  local usb_devices="$(lsusb | grep -v 'root hub' | awk 'NR>0{printf "USB:              "; for(i=7;i<=NF;i++) printf "%s ", $i; print ""} END {if (NR == 0) printf "USB:              none detected"}')"
+  # gather i2c addresses
+  i2c_addresses=""    # initialize empty string to collect populated addresses
+  while IFS= read -r line; do    # iterate over each row of output (captured at end of while loop)
+    if [[ "$line" =~ ^[0-9a-f]+: ]]; then    # check if the row contains addresses (skip header row)
+      columns=($line)    # split the line into columns based on spaces
+      row="${columns[0]:0:1}"    # use the first numeral of the row number
+      for col_idx in "${!columns[@]}"; do    # iterate columns
+        if [[ $col_idx -gt 0 && "${columns[$col_idx]}" != "--" ]]; then    # skip first column (row numbers)
+          [[ "$row" == "0" ]] && col_idx=$((col_idx + 8))    # if first row, we start at #7, so add 8 to the column number reported
+          i2c_addresses+="0x$(printf "%x" "$((16#$row))")$(printf "%x" $((col_idx - 1))) "    # calculate hexadecimal with '0x'
+        fi
+      done
+    fi
+  done <<< "$(echo "$(sudo i2cdetect -y 3)")"
+  [[ -z "$i2c_addresses" ]] && i2c_addresses="none detected"    # if no addresses found, "none detected"
 
   echo -e "LoRa radio:       $lora_radio\n\
 $usb_devices\n\
@@ -140,8 +155,8 @@ meshtastic_info() {
   echo -e "Service status:   $meshtasticd_service_status\n\
 $meshtasticd_info"
 }
-# at some point this will have many functions instead of one giant dump
-system_info() {
+
+all_system_info() {
   echo -e "\
             Femtofox\n\
     CPU:\n\
@@ -185,7 +200,7 @@ logging() {
   fi
 }
 
-while getopts ":harsl:i" opt; do
+while getopts ":harsl:ipcnmoS" opt; do
   case ${opt} in
     h) # Option -h (help)
       echo -e $help
@@ -206,7 +221,13 @@ while getopts ":harsl:i" opt; do
     l) # Option -l (Logging enable/disable/check)
       logging $OPTARG
     ;;
-    i) system_info ;; # Option -i (sysinfo)
+    i) all_system_info ;; # Option -i (sysinfo)
+    p) peripherals_info ;; # Option -p (Peripherals info)
+    c) cpu_info ;; # Option -c (CPU info)
+    n) networking_info ;; # Option -n (Networing info)
+    m) meshtastic_info ;; # Option -m (Meshtastic node info)
+    o) os_info ;; # Option -o (OS info)
+    S) storage_info ;; # Option -S (Storage & RAM info)
     \?) # Unknown option)
       echo -e "Unknown argument $1.\n$help"
     ;;
