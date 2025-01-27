@@ -167,7 +167,7 @@ utilities() {
     case $option in
       1)
         while true; do
-          choice=$(dialog --no-collapse --extra-button --extra-label "Help" --cancel-label "Back" --menu "System info" 17 40 5 \
+          choice=$(dialog --no-collapse --help-button --help-label "Help" --cancel-label "Back" --menu "System info" 17 40 5 \
             1 "CPU" \
             2 "Operating system" \
             3 "Storage & memory" \
@@ -181,7 +181,7 @@ utilities() {
           exit_status=$? # This line checks the exit status of the dialog command
           if [ $exit_status -eq 1 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
             break
-          elif [ $exit_status -eq 3 ]; then # Help ("extra") button
+          elif [ $exit_status -eq 2 ]; then # Help ("extra") button
             dialog --no-collapse --colors --title "System info help" --msgbox "To get system info in terminal (where it can be copied), enter \`\Zusudo femto-utils.sh -i\Zn\`." 7 50
           else
             case $choice in
@@ -207,7 +207,7 @@ utilities() {
               ;;
               6) # Meshtastic node info)
                 loading "Loading Meshtastic node info..."
-                dialog --no-collapse --colors --title "Meshtastic node info" --msgbox "$(replace_colors "$(femto-utils.sh -m)")" 0 0
+                dialog --no-collapse --colors --title "Meshtastic node info" --msgbox "$(replace_colors "$(femto-meshtasticd-config.sh -i)")" 0 0
               ;;
               7) # Complete system info)
                 loading "Loading complete system info..."
@@ -374,8 +374,8 @@ meshtastic_settings() {
     
     case $option in
       1) # view node info)
-        loading "Getting Node info..."
-        dialog --no-collapse --colors --title "Node Info" --msgbox "$(replace_colors "$(femto-meshtasticd-config.sh -m)")" 0 0
+        loading "Getting node info..."
+        dialog --no-collapse --colors --title "Node info" --msgbox "$(replace_colors "$(femto-meshtasticd-config.sh -i)")" 0 0
         ;;
       2) # get current configuration URL & QR code)
         loading "Getting Meshtastic QR code and URL..."
