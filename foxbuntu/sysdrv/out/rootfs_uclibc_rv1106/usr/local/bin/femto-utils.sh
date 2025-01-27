@@ -16,7 +16,6 @@ Options are:
 -p             Peripherals info
 -c             CPU info
 -n             Networking info
--m             Meshtastic node info
 -o             OS info
 -S             Storage & RAM info
 EOF
@@ -149,13 +148,6 @@ UART-3 state:     $uart3_state\n\
 UART-4 state:     $uart4_state"
 }
 
-meshtastic_info() {
-  local meshtasticd_service_status="$(femto-meshtasticd-config.sh -S)"
-  local meshtasticd_info="$(femto-meshtasticd-config.sh -i)"
-  echo -e "Service status:   $meshtasticd_service_status\n\
-$meshtasticd_info"
-}
-
 all_system_info() {
   echo -e "\
             Femtofox\n\
@@ -175,7 +167,7 @@ $(networking_info)\n\
 $(peripherals_info)\n\
 \n\
     Meshtasticd:\n\
-$(meshtastic_info)"
+$(femto-meshtasticd-config.sh -i)"
 }
 
 # enable/disable/check system logging
@@ -200,7 +192,7 @@ logging() {
   fi
 }
 
-while getopts ":harsl:ipcnmoS" opt; do
+while getopts ":harsl:ipcnoS" opt; do
   case ${opt} in
     h) # Option -h (help)
       echo -e $help
@@ -225,7 +217,6 @@ while getopts ":harsl:ipcnmoS" opt; do
     p) peripherals_info ;; # Option -p (Peripherals info)
     c) cpu_info ;; # Option -c (CPU info)
     n) networking_info ;; # Option -n (Networing info)
-    m) meshtastic_info ;; # Option -m (Meshtastic node info)
     o) os_info ;; # Option -o (OS info)
     S) storage_info ;; # Option -S (Storage & RAM info)
     \?) # Unknown option)

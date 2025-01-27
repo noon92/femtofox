@@ -92,6 +92,7 @@ Spread factor:    $(echo "$output" | grep -oP '"spreadFactor":\s*\K\w+')\n\
 Coding rate:      $(echo "$output" | grep -oP '"codingRate":\s*\K\w+')"
       fi
       echo -e "\
+Service status:   $(femto-meshtasticd-config.sh -S)\n\
 Version:          $(echo "$output" | grep -oP '"firmwareVersion":\s*"\K[^"]+' | head -n 1)\n\
 Node name:        $(echo "$output" | grep -oP 'Owner:\s*\K.*' | head -n 1)\n\
 NodeID:           !$(printf "%08x\n" $(echo "$output" | grep -oP '"myNodeNum":\s*\K\d+' | head -n 1))   (nodenum: $(echo "$output" | grep -oP '"myNodeNum":\s*\K\d+' | head -n 1))\n\
