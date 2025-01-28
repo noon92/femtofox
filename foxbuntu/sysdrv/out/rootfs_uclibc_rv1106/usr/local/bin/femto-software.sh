@@ -91,7 +91,7 @@ package_menu() {
       $(if $package_dir/$1.sh -O | grep -q 's' && $package_dir/$1.sh -I; then echo "Stop service x"; fi) \
       $(if $package_dir/$1.sh -O | grep -q 'r' && $package_dir/$1.sh -I; then echo "Start/restart service x"; fi) \
       $(if $package_dir/$1.sh -O | grep -q 'S' && $package_dir/$1.sh -I; then echo "Get service status x"; fi) \
-      "" "" \
+      " " "" \
       "Back to software manager" "" 3>&1 1>&2 2>&3)
     
     exit_status=$? # This line checks the exit status of the dialog command
