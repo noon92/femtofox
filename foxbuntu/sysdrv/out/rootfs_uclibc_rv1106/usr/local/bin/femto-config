@@ -48,10 +48,11 @@ wifi_config() {
   [ -n "$wifi_country" ] && cmd="$cmd -c \"$wifi_country\""
   cmd="$cmd -r"
   if [ -z "$wifi_ssid" ]; then
-    dialog --no-collapse --title "$title2" --msgbox "\nSSID is required to configure Wi-Fi." 8 40
+    dialog --no-collapse --title "$title2" --msgbox "\nSSID is required to configure Wi-Fi." 7 40
     return
   fi
-  eval $cmd
+  echo "Configuring wifi..."
+  eval $cmd &>/dev/null
   dialog --no-collapse --title "$title2" --msgbox "Wi-Fi Settings Saved:\nSSID: $wifi_ssid\nPassword: (hidden)\nCountry: $wifi_country\nMeshtastic Wi-Fi setting set to ON" 9 40
   if [ "$1" = "-w" ]; then
     exit 0
@@ -62,10 +63,11 @@ wifi_config() {
 networking_settings() {
   local title="Networking"
   local title2="Wi-Fi (wlan0) Settings"
+  ip=$(hostname -I | sed 's/ / /g'); ip=${ip:+$(printf "IPv4 address:\n%s" "$ip")}
   wpa_supplicant_conf="/etc/wpa_supplicant/wpa_supplicant.conf"
+  choice=""   # zero the choice before loading the submenu
   while true; do
-    local option=""
-    option=$(dialog --no-collapse --cancel-label "Back" --menu "$title" 16 40 4 \
+    networking_choice=$(dialog --no-collapse --cancel-label "Back" --default-item "$networking_choice" --title "$title" --menu "$ip" $([ -z "$ip" ] && echo 16 || echo 18) 40 4 \
       1 "Turn Wi-Fi on/off" \
       2 "View Wi-Fi settings" \
       3 "Change Wi-Fi settings" \
@@ -73,7 +75,7 @@ networking_settings() {
       5 "Restart networking" \
       6 "Set hostname" \
       7 "Test internet connection" \
-      "" "" \
+      " " "" \
     8 "Back to main menu" 3>&1 1>&2 2>&3)
     
     exit_status=$? # This line checks the exit status of the dialog command
@@ -81,16 +83,16 @@ networking_settings() {
       break
     fi
     
-    case $option in
+    case $networking_choice in
       1) # Turn Wi-Fi on/off)
         if ! ip link show wlan0 &>/dev/null; then
           dialog --no-collapse --colors --msgbox "\Z1Network adapter wlan0 does not exist.\Zn\n\nIs a wifi adapter connected?" 8 40
         else
           while true; do
-            choice=$(dialog --no-collapse --cancel-label "Back" --title "Enable/disable Wi-Fi" --menu "Tip: Wi-Fi can also be toggled by short-pressing the BOOT button on the Luckfox." 13 50 5 \
+            choice=$(dialog --no-collapse --cancel-label "Back" --default-item "$choice" --title "Enable/disable Wi-Fi" --menu "Tip: Wi-Fi can also be toggled by short-pressing the BOOT button on the Luckfox." 13 50 5 \
               1 "Turn Wi-Fi on" \
               2 "Turn Wi-Fi off" \
-              "" "" \
+              " " "" \
               3 "Return to previous menu" 3>&1 1>&2 2>&3)
             exit_status=$? # This line checks the exit status of the dialog command
             if [ $exit_status -eq 1 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
@@ -143,8 +145,7 @@ networking_settings() {
 utilities() {
   local title="Utilities"
   while true; do
-    local option=""
-    option=$(dialog --no-collapse --cancel-label "Back" --menu "$title" 21 50 4 \
+    utilities_choice=$(dialog --no-collapse --cancel-label "Back" --default-item "$utilities_choice" --menu "$title" 21 50 4 \
       1 "View system info" \
       2 "Set system time" \
       3 "Kernel modules" \
@@ -156,7 +157,7 @@ utilities() {
       9 "Disable/enable activity LED" \
       10 "Reboot" \
       11 "Shutdown" \
-      "" "" \
+      " " "" \
       12 "Back to main menu" 3>&1 1>&2 2>&3)
     
     exit_status=$? # This line checks the exit status of the dialog command
@@ -164,10 +165,11 @@ utilities() {
       break
     fi
     
-    case $option in
+    case $utilities_choice in
       1)
+        choice=""   # zero the choice before loading the submenu
         while true; do
-          choice=$(dialog --no-collapse --help-button --help-label "Help" --cancel-label "Back" --menu "System info" 17 40 5 \
+          choice=$(dialog --no-collapse --help-button --help-label "Help" --cancel-label "Back" --default-item "$choice" --menu "System info" 17 40 5 \
             1 "CPU" \
             2 "Operating system" \
             3 "Storage & memory" \
@@ -175,14 +177,13 @@ utilities() {
             5 "Networking" \
             6 "Meshtastic node info" \
             7 "Complete system info" \
-            "" "" \
+            " " "" \
             8 "Back to previous menu" 3>&1 1>&2 2>&3)
-          
           exit_status=$? # This line checks the exit status of the dialog command
           if [ $exit_status -eq 1 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
             break
           elif [ $exit_status -eq 2 ]; then # Help ("extra") button
-            dialog --no-collapse --colors --title "System info help" --msgbox "To get system info in terminal (where it can be copied), enter \`\Zusudo femto-utils.sh -i\Zn\`." 7 50
+            dialog --no-collapse --colors --title "System info help" --msgbox "To get system info in terminal (where it can be copied), enter \`\Zusudo femto-utils.sh -i\Zn\`.\n\nWhen getting Peripherals & Devices (or Complete System Info) without an i2c device connected, it is normal to see error messages on serial console.\n" 0 0
           else
             case $choice in
               1) # CPU)
@@ -234,11 +235,12 @@ utilities() {
       6) luckfox-config ;;
       7) htop ;;
       8) # logging)
+        choice=""   # zero the choice before loading the submenu
         while true; do
-          choice=$(dialog --no-collapse --colors --title "Logging" --menu "Before deploying a Femtofox, it is advisable to disable logging to reduce SD card wear.\nCurrent state: $(replace_colors "$(femto-utils.sh -l "check")")" 14 50 2 \
+          choice=$(dialog --no-collapse --colors --title "Logging" --cancel-label "Back" --default-item "$choice" --menu "Before deploying a Femtofox, it is advisable to disable logging to reduce SD card wear.\nCurrent state: $(replace_colors "$(femto-utils.sh -l "check")")" 14 50 2 \
             1 "Enable (default)" \
             2 "Disable" \
-            "" "" \
+            " " "" \
             3 "Return to previous menu" 3>&1 1>&2 2>&3)
           exit_status=$? # This line checks the exit status of the dialog command
           if [ $exit_status -eq 1 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
@@ -252,11 +254,12 @@ utilities() {
         done
       ;;
       9) # logging)
+        choice=""   # zero the choice before loading the submenu
         while true; do
-          choice=$(dialog --no-collapse --colors --title "Logging" --menu "Before deploying a Femtofox, it is advisable to disable the Activity LED to save power.\nCurrent state: $(replace_colors "$(femto-utils.sh -a "check")")" 14 50 2 \
+          choice=$(dialog --no-collapse --colors --title "Logging" --cancel-label "Back" --default-item "$choice" --menu "Before deploying a Femtofox, it is advisable to disable the Activity LED to save power.\nCurrent state: $(replace_colors "$(femto-utils.sh -a "check")")" 14 50 2 \
             1 "Enable (default)" \
             2 "Disable" \
-            "" "" \
+            " " "" \
             3 "Return to previous menu" 3>&1 1>&2 2>&3)
           exit_status=$? # This line checks the exit status of the dialog command
           if [ $exit_status -eq 1 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
@@ -290,11 +293,11 @@ utilities() {
 
 #set lora radio
 set_lora_radio() {
+  choice=""   # zero the choice before loading the submenu
   while true; do
     echo "Checking LoRa radio..."
-    local option=""
     #Display filename, if exists: $(files=$(ls /etc/meshtasticd/config.d/* 2>/dev/null) && [ -n "$files" ] && echo "\n\nConfiguration files in use:\n$files" | paste -sd, -))
-    option=$(dialog --no-collapse --colors --cancel-label "Back" --title "Meshtastic LoRa radio" --menu "Currently configured LoRa radio:\n$(replace_colors "$(femto-meshtasticd-config.sh -k)")$(ls -1 /etc/meshtasticd/config.d 2>/dev/null | paste -sd ', ' - | sed 's/^/ (/; s/$/)/; s/,/, /g' | grep -v '^ ()$')" 19 50 10 \
+    choice=$(dialog --no-collapse --colors --cancel-label "Back" --default-item "$choice" --title "Meshtastic LoRa radio" --menu "Currently configured LoRa radio:\n$(replace_colors "$(femto-meshtasticd-config.sh -k)")$(ls -1 /etc/meshtasticd/config.d 2>/dev/null | paste -sd ', ' - | sed 's/^/ (/; s/$/)/; s/,/, /g' | grep -v '^ ()$')" 19 50 10 \
        "Ebyte e22-900m30s" "(SX1262_TCXO)" \
        "Ebyte e22-900m22s" "(SX1262_TCXO)"\
        "Ebyte e80-900m22s" "(SX1262_XTAL)"\
@@ -303,7 +306,7 @@ set_lora_radio() {
        "Waveshare sx126x-xxxm" "(SX1262_XTAL)"\
        "AI Thinker ra-01sh" "(SX1262_XTAL)"\
        "None" "(simulated radio)"\
-      "" "" \
+      " " "" \
     "Skip" "" 3>&1 1>&2 2>&3)
     
     exit_status=$? # This line checks the exit status of the dialog command
@@ -312,7 +315,7 @@ set_lora_radio() {
     fi
     
     local radio=""
-    case $option in
+    case $choice in
       "Ebyte e22-900m30s")
         radio="sx1262_tcxo"
       ;;
@@ -352,9 +355,8 @@ set_lora_radio() {
 meshtastic_settings() {
   local title="Meshtastic Settings"
   while true; do
-      echo "Checking Meshtasticd service state..."
-    local option=""
-    option=$(dialog --no-collapse --colors --title "$title" --cancel-label "Back" --menu "Meshtasticd service is $(replace_colors "$(femto-meshtasticd-config.sh -S)")$(femto-meshtasticd-config.sh -k | grep -q 'simulated' && echo '\n\Z1Using simulated radio\Zn')" 19 50 4 \
+    echo "Checking Meshtasticd service state..."
+    meshtastic_choice=$(dialog --no-collapse --colors --title "$title" --cancel-label "Back" --default-item "$meshtastic_choice" --menu "Meshtasticd service is $(replace_colors "$(femto-meshtasticd-config.sh -S)")$(femto-meshtasticd-config.sh -k | grep -q 'simulated' && echo '\n\Z1Warning: using simulated radio\Zn')" 19 50 4 \
       1 "View node info" \
       2 "View configuration URL & QR code" \
       3 "Set new configuration URL" \
@@ -364,7 +366,7 @@ meshtastic_settings() {
       7 "Manage Meshtasticd service" \
       8 "Upgrade/install Meshtasticd" \
       9 "Uninstall Meshtasticd" \
-      "" "" \
+      " " "" \
     10 "Back to main menu" 3>&1 1>&2 2>&3)
     
     exit_status=$? # This line checks the exit status of the dialog command
@@ -372,7 +374,7 @@ meshtastic_settings() {
       break
     fi
     
-    case $option in
+    case $meshtastic_choice in
       1) # view node info)
         loading "Getting node info..."
         dialog --no-collapse --colors --title "Node info" --msgbox "$(replace_colors "$(femto-meshtasticd-config.sh -i)")" 0 0
@@ -396,16 +398,17 @@ meshtastic_settings() {
         set_lora_radio
       ;;
       5) # remote admin)
+        choice=""   # zero the choice before loading the submenu
         while true; do
-          choice=$(dialog --no-collapse --cancel-label "Back" --title "Meshtastic Security Settings" --menu "" 16 40 5 \
+          choice=$(dialog --no-collapse --cancel-label "Back" --default-item "$choice" --title "Meshtastic Security Settings" --menu "" 16 40 5 \
             1 "View/change public key" \
             2 "View/change private key" \
-            "" "" \
+            " " "" \
             3 "View admin keys" \
             4 "Set admin key" \
             5 "Clear admin keys" \
             6 "Legacy admin channel" \
-            "" "" \
+            " " "" \
             7 "Return to previous menu" 3>&1 1>&2 2>&3)
           exit_status=$? # This line checks the exit status of the dialog command
           if [ $exit_status -eq 1 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
@@ -463,12 +466,13 @@ meshtastic_settings() {
               fi
             ;;
             6) # legacy admin)
+              choice=""   # zero the choice before loading the submenu
               while true; do
                 loading "Getting current legacy admin state..."
-                choice=$(dialog --no-collapse --colors --title "Legacy Admin" --menu "Current state: $(replace_colors "$(femto-meshtasticd-config.sh -p)")" 12 40 5 \
+                choice=$(dialog --no-collapse --colors --title "Legacy Admin" --default-item "$choice" --menu "Current state: $(replace_colors "$(femto-meshtasticd-config.sh -p)")" 12 40 5 \
                   1 "Enable" \
                   2 "Disable (default)" \
-                  "" "" \
+                  " " "" \
                   3 "Return to previous menu" 3>&1 1>&2 2>&3)
                 exit_status=$? # This line checks the exit status of the dialog command
                 if [ $exit_status -eq 1 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
@@ -507,10 +511,11 @@ meshtastic_settings() {
         fi
       ;;
       7) #manage meshtasticd service)
+        choice=""   # zero the choice before loading the submenu
         while true; do
           echo "Checking Meshtasticd service state..."
           local service_state="$(replace_colors "$(femto-meshtasticd-config.sh -S)")"
-          choice=$(dialog --no-collapse --colors --cancel-label "Back" --title "Meshtasticd Service" --menu "Meshtasticd service is $service_state$(femto-meshtasticd-config.sh -k | grep -q 'simulated' && echo '\n\Z1Using simulated radio\Zn')" 17 52 5 \
+          choice=$(dialog --no-collapse --colors --cancel-label "Back" --title "Meshtasticd Service" --default-item "$choice" --menu "Meshtasticd service is $service_state$(femto-meshtasticd-config.sh -k | grep -q 'simulated' && echo '\n\Z1Using simulated radio\Zn')" 17 52 5 \
             "View detailed service status" "x" \
             " " " " \
             $(if echo "$service_state" | grep -q 'enabled'; then echo "Start/restart service x"; fi) \
@@ -586,8 +591,7 @@ meshtastic_settings() {
 help_menu() {
   while true; do
   local title="Help / About"
-    local option=""
-    option=$(dialog --no-collapse --cancel-label "Back" --menu "$title" 0 0 7 \
+    help_choice=$(dialog --no-collapse --cancel-label "Back" --default-item "$help_choice" --menu "$title" 0 0 7 \
       1 "About Femtofox" \
       2 "Display pinout" \
       3 "Femtofox licensing info - short" \
@@ -595,7 +599,7 @@ help_menu() {
       5 "Meshtastic licensing info" \
       6 "About Luckfox" \
       7 "About Ubuntu" \
-      "" "" \
+      " " "" \
     8 "Back to main menu" 3>&1 1>&2 2>&3)
     
     exit_status=$? # This line checks the exit status of the dialog command
@@ -603,19 +607,19 @@ help_menu() {
       break
     fi
     
-    case $option in
+    case $help_choice in
       1) #About Femtofox)
-        dialog --no-collapse --title "About Femtofox" --backtitle "Foxbuntu $(grep -oP 'major=\K[0-9]+' /etc/foxbuntu-release).$(grep -oP 'minor=\K[0-9]+' /etc/foxbuntu-release).$(grep -oP 'patch=\K[0-9]+' /etc/foxbuntu-release)$(grep -oP 'hotfix=\K[a-z]+' /etc/foxbuntu-release)" --msgbox "$(femto-license.sh -a)" 18 65
+        dialog --no-collapse --title "About Femtofox" --default-item "$choice" --backtitle "Foxbuntu $(grep -oP 'major=\K[0-9]+' /etc/foxbuntu-release).$(grep -oP 'minor=\K[0-9]+' /etc/foxbuntu-release).$(grep -oP 'patch=\K[0-9]+' /etc/foxbuntu-release)$(grep -oP 'hotfix=\K[a-z]+' /etc/foxbuntu-release)" --msgbox "$(femto-license.sh -a)" 18 65
       ;;
       2) #Display pinout)
+        choice=""   # zero the choice before loading the submenu
         while true; do
-          local option=""
-          option=$(dialog --no-collapse --cancel-label "Back" --menu "Pinouts" 15 40 5 \
+          choice=$(dialog --no-collapse --cancel-label "Back" --menu "Pinouts" 15 40 5 \
             1 "Femtofox Pro/CE" \
             2 "Femtofox Zero" \
             3 "Femtofox Tiny" \
             4 "Luckfox Pico Mini" \
-            "" "" \
+            " " "" \
             5 "Back to Help Menu" 3>&1 1>&2 2>&3)
           
           exit_status=$? # This line checks the exit status of the dialog command
@@ -624,7 +628,7 @@ help_menu() {
             break
           fi
           
-          case $option in
+          case $choice in
             1) dialog --no-collapse --title "Femtofox" --msgbox "$(femto-pinout.sh -f)" 43 68 ;;
             2) dialog --no-collapse --title "Femtofox Zero" --msgbox "$(femto-pinout.sh -z)" 34 48 ;;
             3) dialog --no-collapse --title "Femtofox Tiny" --msgbox "$(femto-pinout.sh -t)" 38 70 ;;
@@ -686,14 +690,14 @@ fi
 
 # Main menu
 while true; do
-  choice=$(dialog --no-collapse --cancel-label "Exit" --menu "Femtofox Config" 16 40 5 \
+  main_menu_choice=$(dialog --no-collapse --cancel-label "Exit" --default-item "$main_menu_choice" --menu "Femtofox Config" 16 40 5 \
     1 "Settings wizard" \
     2 "Networking" \
     3 "Meshtastic" \
     4 "Software manager" \
     5 "Utilities" \
     6 "Help" \
-    "" "" \
+    " " "" \
     7 "Exit" 3>&1 1>&2 2>&3)
   
   exit_status=$? # This line checks the exit status of the dialog command
@@ -702,7 +706,7 @@ while true; do
     break
   fi
   
-  case $choice in
+  case $main_menu_choice in
     1) femto-install-wizard.sh ;;
     2) networking_settings ;;
     3) meshtastic_settings ;;
