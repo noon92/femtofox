@@ -5,6 +5,7 @@ The Femtofox is similar to, and can functionally replace, a [Raspberry Pi Linux 
 
 ### Hardware
 To get started, you will need a Femtofox. You can either build or buy one.
+
 <B> 1. Building a Femtofox </B>
 Directions for ordering PCBs and building a Femtofox can be found in the [Community Hardware repo](https://github.com/femtofox/Femtofox_Community_Hardware).
 
@@ -72,5 +73,5 @@ Foxbuntu, Meshtasticd and the mesh applications can be updated as using the `Fem
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTg4NzYxNDczOV19
+eyJoaXN0b3J5IjpbMTUxNTUyNzcxN119
 -->
