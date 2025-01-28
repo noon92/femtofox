@@ -32,9 +32,9 @@ If you require a large quantity of Femtofox boards, please get in touch.
 ### Operating System
 
  1. Download the latest image of Foxbuntu from the releases [https://github.com/femtofox/Femtofox/releases/] and extract from the 7z file with [7z program](https://www.7-zip.org/) or suitable alternative.
- 2. Use an image flashing tool such as [Balena Etcher] to flash the image to a suitable SD card (see [supported hardware]).
- Note that the image will not appear bootable to Etcher, but will be functional in use.
- 3. Insert the SD card into the reader of the Femtofox
+ 2. Use an image flashing tool such as [Balena Etcher](https://www.balena.io/etcher) to flash the image to a suitable SD card (see [supported hardware](./supported_hardware.md)).
+ Note: the image will not appear bootable to Etcher, but will be functional in use.
+ 3. Insert the SD card into the reader of the Femtofox.
 
 ### Initial Configuration - Suggested Workflow
 Foxbuntu is ready to operate almost from the first boot. The settings can be configured using one of the following methods:
@@ -72,5 +72,5 @@ Foxbuntu, Meshtasticd and the mesh applications can be updated as using the `Fem
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTkyNzk1NDUwXX0=
+eyJoaXN0b3J5IjpbMTg4NzYxNDczOV19
 -->
