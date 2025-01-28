@@ -18,6 +18,7 @@ The Femtofox Pro is available for purchase, and has several added features:
 * Extra pins are mapped to the headers, allowing for easier expansion
 * An added "Kill Switch" breakout, allowing for the addition of an optional thermal fuse for added safety on solar builds
 * Additional decoupling capacitors
+
 The Femtofox Pro is available through the following licensed sellers:
  1. Open Source Country (USA)
  2. NomDeTom (UK)
@@ -30,7 +31,7 @@ If you require a large quantity of Femtofox boards, please get in touch.
 
 ### Operating System
 
- 1. Download the latest image of Foxbuntu from the releases [link] and extract from the 7z file with [7z program].
+ 1. Download the latest image of Foxbuntu from the releases [https://github.com/femtofox/Femtofox/releases/] and extract from the 7z file with [7z program](https://www.7-zip.org/) or suitable alternative.
  2. Use an image flashing tool such as [Balena Etcher] to flash the image to a suitable SD card (see [supported hardware]).
  Note that the image will not appear bootable to Etcher, but will be functional in use.
  3. Insert the SD card into the reader of the Femtofox
@@ -71,5 +72,5 @@ Foxbuntu, Meshtasticd and the mesh applications can be updated as using the `Fem
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTkyOTcwMjY5N119
+eyJoaXN0b3J5IjpbMTkyNzk1NDUwXX0=
 -->
