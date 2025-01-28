@@ -17,7 +17,7 @@ Re-running this script will resize the filesystem to fit the SD card, allocate a
 \n\
 Re-running this script after first boot should not cause any harm, but may not work as expected.\n\
 \n\
-Proceed?" 14 60
+Proceed?" 15 60
   if [ $? -eq 1 ]; then #if cancel/no
     exit 0
   fi

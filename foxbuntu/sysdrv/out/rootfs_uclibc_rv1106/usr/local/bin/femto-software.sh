@@ -17,9 +17,9 @@ install() {
   #output=$(echo -e "$output" | sed '/user_message: /,$d') # remove the user message from the detailed output
 
   if [ $install_status -eq 0 ]; then # if the installation was successful
-    dialog --no-collapse --colors --title "$title" --beep --msgbox "\n\ZuInstallation of $($package_dir/$1.sh -N) successful!\Zn$([ -n "$user_message" ] && echo "\n\n$user_message")\n\nLog:\n$(echo $output)" 0 0 # if there's a user_message, display it with two preceeding line breaks
+    dialog --no-collapse --colors --title "$title" --beep --msgbox "\ZuInstallation of $($package_dir/$1.sh -N) successful!\Zn$([ -n "$user_message" ] && echo "\n\n$user_message")\n\nLog:\n$(echo $output)" 0 0 # if there's a user_message, display it with two preceeding line breaks
   else
-    dialog --no-collapse --colors --title "$title" --beep --msgbox "\n\ZuInstallation of $($package_dir/$1.sh -N) FAILED!\Zn\n\n$user_message\n\nLog:\n$(echo -e $output)" 0 0 # if there's a user_message, display it with two preceeding line breaks
+    dialog --no-collapse --colors --title "$title" --beep --msgbox "\ZuInstallation of $($package_dir/$1.sh -N) FAILED!\Zn\n\n$user_message\n\nLog:\n$(echo -e $output)" 0 0 # if there's a user_message, display it with two preceeding line breaks
   fi
 }
 
@@ -77,10 +77,11 @@ $(if $package_dir/$1.sh -O | grep -q 'U'; then echo "\nFor more information, vis
 }
 
 package_menu() {
+  choice=""
   while true; do
     echo "Loading package menu..."
     # for each line, check if it's supported by the package, display it if the current install state of the package is appropriate (example: don't display "install" if the package is already installed, don't display "stop service" for a package with no services)
-    choice=$(dialog --no-collapse --title "$title" --cancel-label "Back" --menu "$($package_dir/$1.sh -N)" 17 45 5 \
+    choice=$(dialog --no-collapse --title "$title" --cancel-label "Back" --default-item "$choice" --menu "$($package_dir/$1.sh -N)" 17 45 5 \
       $(if $package_dir/$1.sh -O | grep -q 'l' && $package_dir/$1.sh -I; then echo "Run software x"; fi) \
       $(if $package_dir/$1.sh -O | grep -q 'i' && ! $package_dir/$1.sh -I; then echo "Install x"; fi) \
       $(if $package_dir/$1.sh -O | grep -q 'u' && $package_dir/$1.sh -I; then echo "Uninstall x"; fi) \
@@ -118,14 +119,13 @@ package_menu() {
 
 while true; do
 title="$title"
-  option=""
-  option=$(dialog --no-collapse --cancel-label "Back" --menu "$title" 0 0 6 \
+  software_option=$(dialog --no-collapse --cancel-label "Back" --default-item "$software_option" --menu "$title" 0 0 6 \
     1 "The Comms Channel BBS, TC²BBS" \
     2 "Contact (Meshtastic client)" \
     3 "Meshing Around by Spud" \
     4 "Mosquitto MQTT Broker" \
     5 "Mosquitto MQTT Client" \
-    "" ""\
+    " " ""\
     6 "Back to Main Menu" 3>&1 1>&2 2>&3)
   
   exit_status=$? # This line checks the exit status of the dialog command
@@ -133,7 +133,7 @@ title="$title"
     break
   fi
   
-  case $option in
+  case $software_option in
     1) package_intro "tc2_bbs" ;;
     2) package_intro "contact_client" ;;
     3) package_intro "meshing_around" ;;

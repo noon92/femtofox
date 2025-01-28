@@ -60,7 +60,7 @@ done
 
 while true; do
   # Create the menu options
-  option=$(dialog --cancel-label "Back" --title "Kernel Modules" --menu "" 42 103 8 "${modules[@]}" 3>&1 1>&2 2>&3)
+  option=$(dialog --cancel-label "Back" --title "Kernel Modules" --default-item "$selected_module" --menu "" 42 103 8 "${modules[@]}" 3>&1 1>&2 2>&3)
   
   exit_status=$? # Check the exit status of the dialog command
   
@@ -70,13 +70,12 @@ while true; do
 
   # Get the module name from the selection
   selected_module=$option
-  
   # Get the full modinfo for the module and process it for dialog
   modinfo_output=$(modinfo $selected_module | sed ':a;N;$!ba;s/\n/\\n/g') # add \n to module info
 
   # Check if the module is currently enabled
   if lsmod | grep -q "^$selected_module "; then
-    dialog --colors --title "Disable Module" --yesno "The module '$selected_module' is currently \Z2\Zuenabled\Zn.\n\nDo you want to disable it?\n\nFull module info:\n$modinfo_output\n\nNote: Unused dependencies will be removed automatically." 25 0
+    dialog --colors --title "Disable Module" --yesno "The module '$selected_module' is currently \Z4\Zuenabled\Zn.\n\nDo you want to disable it?\n\nFull module info:\n$modinfo_output\n\nNote: Unused dependencies will be removed automatically." 25 0
     if [ $? -eq 0 ]; then
       dialog --msgbox "$(module_switch $selected_module disable)" 7 60
     fi
