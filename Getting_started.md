@@ -6,32 +6,7 @@ The Femtofox is similar to, and can functionally replace, a [Raspberry Pi Linux 
 ### Hardware
 To get started, you will need a Femtofox. You can either build or buy one.
 <B> 1. Building a Femtofox </B>
-
-Femtofox Community Edition (CE) is provided as a standard PCB Gerber files and suitable Bill of Materials (BOM) and Pick and Place files for the components.
-
-Download the Gerber files from [here](TBC).
-
-Upload the Gerber .zip file to a PCB maker of your choice, e.g.:
- - JLCPCB
- - PCBWay
- - OSHPark
-
-Prototypes were made using JLCPCB. It is recommend to select a board thickness of 1.6mm, and a lead-free HASL surface finish. It is also suggested to select "Remove mark" for order serial numbers, as the Gerbers do not contain a specific location for this marking.
-
-Select the number of PCBs and the assembly options you require. Minimum PCB quantities are usually 5 boards, although assembly can be as few as 2 boards.
-
-If required, upload the BOM and Pick&Place files, and check that the suggested parts are available. JLC regularly changes their stocked items, so make sure that, at a minimum, the following are correct for each item:
-
- - Components are the correct footprint (Resistors and Capacitors are 0603 or 1206, MOSFETS are SOT23)
- - Components are the correct rating (see BOM for details)
- - Components are in the `basic` series where possible, especially capacitors, resistors and MOSFETs
-
-Ensure that the components are placed correctly on the PCB, and that the correct radio module is selected, then check and place the order.
-
-Assemble the PCBs according to the BOM and Pick&Place files, or the photographs below.
-
-Solder the Luckfox Pico Mini to the headers as low down as possible, to ensure easy access to the SD card.
-</details>
+Directions for ordering PCBs and building a Femtofox can be found in the [Community Hardware repo](https://github.com/femtofox/Femtofox_Community_Hardware).
 
 <details>
 <summary> <B> 2. Buying a Femtofox </B> </summary>
@@ -96,5 +71,5 @@ Foxbuntu, Meshtasticd and the mesh applications can be updated as using the `Fem
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMjA5NjI5MjA1M119
+eyJoaXN0b3J5IjpbMTkyOTcwMjY5N119
 -->
