@@ -51,7 +51,7 @@ EOF
 
 name="Samba File Sharing"   # software name
 author="Software Freedom Conservancy"   # software author - OPTIONAL
-description="Femtofox comes with Samba preinstalled but disabled. To enable file sharing, run \`sudo smbpasswd femto\` to set a Samba password, and enable the Samba service.\nTo connect to network share, enter \`\\\\femtofox\` from Windows, \`smb://$(hostname)\` from MacOS and \`smbclient //$(hostname)/femto -U femto\` from Linux.\nDefault configuration shares /home/femto. Edit \`/etc/samba/smb.conf\` to add other shares.\n\nSamba is an open-source implementation of the SMB/CIFS protocol that enables file and printer sharing between Linux/Unix and Windows systems. It allows Linux machines to act as file servers, domain controllers, or Active Directory members, making them accessible from Windows and other SMB-compatible clients."   # software description - OPTIONAL (but strongly recommended!)
+description="Femtofox comes with Samba preinstalled but disabled. To enable file sharing, run \`sudo smbpasswd -a femto\` to set a Samba password, and enable the Samba service.\nTo connect to network share, enter \`\\\\femtofox\` from Windows, \`smb://$(hostname)\` from MacOS and \`smbclient //$(hostname)/femto -U femto\` from Linux.\nDefault configuration shares /home/femto. Edit \`/etc/samba/smb.conf\` to add other shares.\n\nSamba is an open-source implementation of the SMB/CIFS protocol that enables file and printer sharing between Linux/Unix and Windows systems. It allows Linux machines to act as file servers, domain controllers, or Active Directory members, making them accessible from Windows and other SMB-compatible clients."   # software description - OPTIONAL (but strongly recommended!)
 URL="https://www.samba.org/"   # software URL. Can contain multiple URLs - OPTIONAL
 options="xiugedsrNADUOSCI"   # script options in use by software package. For example, for a package with no service, exclude `edsr`
 launch=""   # command to launch software, if applicable
@@ -65,7 +65,7 @@ install() {
   echo "apt update can take a long while..."
   DEBIAN_FRONTEND=noninteractive apt-get update -y 2>&1 | tee /dev/tty # allows output to be shown onscreen
   DEBIAN_FRONTEND=noninteractive apt-get install $package_name -y 2>&1 | tee /dev/tty # allows output to be shown onscreen
-  echo -e "user_message: IMPORTANT: To complete installation, run \`sudo smbpasswd femto\` to set a Samba password, and enable the Samba service.\nTo connect to network share, enter \`\\\\\\\\femtofox\` from Windows, \`smb://$(hostname)\` from MacOS and \`smbclient //$(hostname)/femto -U femto\` from Linux.\nDefault configuration shares /home/femto. Edit \`/etc/samba/smb.conf\` to add other shares."
+  echo -e "user_message: IMPORTANT: To complete installation, run \`sudo smbpasswd -a femto\` to set a Samba password, and enable the Samba service.\nTo connect to network share, enter \`\\\\\\\\femtofox\` from Windows, \`smb://$(hostname)\` from MacOS and \`smbclient //$(hostname)/femto -U femto\` from Linux.\nDefault configuration shares /home/femto. Edit \`/etc/samba/smb.conf\` to add other shares."
   exit 0 # should be `exit 1` if operation failed
 }
 
