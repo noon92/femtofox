@@ -56,6 +56,7 @@ URL="URL"   # software URL. Can contain multiple URLs - OPTIONAL
 options="xiugedsrlNADUOSLCI"   # script options in use by software package. For example, for a package with no service, exclude `edsr`
 launch=""   # command to launch software, if applicable
 service_name="service_name"   # the name of the service/s, such as `chrony`. REQUIRED if service options are in use. If multiple services, separate by spaces "service1 service2"
+package_name="apt_package"   # apt package name, if applicable. Can be multiple packages separated by spaces, but if at least one is installed the package will show as "installed" even if the others aren't
 location="/opt/location"   # install location REQUIRED if not apt installed. Generally, we use `/opt/software-name`
 conflicts="package name, other package name"   # comma delineated plain-text list of packages with which this package conflicts. Blank if none. Use the name as it appears in the $name field of the other package. Extra plaintext is allowed, such as "packageA, packageB, any other software that uses the Meshtastic CLI"
 
@@ -91,7 +92,7 @@ check() {
   fi
 
   # this works for apt packages
-  if [ dpkg -l | grep -q package-name ] ; then
+  if dpkg-query -W -f='${Status}' $package_name 2>/dev/null | grep -q "install ok installed"; then
     exit 0
   else
     exit 1

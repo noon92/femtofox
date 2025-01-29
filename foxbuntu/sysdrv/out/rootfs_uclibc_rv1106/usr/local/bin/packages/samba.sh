@@ -51,28 +51,31 @@ EOF
 
 name="Samba File Sharing"   # software name
 author="Software Freedom Conservancy"   # software author - OPTIONAL
-description="Samba is a free software re-implementation of the SMB networking protocol, and was originally developed by Andrew Tridgell. Samba provides file and print services for various Microsoft Windows clients[5] and can integrate with a Microsoft Windows Server domain, either as a Domain Controller (DC) or as a domain member. As of version 4, it supports Active Directory and Microsoft Windows NT domains."   # software description - OPTIONAL (but strongly recommended!)
+description="Femtofox comes with Samba preinstalled but disabled. To enable file sharing, run \`sudo smbpasswd femto\` to set a Samba password, and enable the Samba service.\nTo connect to network share, enter \`\\\\femtofox\` from Windows, \`smb://$(hostname)\` from MacOS and \`smbclient //$(hostname)/femto -U femto\` from Linux.\nDefault configuration shares /home/femto. Edit \`/etc/samba/smb.conf\` to add other shares.\n\nSamba is an open-source implementation of the SMB/CIFS protocol that enables file and printer sharing between Linux/Unix and Windows systems. It allows Linux machines to act as file servers, domain controllers, or Active Directory members, making them accessible from Windows and other SMB-compatible clients."   # software description - OPTIONAL (but strongly recommended!)
 URL="https://www.samba.org/"   # software URL. Can contain multiple URLs - OPTIONAL
 options="xiugedsrNADUOSCI"   # script options in use by software package. For example, for a package with no service, exclude `edsr`
 launch=""   # command to launch software, if applicable
 service_name="smbd nmbd"   # the name of the service/s, such as `chrony`. REQUIRED if service options are in use. If multiple services, separate by spaces "service1 service2"
 location=""   # install location REQUIRED if not apt installed. Generally, we use `/opt/software-name`
+package_name="samba"   # apt package name, if applicable
 conflicts=""   # comma delineated plain-text list of packages with which this package conflicts. Blank if none. Use the name as it appears in the $name field of the other package. Extra plaintext is allowed, such as "packageA, packageB, any other software that uses the Meshtastic CLI"
 
 # install script
 install() {
   echo "apt update can take a long while..."
   DEBIAN_FRONTEND=noninteractive apt-get update -y 2>&1 | tee /dev/tty # allows output to be shown onscreen
-  DEBIAN_FRONTEND=noninteractive apt-get install samba -y 2>&1 | tee /dev/tty # allows output to be shown onscreen
-  echo "user_message: System comes with a configuration file to share /home/femto. See \`/etc/samba/smb.conf\`."
+  DEBIAN_FRONTEND=noninteractive apt-get install $package_name -y 2>&1 | tee /dev/tty # allows output to be shown onscreen
+  echo -e "user_message: IMPORTANT: To complete installation, run \`sudo smbpasswd femto\` to set a Samba password, and enable the Samba service.\nTo connect to network share, enter \`\\\\\\\\femtofox\` from Windows, \`smb://$(hostname)\` from MacOS and \`smbclient //$(hostname)/femto -U femto\` from Linux.\nDefault configuration shares /home/femto. Edit \`/etc/samba/smb.conf\` to add other shares."
   exit 0 # should be `exit 1` if operation failed
 }
 
 
 # uninstall script
 uninstall() {
-  DEBIAN_FRONTEND=noninteractive apt remove -y samba 2>&1 | tee /dev/tty
-  echo "user_message: Some files may remain on system. To remove, run \`sudo apt remove --purge samba -y\` and \`sudo apt autoremove -y\`."
+  DEBIAN_FRONTEND=noninteractive apt remove -y $package_name 2>&1 | tee /dev/tty
+  echo "Removing unused dependencies..."
+  DEBIAN_FRONTEND=noninteractive apt autoremove -y $package_name 2>&1 | tee /dev/tty
+  echo "user_message: Some files may remain on system. To remove, run \`sudo apt remove --purge $package_name -y\` and \`sudo apt autoremove -y\`."
   exit 0 # should be `exit 1` if operation failed
 }
 
@@ -81,13 +84,13 @@ uninstall() {
 upgrade() {
   echo "apt update can take a long while..."
   DEBIAN_FRONTEND=noninteractive apt-get update -y 2>&1 | tee /dev/tty # allows output to be shown onscreen
-  DEBIAN_FRONTEND=noninteractive apt upgrade -y samba 2>&1 | tee /dev/tty
+  DEBIAN_FRONTEND=noninteractive apt upgrade -y $package_name 2>&1 | tee /dev/tty
   exit 0 # should be `exit 1` if operation failed
 }
 
 # Check if already installed. `exit 0` if yes, `exit 1` if no
 check() {
-if dpkg -l | grep -q samba; then
+if dpkg-query -W -f='${Status}' $package_name 2>/dev/null | grep -q "install ok installed"; then
   exit 0
 else
   exit 1

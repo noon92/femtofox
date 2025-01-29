@@ -57,6 +57,7 @@ options="xiugedsrNADUOSCI"   # script options in use by software package. For ex
 launch=""   # command to launch software, if applicable
 service_name=""   # the name of the service/s, such as `chrony`. REQUIRED if service options are in use. If multiple services, separate by spaces "service1 service2"
 location=""   # install location REQUIRED if not apt installed. Generally, we use `/opt/software-name`
+package_name="mosquitto-clients"   # apt package name, if applicable
 conflicts=""   # comma delineated plain-text list of packages with which this package conflicts. Blank if none. Use the name as it appears in the $name field of the other package. Extra plaintext is allowed, such as "packageA, packageB, any other software that uses the Meshtastic CLI"
 
 # install script
@@ -87,7 +88,7 @@ upgrade() {
 
 # Check if already installed. `exit 0` if yes, `exit 1` if no
 check() {
-if dpkg -l | grep -q mosquitto-clients; then
+if dpkg-query -W -f='${Status}' $package_name 2>/dev/null | grep -q "install ok installed"; then
   exit 0
 else
   exit 1

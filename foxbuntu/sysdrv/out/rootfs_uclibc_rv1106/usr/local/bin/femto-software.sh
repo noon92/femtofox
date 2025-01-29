@@ -105,8 +105,8 @@ package_menu() {
       "Install") install $1 ;;
       "Uninstall") uninstall $1 ;;
       "Upgrade") upgrade $1 ;;
-      "Enable service") echo "Enabling service..." && eval "$package_dir/$1.sh -e" ;;
-      "Disable service") echo "Disabling service..." && eval "$package_dir/$1.sh -d" ;;
+      "Enable service") echo "Enabling and starting service..." && eval "$package_dir/$1.sh -e" && eval "$package_dir/$1.sh -r" ;;
+      "Disable service") echo "Disabling and stopping service..." && eval "$package_dir/$1.sh -d" && eval "$package_dir/$1.sh -s" ;;
       "Stop service") echo "Stopping service..." && eval "$package_dir/$1.sh -s" ;;
       "Start/restart service") echo "Starting/restarting service..." && eval "$package_dir/$1.sh -r" ;;
       "Get service status") echo "Getting service status..." && dialog --no-collapse --title "$title" --msgbox "$(eval "$package_dir/$1.sh -S")" 0 0 ;;
