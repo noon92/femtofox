@@ -93,7 +93,9 @@ uninstall() {
   systemctl stop $service_name
   rm /etc/systemd/system/$service_name.service
   systemctl daemon-reload
+  echo "Disabled and removed \`$service_name\` service."
   rm -rf $location
+  echo "Removed \`$location\`."
   echo "user_message: Service removed, all files deleted."
   exit 0
 }

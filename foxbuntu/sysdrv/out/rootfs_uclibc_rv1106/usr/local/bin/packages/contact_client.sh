@@ -85,7 +85,9 @@ $launch" | sudo tee /usr/local/bin/contact > /dev/null
 # uninstall script
 uninstall() {
   rm -rf $location
+  echo "Removed \`$location\`."
   rm /usr/local/bin/contact
+  echo "Removed \`contact\` shortcut."
   echo "user_message: All files removed."
   exit 0 # should be `exit 1` if the installation failed
 }

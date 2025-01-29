@@ -38,7 +38,7 @@ pip3 install requests pyephem pytap2 meshtastic pypubsub geopy maidenhead beauti
 if [[ $? -eq 2 ]]; then echo "Error, step failed..."; fi
 
 echo "Adding Samba configuration..." # add it manually so we're always using the most up to date smb.conf file template from the package
-echo -e "\n[home]\npath = /home/femto\nbrowsable = yes\nwritable = yes\nread only = no\ncreate mask = 0775\ndirectory mask = 0775\nvalid users = femto" | sudo tee -a /etc/samba/smb.conf > /dev/null && sudo systemctl restart smbd
+echo "\n[home]\npath = /home/femto\nbrowsable = yes\nwritable = yes\nread only = no\ncreate mask = 0775\ndirectory mask = 0775\nvalid users = femto" | sudo tee -a /etc/samba/smb.conf > /dev/null && sudo systemctl restart smbd
 
 echo "Setting MOTD..."
 mv /etc/update-motd.d/10-help-text /etc/update-motd.d/10-help-text.bak

@@ -13,7 +13,7 @@ install() {
   output=$($package_dir/$1.sh -i)
   install_status=$?  # Capture the exit status of the eval command
   user_message=$(echo "$output" | awk '/user_message: / {found=1; split($0, arr, "user_message: "); print arr[2]; next} found {print}' | sed '/^$/q') # grab the user_message, if present
-  #output=$(echo -e "$output" | sed '/user_message: /,$d') # remove the user message from the detailed output
+  output=$(echo -e "$output" | sed '/user_message: /,$d') # remove the user message from the detailed output
 
   if [ $install_status -eq 0 ]; then # if the installation was successful
     dialog --no-collapse --colors --title "$title" --beep --msgbox "\ZuInstallation of $($package_dir/$1.sh -N) successful!\Zn$([ -n "$user_message" ] && echo "\n\n$user_message")\n\nLog:\n$(echo $output)" 0 0 # if there's a user_message, display it with two preceeding line breaks
@@ -23,7 +23,7 @@ install() {
 }
 
 uninstall() {
-  dialog --no-collapse --title "$title" --yesno "\nUninstall $1\n\nProceed?" 10 40
+  dialog --no-collapse --title "$title" --yesno "\nUninstall $($package_dir/$1.sh -N)\n\nProceed?" 10 40
   if [ $? -eq 1 ]; then #if cancel/no
     return 1
   fi
@@ -31,7 +31,7 @@ uninstall() {
   output=$(eval "$package_dir/$1.sh -u 2>&1 | tee /dev/tty")
   install_status=$?  # Capture the exit status of the eval command
   user_message=$(echo "$output" | awk '/user_message: / {found=1; split($0, arr, "user_message: "); print arr[2]; next} found {print}' | sed '/^$/q') # grab the user_message, if present
-  #output=$(echo "$output" | sed '/user_message: /,$d') # remove the user message from the detailed output
+  output=$(echo "$output" | sed '/user_message: /,$d') # remove the user message from the detailed output
   if [ $install_status -eq 0 ]; then # if the installation was successful
     dialog --no-collapse --colors --title "$title" --beep --msgbox "\n\ZuUninstallation of $($package_dir/$1.sh -N) successful!\Zn$([ -n "$user_message" ] && echo "\n\n$user_message")\n\nLog:\n$(echo -e "$output")" 0 0 # if there's a user_message, display it with two preceeding line breaks
   else
@@ -40,7 +40,7 @@ uninstall() {
 }
 
 upgrade() {
-  dialog --no-collapse --title "$title" --yesno "\nUpgrade $1\n\nProceed?" 10 40
+  dialog --no-collapse --title "$title" --yesno "\nUpgrade $($package_dir/$1.sh -N)\n\nProceed?" 10 40
   if [ $? -eq 1 ]; then #if cancel/no
     return 1
   fi
@@ -67,7 +67,7 @@ package_intro() {
         $(if $package_dir/$1.sh -O | grep -q 'A'; then echo -e "by $($package_dir/$1.sh -A)"; fi)\n\
 $(if $package_dir/$1.sh -O | grep -q 'D'; then echo "\n$($package_dir/$1.sh -D)"; fi)\n\
 \n\
-$(echo "Currently:      " && $package_dir/$1.sh -I && echo "\Zuinstalled\Zn" || echo " \Zunot installed\Zn")\n\
+$(echo "Currently:       " && $package_dir/$1.sh -I && echo "\Zuinstalled\Zn" || echo "\Zunot installed\Zn")\n\
 $(if output=$($package_dir/$1.sh -L); [ -n "$output" ]; then echo "Installs to:     \Zu$output\Zn\n"; fi)\
 $(if output=$($package_dir/$1.sh -C); [ -n "$output" ]; then echo "Conflicts with:  \Zu$output\Zn\n"; fi)\
 An internet connection is required for installation.\n\
@@ -105,11 +105,11 @@ package_menu() {
       "Install") install $1 ;;
       "Uninstall") uninstall $1 ;;
       "Upgrade") upgrade $1 ;;
-      "Enable service") eval "$package_dir/$1.sh -e" ;;
-      "Disable service") eval "$package_dir/$1.sh -d" ;;
-      "Stop service") eval "$package_dir/$1.sh -s" ;;
-      "Start/restart service") eval "$package_dir/$1.sh -r" ;;
-      "Get service status") dialog --no-collapse --title "$title" --msgbox "$(eval "$package_dir/$1.sh -S")" 0 0 ;;
+      "Enable service") echo "Enabling service..." && eval "$package_dir/$1.sh -e" ;;
+      "Disable service") echo "Disabling service..." && eval "$package_dir/$1.sh -d" ;;
+      "Stop service") echo "Stopping service..." && eval "$package_dir/$1.sh -s" ;;
+      "Start/restart service") echo "Starting/restarting service..." && eval "$package_dir/$1.sh -r" ;;
+      "Get service status") echo "Getting service status..." && dialog --no-collapse --title "$title" --msgbox "$(eval "$package_dir/$1.sh -S")" 0 0 ;;
       "Back to software manager") break ;;
     esac
   done
