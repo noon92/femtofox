@@ -63,8 +63,8 @@ conflicts=""   # comma delineated plain-text list of packages with which this pa
 # install script
 install() {
   echo "apt update can take a long while..."
-  DEBIAN_FRONTEND=noninteractive apt-get update -y 2>&1 | tee /dev/tty # allows output to be shown onscreen
-  DEBIAN_FRONTEND=noninteractive apt-get install mosquitto-clients -y 2>&1 | tee /dev/tty # allows output to be shown onscreen
+  DEBIAN_FRONTEND=noninteractive apt-get update -y 2>&1 | tee /dev/tty | grep -q "Err" && { echo "user_message: apt update failed. Is internet connected?"; exit 1; }
+  DEBIAN_FRONTEND=noninteractive apt-get install $package_name -y 2>&1 | tee /dev/tty | grep -q "Err" && { echo "user_message: apt install failed. Is internet connected?"; exit 1; }
   echo "user_message: Installation requires more setup. For a guide, see https://docs.vultr.com/how-to-install-mosquitto-mqtt-broker-on-ubuntu-24-04"
   exit 0 # should be `exit 1` if operation failed
 }
@@ -81,8 +81,8 @@ uninstall() {
 #upgrade script
 upgrade() {
   echo "apt update can take a long while..."
-  DEBIAN_FRONTEND=noninteractive apt-get update -y 2>&1 | tee /dev/tty # allows output to be shown onscreen
-  DEBIAN_FRONTEND=noninteractive apt upgrade -y mosquitto-clients 2>&1 | tee /dev/tty
+  DEBIAN_FRONTEND=noninteractive apt-get update -y 2>&1 | tee /dev/tty | grep -q "Err" && { echo "user_message: apt update failed. Is internet connected?"; exit 1; }
+  DEBIAN_FRONTEND=noninteractive apt upgrade -y $package_name 2>&1 | tee /dev/tty | grep -q "Err" && { echo "user_message: apt upgrade failed. Is internet connected?"; exit 1; }
   exit 0 # should be `exit 1` if operation failed
 }
 

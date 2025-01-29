@@ -44,21 +44,22 @@ done
 
 # Perform filesystem resize
   log_message "Resizing filesystem. This can take up to 10 minutes, depending on microSD card size and speed"
-  sudo resize2fs /dev/mmcblk1p5
-  sudo resize2fs /dev/mmcblk1p6
-  sudo resize2fs /dev/mmcblk1p7
+  resize2fs /dev/mmcblk1p5
+  resize2fs /dev/mmcblk1p6
+  resize2fs /dev/mmcblk1p7
   log_message "Resizing filesystem complete"
 
 	# allocate swap file
 if [ ! -f /swapfile ]; then # check if swap file already exists
-  sudo fallocate -l 1G /swapfile
-  sudo chmod 600 /swapfile
-  sudo mkswap /swapfile > /dev/null
-  sudo swapon /swapfile > /dev/null
+  log_message "Allocating swap file"
+  fallocate -l 1G /swapfile
+  chmod 600 /swapfile
+  mkswap /swapfile > /dev/null
+  swapon /swapfile > /dev/null
   echo '/swapfile none swap sw 0 0' | tee -a /etc/fstab > /dev/null
   log_message "Swap file allocated."
 else
-	log_message "Swap file already allocated, skipping."
+	log_message "Swap file already allocated, skipping"
 fi
 
 # add RTC support - looks unneeded?

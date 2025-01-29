@@ -63,7 +63,8 @@ conflicts="package name, other package name"   # comma delineated plain-text lis
 # install script
 install() {
   # for apt packages, this method allows onscreen output during install:
-  # DEBIAN_FRONTEND=noninteractive sudo apt-get install mosquitto -y 2>&1 | tee /dev/tty # allows output to be shown onscreen
+  # DEBIAN_FRONTEND=noninteractive apt-get update -y 2>&1 | tee /dev/tty || { echo "user_message: apt update failed. Is internet connected?"; exit 1; }
+  # DEBIAN_FRONTEND=noninteractive apt-get install $package_name -y 2>&1 | tee /dev/tty || { echo "user_message: apt install failed. Is internet connected?"; exit 1; }
   echo "user_message: Exit message to user, displayed prominently in post-install"
   exit 0 # should be `exit 1` if operation failed
 }
