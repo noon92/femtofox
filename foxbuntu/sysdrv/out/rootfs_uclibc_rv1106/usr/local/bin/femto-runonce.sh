@@ -47,6 +47,7 @@ done
   sudo resize2fs /dev/mmcblk1p5
   sudo resize2fs /dev/mmcblk1p6
   sudo resize2fs /dev/mmcblk1p7
+  log_message "Resizing filesystem complete"
 
 	# allocate swap file
 if [ ! -f /swapfile ]; then # check if swap file already exists
