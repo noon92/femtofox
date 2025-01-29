@@ -72,7 +72,7 @@ if ! grep -q "eth0" /etc/network/interfaces; then
 # static mac address for onboard ethernet (castellated pins)
 allow-hotplug eth0
 iface eth0 inet dhcp
-hwaddress ether $(awk '/Serial/ {print $3}' /proc/cpuinfo | tail -c 11 | sed 's/^\(.*\)/a2\1/' | sed 's/\(..\)/\1:/g;s/:$//')
+hwaddress ether $mac
 EOF
 else
   log_message "eth0 already exists in /etc/network/interfaces, skipping"
