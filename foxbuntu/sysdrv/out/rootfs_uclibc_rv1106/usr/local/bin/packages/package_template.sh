@@ -47,13 +47,13 @@ EOF
 # Successful operations should `exit 0`, fails should `exit 1`
 # Messages to the user (such as configuration instructions, explanatory error messages, etc) should be given as: `echo "user_message: text"`
 # Everything following `user_message: ` will be displayed prominently to the user, so it must the last thing echoed
-
+hxiugedsrlNADUOSLCI
 
 name="name"   # software name
 author="author"   # software author - OPTIONAL
 description="description"   # software description - OPTIONAL (but strongly recommended!)
 URL="URL"   # software URL. Can contain multiple URLs - OPTIONAL
-options="xiugedsrlNADUOSLCIto"   # script options in use by software package. For example, for a package with no service, exclude `edsr`
+options="xiugedsrlNADUOSLCI"   # script options in use by software package. For example, for a package with no service, exclude `edsr`
 launch=""   # command to launch software, if applicable
 service_name="service_name"   # the name of the service/s, such as `chrony`. REQUIRED if service options are in use. If multiple services, separate by spaces "service1 service2"
 location="/opt/location"   # install location REQUIRED if not apt installed. Generally, we use `/opt/software-name`

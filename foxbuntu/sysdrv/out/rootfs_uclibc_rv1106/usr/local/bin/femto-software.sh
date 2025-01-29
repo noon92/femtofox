@@ -116,31 +116,39 @@ package_menu() {
   done
 }
 
-
+# generate menu from filenames in /usr/local/bin/packages
 while true; do
-title="$title"
-  software_option=$(dialog --no-collapse --cancel-label "Back" --default-item "$software_option" --menu "$title" 0 0 6 \
-    1 "The Comms Channel BBS, TC²BBS" \
-    2 "Contact (Meshtastic client)" \
-    3 "Meshing Around by Spud" \
-    4 "Mosquitto MQTT Broker" \
-    5 "Mosquitto MQTT Client" \
-    " " ""\
-    6 "Back to Main Menu" 3>&1 1>&2 2>&3)
-  
+  menu_entries=()
+  index=1
+  for file in /usr/local/bin/packages/*.sh; do
+    filename=$(basename "$file" .sh)
+    [[ "$filename" == "package_template" ]] && continue # skip package_template.sh
+    menu_entries+=("$index" "$(/usr/local/bin/packages/"$filename".sh -N)")
+    ((index++))
+  done
+
+  menu_entries+=(" " "")  # add blank line and "Back to Main Menu" entry
+  menu_entries+=("$index" "Back to main menu")
+  software_option=$(dialog --no-collapse --cancel-label "Back" --default-item "$software_option" --menu "$title" $((9 + index)) 50 $((index + 1)) "${menu_entries[@]}" 3>&1 1>&2 2>&3)
   exit_status=$? # This line checks the exit status of the dialog command
   if [ $exit_status -ne 0 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
     break
   fi
-  
-  case $software_option in
-    1) package_intro "tc2_bbs" ;;
-    2) package_intro "contact_client" ;;
-    3) package_intro "meshing_around" ;;
-    4) package_intro "mosquitto_mqtt_broker" ;;
-    5) package_intro "mosquitto_mqtt_client" ;;
-    6) break ;;
-  esac
+    
+  case_block="  case \$software_option in"
+  index=1
+  for file in /usr/local/bin/packages/*.sh; do
+    filename=$(basename "$file" .sh)
+    [[ "$filename" == "package_template" ]] && continue # skip package_template.sh
+    case_block+="
+      $index) package_intro \"$filename\" ;;"
+    ((index++))
+  done
+
+  case_block+="
+      $index) break ;;
+    esac" #add return to main menu option
+  eval "$case_block" # Execute the generated case statement
 done
 
 exit 0
