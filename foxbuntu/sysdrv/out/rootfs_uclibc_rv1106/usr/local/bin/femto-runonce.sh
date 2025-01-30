@@ -43,7 +43,7 @@ done
 ) &
 
 # Perform filesystem resize
-  log_message "Resizing filesystem. This can take up to 10 minutes, depending on microSD card size and speed"
+  log_message "Resizing filesystem. This can take several minutes, depending on microSD card size and speed"
   resize2fs /dev/mmcblk1p5
   resize2fs /dev/mmcblk1p6
   resize2fs /dev/mmcblk1p7
@@ -51,7 +51,7 @@ done
 
 	# allocate swap file
 if [ ! -f /swapfile ]; then # check if swap file already exists
-  log_message "Allocating swap file"
+	log_message "Allocating swap file. This can take up to 10 minutes, depending on microSD card speed"
   fallocate -l 1G /swapfile
   chmod 600 /swapfile
   mkswap /swapfile > /dev/null
