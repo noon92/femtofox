@@ -53,17 +53,18 @@ name="Mosquitto MQTT Client"   # software name
 author="Eclipse Foundation"   # software author - OPTIONAL
 description="Eclipse Mosquitto is an open source (EPL/EDL licensed) message broker that implements the MQTT protocol versions 5.0, 3.1.1 and 3.1. Mosquitto is lightweight and is suitable for use on all devices from low power single board computers to full servers.\n\nThe MQTT protocol provides a lightweight method of carrying out messaging using a publish/subscribe model. This makes it suitable for Internet of Things messaging such as with low power sensors or mobile devices such as phones, embedded computers or microcontrollers.\n\nThe Mosquitto project also provides a C library for implementing MQTT clients, and the very popular mosquitto_pub and mosquitto_sub command line MQTT clients.\n\nMosquitto is part of the Eclipse Foundation, and is an iot.eclipse.org project. The development is driven by Cedalo."   # software description - OPTIONAL (but strongly recommended!)
 URL="https://mosquitto.org/"   # software URL. Can contain multiple URLs - OPTIONAL
-options="xiugedslNADUOSLCIto"   # script options in use by software package. For example, for a package with no service, exclude `edsr`
+options="xiugedsrNADUOSCI"   # script options in use by software package. For example, for a package with no service, exclude `edsr`
 launch=""   # command to launch software, if applicable
 service_name=""   # the name of the service/s, such as `chrony`. REQUIRED if service options are in use. If multiple services, separate by spaces "service1 service2"
 location=""   # install location REQUIRED if not apt installed. Generally, we use `/opt/software-name`
+package_name="mosquitto-clients"   # apt package name, if applicable
 conflicts=""   # comma delineated plain-text list of packages with which this package conflicts. Blank if none. Use the name as it appears in the $name field of the other package. Extra plaintext is allowed, such as "packageA, packageB, any other software that uses the Meshtastic CLI"
 
 # install script
 install() {
   echo "apt update can take a long while..."
-  DEBIAN_FRONTEND=noninteractive apt-get update -y 2>&1 | tee /dev/tty # allows output to be shown onscreen
-  DEBIAN_FRONTEND=noninteractive apt-get install mosquitto-clients -y 2>&1 | tee /dev/tty # allows output to be shown onscreen
+  DEBIAN_FRONTEND=noninteractive apt-get update -y 2>&1 | tee /dev/tty | grep -q "Err" && { echo "user_message: apt update failed. Is internet connected?"; exit 1; }
+  DEBIAN_FRONTEND=noninteractive apt-get install $package_name -y 2>&1 | tee /dev/tty | grep -q "Err" && { echo "user_message: apt install failed. Is internet connected?"; exit 1; }
   echo "user_message: Installation requires more setup. For a guide, see https://docs.vultr.com/how-to-install-mosquitto-mqtt-broker-on-ubuntu-24-04"
   exit 0 # should be `exit 1` if operation failed
 }
@@ -80,14 +81,14 @@ uninstall() {
 #upgrade script
 upgrade() {
   echo "apt update can take a long while..."
-  DEBIAN_FRONTEND=noninteractive apt-get update -y 2>&1 | tee /dev/tty # allows output to be shown onscreen
-  DEBIAN_FRONTEND=noninteractive apt upgrade -y mosquitto-clients 2>&1 | tee /dev/tty
+  DEBIAN_FRONTEND=noninteractive apt-get update -y 2>&1 | tee /dev/tty | grep -q "Err" && { echo "user_message: apt update failed. Is internet connected?"; exit 1; }
+  DEBIAN_FRONTEND=noninteractive apt upgrade -y $package_name 2>&1 | tee /dev/tty | grep -q "Err" && { echo "user_message: apt upgrade failed. Is internet connected?"; exit 1; }
   exit 0 # should be `exit 1` if operation failed
 }
 
 # Check if already installed. `exit 0` if yes, `exit 1` if no
 check() {
-if dpkg -l | grep -q mosquitto-clients; then
+if dpkg-query -W -f='${Status}' $package_name 2>/dev/null | grep -q "install ok installed"; then
   exit 0
 else
   exit 1
