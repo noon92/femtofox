@@ -10,7 +10,7 @@ if [ $# -eq 0 ]; then
 fi
 
 args="$@" # arguments to this script
-interaction="true"
+interactive="true"
 help=$(cat <<EOF
 Arguments:
 -h          This message
@@ -19,6 +19,7 @@ Arguments:
     Actions:
 -i          Install
 -u          Uninstall
+-a          Interactive initialization script: code that must be run to initialize the installation prior to use, but can only be run from terminal
 -g          Upgrade
 -e          Enable service, if applicable
 -d          Disable service, if applicable
@@ -47,13 +48,12 @@ EOF
 # Successful operations should `exit 0`, fails should `exit 1`
 # Messages to the user (such as configuration instructions, explanatory error messages, etc) should be given as: `echo "user_message: text"`
 # Everything following `user_message: ` will be displayed prominently to the user, so it must the last thing echoed
-hxiugedsrlNADUOSLCI
 
 name="name"   # software name
 author="author"   # software author - OPTIONAL
 description="description"   # software description - OPTIONAL (but strongly recommended!)
 URL="URL"   # software URL. Can contain multiple URLs - OPTIONAL
-options="xiugedsrlNADUOSLCI"   # script options in use by software package. For example, for a package with no service, exclude `edsr`
+options="xiuagedsrlNADUOSLCI"   # script options in use by software package. For example, for a package with no service, exclude `edsr`
 launch=""   # command to launch software, if applicable
 service_name="service_name"   # the name of the service/s, such as `chrony`. REQUIRED if service options are in use. If multiple services, separate by spaces "service1 service2"
 package_name="apt_package"   # apt package name, if applicable. Can be multiple packages separated by spaces, but if at least one is installed the package will show as "installed" even if the others aren't
@@ -69,13 +69,16 @@ install() {
   exit 0 # should be `exit 1` if operation failed
 }
 
-
 # uninstall script
 uninstall() {
   echo "user_message: Exit message to user, displayed prominently in post-install"
   exit 0 # should be `exit 1` if operation failed
 }
 
+# code that must be run to initialize the installation prior to use, but can only be run from terminal
+interactive_init() {
+  exit 0 # should be `exit 1` if operation failed
+}
 
 # upgrade script
 upgrade() {
@@ -113,6 +116,9 @@ while getopts ":h$options" opt; do
       ;;
     u) # Option -u (uninstall)
       uninstall
+      ;;
+    a) # Option -a (interactive initialization)
+      interactive_init
       ;;
     g) # Option -g (upgrade)
       upgrade

@@ -10,7 +10,7 @@ if [ $# -eq 0 ]; then
 fi
 
 args="$@" # arguments to this script
-interaction="true"
+interactive="true"
 help=$(cat <<EOF
 Arguments:
 -h          This message
@@ -19,6 +19,7 @@ Arguments:
     Actions:
 -i          Install
 -u          Uninstall
+-a          Interactive initialization script: code that must be run to initialize the installation prior to use, but can only be run from terminal
 -g          Upgrade
 -e          Enable service, if applicable
 -d          Disable service, if applicable
@@ -48,12 +49,14 @@ EOF
 # Messages to the user (such as configuration instructions, explanatory error messages, etc) should be given as: `echo "user_message: text"`
 # Everything following `user_message: ` will be displayed prominently to the user, so it must the last thing echoed
 
+user_message="To connect to network share, enter \`\\\\\\\\femtofox\\home\` from Windows, \`smb://$(hostname)\\home\` from MacOS or \`smbclient //$(hostname)/femto -U femto\` from Linux.\nDefault configuration shares /home/femto. Edit \`/etc/samba/smb.conf\` to add other shares.\n\nTroubleshooting: if Windows refuses to connect, especially after succeeding previously, hit [win]+R and enter \`net use * /delete\`."
+init_instructions="To enable file sharing, run \`Initialize\` in the femto-config Samba menu, or enable the Samba service, run \`sudo smbpasswd -a femto\` to set a Samba password, and then restart the Samba service."
 
 name="Samba File Sharing"   # software name
 author="Software Freedom Conservancy"   # software author - OPTIONAL
-description="Femtofox comes with Samba preinstalled but disabled. To enable file sharing, run \`sudo smbpasswd -a femto\` to set a Samba password, and enable the Samba service.\nTo connect to network share, enter \`\\\\femtofox\` from Windows, \`smb://$(hostname)\` from MacOS and \`smbclient //$(hostname)/femto -U femto\` from Linux.\nDefault configuration shares /home/femto. Edit \`/etc/samba/smb.conf\` to add other shares.\n\nSamba is an open-source implementation of the SMB/CIFS protocol that enables file and printer sharing between Linux/Unix and Windows systems. It allows Linux machines to act as file servers, domain controllers, or Active Directory members, making them accessible from Windows and other SMB-compatible clients.\n\nTroubleshooting: if Windows refuses to connect, especially after succeeding previously, hit [win]+R and enter \`net use * /delete\`."   # software description - OPTIONAL (but strongly recommended!)
+description="Femtofox comes with Samba preinstalled but disabled. $init_instructions\n\n$user_message"   # software description - OPTIONAL (but strongly recommended!)
 URL="https://www.samba.org/"   # software URL. Can contain multiple URLs - OPTIONAL
-options="xiugedsrNADUOSCI"   # script options in use by software package. For example, for a package with no service, exclude `edsr`
+options="xiuagedsrNADUOSCI"   # script options in use by software package. For example, for a package with no service, exclude `edsr`
 launch=""   # command to launch software, if applicable
 service_name="smbd nmbd"   # the name of the service/s, such as `chrony`. REQUIRED if service options are in use. If multiple services, separate by spaces "service1 service2"
 location=""   # install location REQUIRED if not apt installed. Generally, we use `/opt/software-name`
@@ -63,12 +66,15 @@ conflicts=""   # comma delineated plain-text list of packages with which this pa
 # install script
 install() {
   echo "apt update can take a long while..."
-  DEBIAN_FRONTEND=noninteractive apt-get update -y 2>&1 | tee /dev/tty | grep -q "Err" && { echo "user_message: apt update failed. Is internet connected?"; exit 1; }
-  DEBIAN_FRONTEND=noninteractive apt-get install $package_name -y 2>&1 | tee /dev/tty | grep -q "Err" && { echo "user_message: apt install failed. Is internet connected?"; exit 1; }
-  echo -e "user_message: IMPORTANT: To complete installation, enable the Samba service, run \`sudo smbpasswd -a femto\` to set a Samba password, and restart the Samba service.\nTo connect to network share, enter \`\\\\\\\\femtofox\` from Windows, \`smb://$(hostname)\` from MacOS and \`smbclient //$(hostname)/femto -U femto\` from Linux.\nDefault configuration shares /home/femto. Edit \`/etc/samba/smb.conf\` to add other shares.\n\nTroubleshooting: if Windows refuses to connect, especially after succeeding previously, hit [win]+R and enter \`net use * /delete\`."
-  exit 0 # should be `exit 1` if operation failed
+ # DEBIAN_FRONTEND=noninteractive apt-get update -y 2>&1 | tee /dev/tty | grep -q "Err" && { echo "user_message: apt update failed. Is internet connected?"; exit 1; }
+ # DEBIAN_FRONTEND=noninteractive apt-get install $package_name -y 2>&1 | tee /dev/tty | grep -q "Err" && { echo "user_message: apt install failed. Is internet connected?"; exit 1; }
+  if [ "$interactive" = "true" ]; then # interactive install
+    interactive_init
+  else # noninteractive installation (such as web-UI)
+    echo -e "user_message: IMPORTANT: $init_instructions\n\n$user_message"
+    exit 0 # should be `exit 1` if operation failed
+  fi
 }
-
 
 # uninstall script
 uninstall() {
@@ -79,6 +85,15 @@ uninstall() {
   exit 0 # should be `exit 1` if operation failed
 }
 
+# code that must be run to initialize the installation prior to use, but can only be run from terminal
+interactive_init() {
+  $(basename "$0" -e)
+  echo -e "\nSet user \`Femto\` login password:"
+  smbpasswd -a femto
+  $(basename "$0" -r)
+  echo -e "user_message: Samba initialized, and service enabled and started. $user_message"
+  exit 0
+}
 
 #upgrade script
 upgrade() {
@@ -107,6 +122,9 @@ while getopts ":h$options" opt; do
       ;;
     i) # Option -i (install)
       install
+      ;;
+    a) # Option -a (interactive initialization)
+      interactive_init
       ;;
     u) # Option -u (uninstall)
       uninstall

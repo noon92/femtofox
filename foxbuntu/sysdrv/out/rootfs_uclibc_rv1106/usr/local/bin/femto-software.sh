@@ -39,6 +39,21 @@ uninstall() {
   fi
 }
 
+initialize() {
+  dialog --no-collapse --title "$title" --yesno "\nIntialize $($package_dir/$1.sh -N)\n\nInitialization runs commands that frequently require user interaction and so can only be run from terminal.\n\nProceed?" 13 50
+  if [ $? -eq 1 ]; then #if cancel/no
+    return 1
+  fi
+  clear
+  echo "Initializing $($package_dir/$1.sh -N)..."
+  eval "$package_dir/$1.sh -a"
+  if [ $? -eq 0 ]; then # if the installation was successful
+    dialog --no-collapse --colors --title "$title" --beep --msgbox "\nInitialization of $($package_dir/$1.sh -N) successful!" 8 50 # if there's a user_message, display it with two preceeding line breaks
+  else
+    dialog --no-collapse --colors --title "$title" --beep --msgbox "\nInitialization of $($package_dir/$1.sh -N) FAILED!" 8 50 # if there's a user_message, display it with two preceeding line breaks
+  fi
+}
+
 upgrade() {
   dialog --no-collapse --title "$title" --yesno "\nUpgrade $($package_dir/$1.sh -N)\n\nProceed?" 10 40
   if [ $? -eq 1 ]; then #if cancel/no
@@ -54,7 +69,6 @@ upgrade() {
   else
     dialog --no-collapse --colors --title "$title" --beep --msgbox "\n\ZuUpgrade of $($package_dir/$1.sh -N) FAILED!\Zn\n\n$user_message\n\nLog:\n$output" 0 0 # if there's a user_message, display it with two preceeding line breaks
   fi  
-
 }
 
 
@@ -80,10 +94,11 @@ package_menu() {
   while true; do
     echo "Loading package menu..."
     # for each line, check if it's supported by the package, display it if the current install state of the package is appropriate (example: don't display "install" if the package is already installed, don't display "stop service" for a package with no services)
-    choice=$(dialog --no-collapse --title "$title" --cancel-label "Back" --default-item "$choice" --menu "$($package_dir/$1.sh -N)" 17 45 5 \
+    choice=$(dialog --no-collapse --title "$title" --cancel-label "Back" --default-item "$choice" --menu "$($package_dir/$1.sh -N)" 18 45 5 \
       $(if $package_dir/$1.sh -O | grep -q 'l' && $package_dir/$1.sh -I; then echo "Run software x"; fi) \
       $(if $package_dir/$1.sh -O | grep -q 'i' && ! $package_dir/$1.sh -I; then echo "Install x"; fi) \
       $(if $package_dir/$1.sh -O | grep -q 'u' && $package_dir/$1.sh -I; then echo "Uninstall x"; fi) \
+      $(if $package_dir/$1.sh -O | grep -q 'a' && $package_dir/$1.sh -I; then echo "Initialize x"; fi) \
       $(if $package_dir/$1.sh -O | grep -q 'g' && $package_dir/$1.sh -I; then echo "Upgrade x"; fi) \
       $(if $package_dir/$1.sh -O | grep -q 'e' && $package_dir/$1.sh -I; then echo "Enable service x"; fi) \
       $(if $package_dir/$1.sh -O | grep -q 'd' && $package_dir/$1.sh -I; then echo "Disable service x"; fi) \
@@ -104,6 +119,7 @@ package_menu() {
       "Run software") eval "$package_dir/$1.sh -l" ;;
       "Install") install $1 ;;
       "Uninstall") uninstall $1 ;;
+      "Initialize") initialize $1 ;;
       "Upgrade") upgrade $1 ;;
       "Enable service") echo "Enabling and starting service..." && eval "$package_dir/$1.sh -e" && eval "$package_dir/$1.sh -r" ;;
       "Disable service") echo "Disabling and stopping service..." && eval "$package_dir/$1.sh -d" && eval "$package_dir/$1.sh -s" ;;
