@@ -40,7 +40,7 @@ uninstall() {
 }
 
 initialize() {
-  dialog --no-collapse --title "$title" --yesno "\nIntialize $($package_dir/$1.sh -N)\n\nInitialization runs commands that frequently require user interaction and so can only be run from terminal.\n\nProceed?" 13 50
+  dialog --no-collapse --title "$title" --yesno "\nIntialize $($package_dir/$1.sh -N)\n\nInitialization runs commands that require user interaction and so can only be run from terminal.\n\nProceed?" 13 50
   if [ $? -eq 1 ]; then #if cancel/no
     return 1
   fi

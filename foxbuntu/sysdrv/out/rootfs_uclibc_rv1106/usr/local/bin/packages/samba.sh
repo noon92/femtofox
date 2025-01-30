@@ -49,7 +49,7 @@ EOF
 # Messages to the user (such as configuration instructions, explanatory error messages, etc) should be given as: `echo "user_message: text"`
 # Everything following `user_message: ` will be displayed prominently to the user, so it must the last thing echoed
 
-user_message="To connect to network share, enter \`\\\\\\\\femtofox\\home\` from Windows, \`smb://$(hostname)\\home\` from MacOS or \`smbclient //$(hostname)/femto -U femto\` from Linux.\nDefault configuration shares /home/femto. Edit \`/etc/samba/smb.conf\` to add other shares.\n\nTroubleshooting: if Windows refuses to connect, especially after succeeding previously, hit [win]+R and enter \`net use * /delete\`."
+user_message="To connect to network share, enter \`\\\\femtofox\\home\` from Windows, \`smb://$(hostname)\\home\` from MacOS or \`smbclient //$(hostname)/femto -U femto\` from Linux.\nDefault configuration shares /home/femto. Edit \`/etc/samba/smb.conf\` to add other shares.\n\nTroubleshooting: if Windows refuses to connect, especially after succeeding previously, hit [win]+R and enter \`net use * /delete\`."
 init_instructions="To enable file sharing, run \`Initialize\` in the femto-config Samba menu, or enable the Samba service, run \`sudo smbpasswd -a femto\` to set a Samba password, and then restart the Samba service."
 
 name="Samba File Sharing"   # software name
@@ -87,10 +87,10 @@ uninstall() {
 
 # code that must be run to initialize the installation prior to use, but can only be run from terminal
 interactive_init() {
-  $(basename "$0" -e)
   echo -e "\nSet user \`Femto\` login password:"
   smbpasswd -a femto
-  $(basename "$0" -r)
+  /usr/local/bin/packages/samba.sh -e
+  /usr/local/bin/packages/samba.sh -r
   echo -e "user_message: Samba initialized, and service enabled and started. $user_message"
   exit 0
 }
