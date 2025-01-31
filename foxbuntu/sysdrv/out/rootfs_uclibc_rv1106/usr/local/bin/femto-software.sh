@@ -5,9 +5,8 @@ package_dir="/usr/local/bin/packages"
 
 install() {
   dialog --no-collapse --title "Install $($package_dir/$1.sh -N)" --yesno "\nInstallation requires internet connectivity.\n\nProceed?" 10 40
-  if [ $? -eq 1 ]; then #if cancel/no
-    return 1
-  fi
+  [ $? -eq 1 ] && return 1 #if cancel/no
+
   echo "Installing $($package_dir/$1.sh -N)..."
   # Run the installation script, capturing the output and displaying it in real time
   output=$($package_dir/$1.sh -i)
@@ -24,9 +23,7 @@ install() {
 
 uninstall() {
   dialog --no-collapse --title "Uninstall $($package_dir/$1.sh -N)" --yesno "\nReinstallation will require internet connectivity.\n\nProceed?" 10 40
-  if [ $? -eq 1 ]; then #if cancel/no
-    return 1
-  fi
+  [ $? -eq 1 ] && return 1 #if cancel/no
   echo "Uninstalling $($package_dir/$1.sh -N)..."
   output=$(eval "$package_dir/$1.sh -u 2>&1 | tee /dev/tty")
   install_status=$?  # Capture the exit status of the eval command
@@ -41,9 +38,7 @@ uninstall() {
 
 initialize() {
   dialog --no-collapse --title "$title" --yesno "\nIntialize $($package_dir/$1.sh -N)\n\nInitialization runs commands that require user interaction and so can only be run from terminal.\n\nProceed?" 13 50
-  if [ $? -eq 1 ]; then #if cancel/no
-    return 1
-  fi
+  [ $? -eq 1 ] && return 1 #if cancel/no
   clear
   echo "Initializing $($package_dir/$1.sh -N)..."
   eval "$package_dir/$1.sh -a"
@@ -56,9 +51,7 @@ initialize() {
 
 upgrade() {
   dialog --no-collapse --title "Upgrade $($package_dir/$1.sh -N)" --yesno "\nUpgrade requires internet connectivity.\n\nProceed?" 10 40
-  if [ $? -eq 1 ]; then #if cancel/no
-    return 1
-  fi
+  [ $? -eq 1 ] && return 1 #if cancel/no
   echo "Upgrading $($package_dir/$1.sh -N)..."
   output=$(eval "$package_dir/$1.sh -g 2>&1 | tee /dev/tty")
   install_status=$?  # Capture the exit status of the eval command
@@ -107,13 +100,7 @@ package_menu() {
       $(if $package_dir/$1.sh -O | grep -q 'S' && $package_dir/$1.sh -I; then echo "Get service status x"; fi) \
       " " "" \
       "Back to software manager" "" 3>&1 1>&2 2>&3)
-    
-    exit_status=$? # This line checks the exit status of the dialog command
-    
-    if [ $exit_status -ne 0 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
-      break
-    fi
-    
+    [ $? -eq 1 ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
     # execute the actual commands
     case $choice in
       "Run software") echo "Launching $($package_dir/$1.sh -N)..." && eval "$package_dir/$1.sh -l" ;;
@@ -145,10 +132,7 @@ while true; do
   menu_entries+=(" " "")  # add blank line and "Back to Main Menu" entry
   menu_entries+=("$index" "Back to main menu")
   software_option=$(dialog --no-collapse --cancel-label "Back" --default-item "$software_option" --menu "$title" $((9 + index)) 50 $((index + 1)) "${menu_entries[@]}" 3>&1 1>&2 2>&3)
-  exit_status=$? # This line checks the exit status of the dialog command
-  if [ $exit_status -ne 0 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
-    break
-  fi
+  [ $? -eq 1 ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
     
   case_block="  case \$software_option in"
   index=1

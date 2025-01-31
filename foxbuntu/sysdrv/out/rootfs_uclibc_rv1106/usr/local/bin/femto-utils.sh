@@ -76,12 +76,12 @@ storage_info() {
   local microsd_size="$(df --block-size=1 / | awk 'NR==2 {total=$2; avail=$4; total_human=sprintf("%.2f", total/1024/1024/1024); avail_human=sprintf("%.2f", avail/1024/1024/1024); printf "%.2f GB   (%.2f%% free)", total_human, (avail/total)*100}')"
   local memory="$(free -m | awk 'NR==2{printf "%d MB      (%.2f%% free)\n", $2, 100 - (($3/$2)*100)}')"
   local swap="$(free -m | awk 'NR==3 {if ($2 > 1000) {printf "%.2f GB    (%.2f%% free)", $2/1024, ($4/$2)*100} else {printf "%d MB    (%.2f%% free)", $2, ($4/$2)*100}}')"
-  local mounted_drives="$([ "$(for dir in /mnt/*/; do echo -n "/mnt${dir#"/mnt"} "; done)" ] && echo "Mounted drives:   $(for dir in /mnt/*; do echo -n "/mnt${dir#"/mnt"} "; done | sed 's/\/$//')")"
+  local mounted_drives="$( [ "$(for dir in /mnt/*/; do [ -d "$dir" ] && echo -n "/mnt${dir#"/mnt"} "; done)" ] && echo "$(for dir in /mnt/*/; do [ -d "$dir" ] && echo -n "/mnt${dir#"/mnt"} "; done | sed 's/\/$//')" || echo "none" )"
 
   echo -e "microSD size:     $microsd_size\n\
 Memory:           $memory\n\
 Swap:             $swap\n\
-$mounted_drives"
+Mounted drives:   $mounted_drives"
 }
 
 os_info() {
