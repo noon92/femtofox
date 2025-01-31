@@ -4,7 +4,7 @@ title="Software Manager"
 package_dir="/usr/local/bin/packages"
 
 install() {
-  dialog --no-collapse --title "$title" --yesno "\nInstall $($package_dir/$1.sh -N)\n\nProceed?" 10 40
+  dialog --no-collapse --title "Install $($package_dir/$1.sh -N)" --yesno "\nInstallation requires internet connectivity.\n\nProceed?" 10 40
   if [ $? -eq 1 ]; then #if cancel/no
     return 1
   fi
@@ -23,7 +23,7 @@ install() {
 }
 
 uninstall() {
-  dialog --no-collapse --title "$title" --yesno "\nUninstall $($package_dir/$1.sh -N)\n\nProceed?" 10 40
+  dialog --no-collapse --title "Uninstall $($package_dir/$1.sh -N)" --yesno "\nReinstallation will require internet connectivity.\n\nProceed?" 10 40
   if [ $? -eq 1 ]; then #if cancel/no
     return 1
   fi
@@ -55,7 +55,7 @@ initialize() {
 }
 
 upgrade() {
-  dialog --no-collapse --title "$title" --yesno "\nUpgrade $($package_dir/$1.sh -N)\n\nProceed?" 10 40
+  dialog --no-collapse --title "Upgrade $($package_dir/$1.sh -N)" --yesno "\nUpgrade requires internet connectivity.\n\nProceed?" 10 40
   if [ $? -eq 1 ]; then #if cancel/no
     return 1
   fi
@@ -116,7 +116,7 @@ package_menu() {
     
     # execute the actual commands
     case $choice in
-      "Run software") eval "$package_dir/$1.sh -l" ;;
+      "Run software") echo "Launching $($package_dir/$1.sh -N)..." && eval "$package_dir/$1.sh -l" ;;
       "Install") install $1 ;;
       "Uninstall") uninstall $1 ;;
       "Initialize") initialize $1 ;;
@@ -167,10 +167,3 @@ while true; do
 done
 
 exit 0
-
-
-    # 4 "Mosquitto MQTT broker" \
-    # 5 "GPS and Telemetry" \
-    
-    # 4) mosquitto ;;
-    # 5) gpsd ;;

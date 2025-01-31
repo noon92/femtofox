@@ -49,7 +49,7 @@ EOF
 # Everything following `user_message: ` will be displayed prominently to the user, so it must the last thing echoed
 
 
-name="TC2-BBS"   # software name
+name="TC²-BBS"   # software name
 author="The Comms Channel"   # software author - OPTIONAL
 description="The TC²-BBS system integrates with Meshtastic devices. The system allows for message handling, bulletin boards, mail systems, and a channel directory."   # software description - OPTIONAL (but strongly recommended!)
 URL="https://github.com/TheCommsChannel/TC2-BBS-mesh"   # software URL. Can contain multiple URLs - OPTIONAL

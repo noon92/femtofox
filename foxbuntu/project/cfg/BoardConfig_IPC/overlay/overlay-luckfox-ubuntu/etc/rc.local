@@ -8,7 +8,7 @@
 #  /usr/local/bin/femto-runonce.sh
 #fi
 
-luckfox-config load
+#luckfox-config load
 
 # try enable RTC
 echo 'ds1307 0x68' | sudo tee /sys/class/i2c-adapter/i2c-3/new_device > /dev/null 2>&1

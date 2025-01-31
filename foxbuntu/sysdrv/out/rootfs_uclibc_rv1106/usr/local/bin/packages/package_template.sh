@@ -49,16 +49,16 @@ EOF
 # Messages to the user (such as configuration instructions, explanatory error messages, etc) should be given as: `echo "user_message: text"`
 # Everything following `user_message: ` will be displayed prominently to the user, so it must the last thing echoed
 
-name="name"   # software name
-author="author"   # software author - OPTIONAL
-description="description"   # software description - OPTIONAL (but strongly recommended!)
-URL="URL"   # software URL. Can contain multiple URLs - OPTIONAL
-options="xiuagedsrlNADUOSLCI"   # script options in use by software package. For example, for a package with no service, exclude `edsr`
-launch=""   # command to launch software, if applicable
-service_name="service_name"   # the name of the service/s, such as `chrony`. REQUIRED if service options are in use. If multiple services, separate by spaces "service1 service2"
-package_name="apt_package"   # apt package name, if applicable. Can be multiple packages separated by spaces, but if at least one is installed the package will show as "installed" even if the others aren't
-location="/opt/location"   # install location REQUIRED if not apt installed. Generally, we use `/opt/software-name`
-conflicts="package name, other package name"   # comma delineated plain-text list of packages with which this package conflicts. Blank if none. Use the name as it appears in the $name field of the other package. Extra plaintext is allowed, such as "packageA, packageB, any other software that uses the Meshtastic CLI"
+name="name"                     # software name
+author="author"                 # software author - OPTIONAL
+description="description"       # software description - OPTIONAL (but strongly recommended!)
+URL="URL"                       # software URL. Can contain multiple URLs - OPTIONAL
+options="hxiuagedsrlNADUOSLCI"  # script options in use by software package. For example, for a package with no service, exclude `edsrS`
+launch="/opt/package/run.sh"    # command to launch software, if applicable
+service_name="service_name"     # the name of the service/s, such as `chrony`. REQUIRED if service options are in use. If multiple services, separate by spaces "service1 service2"
+package_name="apt_package"      # apt package name, if applicable. Can be multiple packages separated by spaces, but if at least one is installed the package will show as "installed" even if the others aren't
+location="/opt/location"        # install location REQUIRED if not apt installed. Generally, we use `/opt/software-name`
+conflicts="package1, package2"  # comma delineated plain-text list of packages with which this package conflicts. Blank if none. Use the name as it appears in the $name field of the other package. Extra plaintext is allowed, such as "packageA, packageB, any other software that uses the Meshtastic CLI"
 
 # install script
 install() {
@@ -103,7 +103,7 @@ check() {
   fi
 }
 
-while getopts ":h$options" opt; do
+while getopts ":$options" opt; do
   case ${opt} in
     h) # Option -h (help)
       echo -e "$help"

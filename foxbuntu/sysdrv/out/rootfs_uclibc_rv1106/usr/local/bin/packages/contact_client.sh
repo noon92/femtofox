@@ -46,9 +46,9 @@ EOF
 
 name="Contact"   # software name
 author="pdxlocations"   # software author - OPTIONAL
-description="A Text-Based Console UI for Meshtastic Nodes.\nAfter install, run \`contact\` to launch."   # software description - OPTIONAL (but strongly recommended!)
+description="A Text-Based Console UI for Meshtastic Nodes. Formerly called Curse Client.\nAfter install, run \`contact\` to launch."   # software description - OPTIONAL (but strongly recommended!)
 URL="https://github.com/pdxlocations/contact/"   # software URL. Can contain multiple URLs - OPTIONAL
-options="xiuglNADUOSLCI"   # script options in use by software package. For example, for a package with no service, exclude `edsr`
+options="xiuglNADUOLCI"   # script options in use by software package. For example, for a package with no service, exclude `edsrS`
 launch="python /opt/contact/main.py --host"   # command to launch software, if applicable
 service_name=""   # the name of the service/s, such as `chrony`. REQUIRED if service options are in use. If multiple services, separate by spaces "service1 service2"
 location="/opt/contact"   # install location REQUIRED if not apt installed. Generally, we use `/opt/software-name`
