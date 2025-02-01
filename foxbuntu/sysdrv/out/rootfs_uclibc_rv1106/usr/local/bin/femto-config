@@ -210,8 +210,9 @@ utilities() {
             4 "Peripherals & devices" \
             5 "Networking" \
             6 "Meshtastic node info" \
+            7 "Complete system info" \
             " " "" \
-            7 "Back to previous menu" 3>&1 1>&2 2>&3)
+            8 "Back to previous menu" 3>&1 1>&2 2>&3)
           exit_status=$? # This line checks the exit status of the dialog command
           if [ $exit_status -eq 1 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
             break
@@ -222,7 +223,6 @@ utilities() {
               1) # CPU)
                 loading "Loading CPU info..."
                 dialog --no-collapse --colors --title "CPU info" --msgbox "$(ingest_data "femto-utils.sh -c" 15)" 0 0
-                #dialog --no-collapse --colors --title "CPU info" --msgbox "$(replace_colors "$(femto-utils.sh -c)")" 0 0
               ;;
               2) # Operating system)
                 loading "Loading operating system info..."
@@ -244,7 +244,29 @@ utilities() {
                 loading "Loading Meshtastic node info..."
                 dialog --no-collapse --colors --title "Meshtastic node info" --msgbox "$(ingest_data "femto-meshtasticd-config.sh -i" 15)" 0 0
               ;;
-              7) break ;;
+              7) # Complete system info)
+                loading "Loading complete system info..."
+                dialog --no-collapse --colors --title "Meshtastic node info" --msgbox "\
+            Femtofox
+    CPU:
+$(ingest_data "femto-utils.sh -c" 15)
+
+    Operating System:
+$(ingest_data "femto-utils.sh -o" 15)
+
+    Storage:
+$(ingest_data "femto-utils.sh -S" 15)
+
+    Networking (wlan0 & eth0):
+$(ingest_data "femto-utils.sh -p" 15)
+
+    Peripherals:
+$(ingest_data "femto-utils.sh -n" 15)
+
+    Meshtasticd:
+$(ingest_data "femto-meshtasticd-config.sh -i" 15)" 0 0
+              ;;
+              8) break ;;
             esac
           fi
         done
