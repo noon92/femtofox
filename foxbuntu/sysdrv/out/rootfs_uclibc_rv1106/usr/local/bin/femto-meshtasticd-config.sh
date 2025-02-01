@@ -83,7 +83,7 @@ while getopts ":higkl:q:uU:rR:aA:cpo:sM:Stwuxm" opt; do
     i) # Option -i (Get important node info)
       declare -a output_array
       output=$(meshtastic --host --info)
-      output_array+=("Service status=$(femto-meshtasticd-config.sh -S)")
+      output_array+=("Service=$(femto-meshtasticd-config.sh -S)")
       output_array+=("Version=$(echo "$output" | grep -oP '"firmwareVersion":\s*"\K[^"]+' | head -n 1)")
       output_array+=("Node name=$(echo "$output" | grep -oP 'Owner:\s*\K.*' | head -n 1)")
       output_array+=("NodeID=$(echo "!$(printf "%08x\n" $(echo "$output" | grep -oP '"myNodeNum":\s*\K\d+' | head -n 1))")")
@@ -107,14 +107,14 @@ while getopts ":higkl:q:uU:rR:aA:cpo:sM:Stwuxm" opt; do
       output_array+=("Hop limit=$(echo "$output" | grep -oP '"hopLimit":\s*\K\w+')")
       freq_slot=$(echo "$output" | grep -oP '"channelNum":\s*\K\d+' | head -n 1)
       if [ "$freq_slot" != 0 ]; then # only display frequency slot if not 0
-        freq_slot+=("Override freq=$freq_slot")
+        freq_slot+=("Freq slot=$freq_slot")
       fi
       override_freq=$(echo "$output" | grep -oP '"overrideFrequency":\s*\K[0-9.]+')
       if [ "$override_freq" != "0" ]; then # only display override frequency if not 0
-        output_array+=("Override freq=$override_freq")
+        output_array+=("Over. freq=$override_freq")
       fi
       output_array+=("Public key=$(echo "$output" | grep -oP '"publicKey":\s*"\K[^"]+' | head -n 1)")
-      output_array+=("Nodes in nodedb=$(echo "$output" | grep -oP '"![a-zA-Z0-9]+":\s*\{' | wc -l)")
+      output_array+=("Nodes in db=$(echo "$output" | grep -oP '"![a-zA-Z0-9]+":\s*\{' | wc -l)")
       # now, echo the array
       for pair in "${output_array[@]}"; do
         key=$(echo "$pair" | cut -d'=' -f1)

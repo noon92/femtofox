@@ -37,26 +37,46 @@ loading() {
   dialog --no-collapse --infobox "$1" 5 45
 }
 
-# function to pull data from various femto scripts and convert it to the contents of a read only dialog --form
-ingest_data() { # usage: `ingest_data "command.sh -argument" key_width value_width`
-  unset  output_array #debug code, delete me
-  declare -a output_array
-  # Read the output from femto-meshtasticd-config.sh and store it in the array
+## function to pull data from various femto scripts and convert it to the contents of a read only dialog --form
+# ingest_data() { # usage: `ingest_data "command.sh -argument" key_width value_width`
+#   unset  output_array #debug code, delete me
+#   declare -a output_array
+#   # Read the output from femto-meshtasticd-config.sh and store it in the array
+#   while IFS=':' read -r key value; do
+#     # Trim leading/trailing spaces from key and value
+#     key=$(echo "$key" | xargs)
+#     value=$(echo "$value" | xargs)
+#     output_array+=("$key=$value")  # Use indexed array to preserve order
+#   done < <(eval $1)
+#   form_contents=""
+#   i=1
+#   for pair in "${output_array[@]}"; do
+#     key=$(cut -d'=' -f1 <<< "$pair")
+#     value=$(cut -d'=' -f2- <<< "$pair")
+#     form_contents+="\"$key\" $i 1 \"$value\" $i $2 $3 -1 "
+#     ((i++))
+#   done
+#   echo "$form_contents" | sed 's/\x1b\[[0-9;]*m//g'
+# }
+## CODE TO USE THIS FUNCTION:
+# eval "$(echo -e "dialog --no-collapse --no-cancel --form \"Meshtastic node info\" 0 0 0 $(ingest_data "femto-meshtasticd-config.sh -i" 18 0) 2>/dev/null")"
+
+
+# function to pull data from various femto scripts and convert it a simple text string, with dialog colors
+ingest_data() { # usage: `ingest_data "command.sh -argument" key_width`
+  local output_string=""
+  # Read the output from femto-meshtasticd-config.sh and store output_string
   while IFS=':' read -r key value; do
     # Trim leading/trailing spaces from key and value
-    key=$(echo "$key" | xargs)
-    value=$(echo "$value" | xargs)
-    output_array+=("$key=$value")  # Use indexed array to preserve order
+    key=$(replace_colors "$(echo "$key" | xargs)")
+    value=$(replace_colors "$(echo "$value" | xargs)")
+    if [[ -z "$key" && -z "$value" ]]; then
+      output_string+="---\n"
+    else
+      output_string+=$(printf "%s:%*s%s\n" "$key" $(($2 - 1 - ${#key})) "" "$value\n") # save the key and value to the output_string, adding padding between them as determined by `$2 - 1 - key-length` The 1 accounts for the :
+    fi
   done < <(eval $1)
-  form_contents=""
-  i=1
-  for pair in "${output_array[@]}"; do
-    key=$(cut -d'=' -f1 <<< "$pair")
-    value=$(cut -d'=' -f2- <<< "$pair")
-    form_contents+="\"$key\" $i 1 \"$value\" $i $2 $3 -1 "
-    ((i++))
-  done
-  echo "$form_contents" | sed 's/\x1b\[[0-9;]*m//g'
+  echo -e "$output_string"
 }
 
 wifi_config() {
@@ -90,11 +110,10 @@ wifi_config() {
 networking_settings() {
   local title="Networking"
   local title2="Wi-Fi (wlan0) Settings"
-  ip=$(hostname -I | sed 's/ / /g'); ip=${ip:+$(printf "IPv4 address: %s" "$ip")}
   wpa_supplicant_conf="/etc/wpa_supplicant/wpa_supplicant.conf"
   choice=""   # zero the choice before loading the submenu
   while true; do
-    networking_choice=$(dialog --no-collapse --cancel-label "Back" --backtitle "$ip" --default-item "$networking_choice" --title "$title" --menu "" $([ -z "$ip" ] && echo 14 || echo 16) 40 4 \
+    networking_choice=$(dialog --no-collapse --cancel-label "Back" --backtitle "IPv4 address:  $(femto-network-config.sh -i)" --default-item "$networking_choice" --title "$title" --menu "" 16 40 4 \
       1 "Turn Wi-Fi on/off" \
       2 "View Wi-Fi settings" \
       3 "Change Wi-Fi settings" \
@@ -127,14 +146,14 @@ networking_settings() {
       ;;
       2) # View Wi-Fi settings)
         echo "Getting Wi-Fi configuration..."
-        dialog --no-collapse --title "$title2" --colors --msgbox "$(replace_colors "$(femto-network-config.sh -w)")" 0 0
+        dialog --no-collapse --title "$title2" --colors --msgbox "$(ingest_data "femto-network-config.sh -w" 15)" 0 0
       ;;
       3) # Change Wi-Fi settings)
         wifi_config
       ;;
       4) # View ethernet settings)
         echo "Getting ethernet configuration..."
-        dialog --no-collapse --title "Ethernet (eth0) settings" --colors --msgbox "$(echo -e "$(replace_colors "$(femto-network-config.sh -e)")")" 0 0
+        dialog --no-collapse --title "Ethernet (eth0) settings" --colors --msgbox "$(ingest_data "femto-network-config.sh -e" 15)" 0 0
       ;;
       5) # Restart networking)
         dialog --no-collapse --title "$title2" --yesno "Wi-Fi and Ethernet will be restarted.\nMeshtastic Wi-Fi setting will be set to ON.\n\nProceed?" 10 40
@@ -184,16 +203,15 @@ utilities() {
       1) #sysinfo)
         choice=""   # zero the choice before loading the submenu
         while true; do
-          choice=$(dialog --no-collapse --help-button --help-label "Help" --cancel-label "Back" --default-item "$choice" --menu "System info" 17 40 5 \
+          choice=$(dialog --no-collapse --help-button --help-label "Help" --cancel-label "Back" --default-item "$choice" --menu "System info" 16 40 5 \
             1 "CPU" \
             2 "Operating system" \
             3 "Storage & memory" \
             4 "Peripherals & devices" \
             5 "Networking" \
             6 "Meshtastic node info" \
-            7 "Complete system info" \
             " " "" \
-            8 "Back to previous menu" 3>&1 1>&2 2>&3)
+            7 "Back to previous menu" 3>&1 1>&2 2>&3)
           exit_status=$? # This line checks the exit status of the dialog command
           if [ $exit_status -eq 1 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
             break
@@ -203,33 +221,35 @@ utilities() {
             case $choice in
               1) # CPU)
                 loading "Loading CPU info..."
-                dialog --no-collapse --colors --title "CPU info" --msgbox "$(replace_colors "$(femto-utils.sh -c)")" 0 0
+                dialog --no-collapse --colors --title "CPU info" --msgbox "$(ingest_data "femto-utils.sh -c" 15)" 0 0
+                #dialog --no-collapse --colors --title "CPU info" --msgbox "$(replace_colors "$(femto-utils.sh -c)")" 0 0
               ;;
               2) # Operating system)
                 loading "Loading operating system info..."
-                dialog --no-collapse --colors --extra-button --title "Operating system" --msgbox "$(replace_colors "$(femto-utils.sh -o)")" 0 0
+                dialog --no-collapse --colors --title "Operating system info" --msgbox "$(ingest_data "femto-utils.sh -o" 15)" 0 0
+                #dialog --no-collapse --colors --extra-button --title "Operating system" --msgbox "$(replace_colors "$(femto-utils.sh -o)")" 0 0
               ;;
               3) # Storage & memory)
                 loading "Loading storage & memory info..."
-                dialog --no-collapse --colors --title "Storage & memory" --msgbox "$(replace_colors "$(femto-utils.sh -S)")" 0 0
+                dialog --no-collapse --colors --title "Storage & memory info" --msgbox "$(ingest_data "femto-utils.sh -S" 15)" 0 0
+                #dialog --no-collapse --colors --title "Storage & memory" --msgbox "$(replace_colors "$(femto-utils.sh -S)")" 0 0
               ;;
               4) # Peripherals & devices)
                 loading "Loading peripherals & devices info..."
-                dialog --no-collapse --colors --title "Peripherals & devices" --msgbox "$(replace_colors "$(femto-utils.sh -p)")" 0 0
+                dialog --no-collapse --colors --title "Peripherals & devices info" --msgbox "$(ingest_data "femto-utils.sh -p" 15)" 0 0
+                #dialog --no-collapse --colors --title "Peripherals & devices" --msgbox "$(replace_colors "$(femto-utils.sh -p)")" 0 0
               ;; 
               5) # Networking)
                 loading "Loading networking info..."
-                dialog --no-collapse --colors --title "Networking" --msgbox "$(replace_colors "$(femto-utils.sh -n)")" 0 0
+                dialog --no-collapse --colors --title "Networking info" --msgbox "$(ingest_data "femto-utils.sh -n" 15)" 0 0
+                #dialog --no-collapse --colors --title "Networking" --msgbox "$(replace_colors "$(femto-utils.sh -n)")" 0 0
               ;;
               6) # Meshtastic node info)
                 loading "Loading Meshtastic node info..."
-                dialog --no-collapse --colors --title "Meshtastic node info" --msgbox "$(replace_colors "$(femto-meshtasticd-config.sh -i)")" 0 0
+                dialog --no-collapse --colors --title "Meshtastic node info" --msgbox "$(ingest_data "femto-meshtasticd-config.sh -i" 15)" 0 0
+                #dialog --no-collapse --colors --title "Meshtastic node info" --msgbox "$(replace_colors "$(femto-meshtasticd-config.sh -i)")" 0 0
               ;;
-              7) # Complete system info)
-                loading "Loading complete system info..."
-                dialog --no-collapse --colors --title "System info" --msgbox "$(replace_colors "$(femto-utils.sh -i)")" 0 0
-              ;;
-              8) break ;;
+              7) break ;;
             esac
           fi
         done
@@ -376,7 +396,7 @@ meshtastic_settings() {
     case $meshtastic_choice in
       1) # view node info)
         loading "Getting node info..."
-        eval "$(echo -e "dialog --no-collapse --no-cancel --form \"Meshtastic node info\" 0 0 0 $(ingest_data "femto-meshtasticd-config.sh -i" 18 0) 2>/dev/null")"
+        dialog --no-collapse --colors --title "Meshtastic node info" --msgbox "$(ingest_data "sudo femto-meshtasticd-config.sh -i" 17)" 0 0
         ;;
       2) # get current configuration URL & QR code)
         loading "Getting Meshtastic QR code and URL..."
