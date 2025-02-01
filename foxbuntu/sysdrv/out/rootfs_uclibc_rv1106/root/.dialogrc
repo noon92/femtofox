@@ -25,3 +25,6 @@ form_text_color = (WHITE,CYAN,ON)
 
 # Readonly form item color
 form_item_readonly_color = (BLUE,WHITE,ON)
+
+# Item help-text color
+itemhelp_color = (BLACK,BLUE,OFF)
