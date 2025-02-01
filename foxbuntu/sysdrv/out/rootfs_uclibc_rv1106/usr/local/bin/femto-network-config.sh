@@ -140,7 +140,7 @@ $wifi_settings"
       if [ "$successful" -eq 0 ]; then
         echo -e "\033[0;31mNo internet connection detected.\033[0m"
       else
-        echo -e "Internet connection is \033[4m\033[0;32mup\033[0m.\n\nPinged $(echo "${targets[*]}" | sed 's/ /, /g').\nReceived $successful/$total responses."
+        echo -e "Internet connection is \033[4m\033[0;34mup\033[0m.\n\nPinged $(echo "${targets[*]}" | sed 's/ /, /g').\nReceived $successful/$total responses."
       fi
       ;;
     r) # Option -r (restart Wi-Fi)
