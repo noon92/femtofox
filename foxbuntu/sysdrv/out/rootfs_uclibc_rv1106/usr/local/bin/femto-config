@@ -227,27 +227,22 @@ utilities() {
               2) # Operating system)
                 loading "Loading operating system info..."
                 dialog --no-collapse --colors --title "Operating system info" --msgbox "$(ingest_data "femto-utils.sh -o" 15)" 0 0
-                #dialog --no-collapse --colors --extra-button --title "Operating system" --msgbox "$(replace_colors "$(femto-utils.sh -o)")" 0 0
               ;;
               3) # Storage & memory)
                 loading "Loading storage & memory info..."
                 dialog --no-collapse --colors --title "Storage & memory info" --msgbox "$(ingest_data "femto-utils.sh -S" 15)" 0 0
-                #dialog --no-collapse --colors --title "Storage & memory" --msgbox "$(replace_colors "$(femto-utils.sh -S)")" 0 0
               ;;
               4) # Peripherals & devices)
                 loading "Loading peripherals & devices info..."
                 dialog --no-collapse --colors --title "Peripherals & devices info" --msgbox "$(ingest_data "femto-utils.sh -p" 15)" 0 0
-                #dialog --no-collapse --colors --title "Peripherals & devices" --msgbox "$(replace_colors "$(femto-utils.sh -p)")" 0 0
               ;; 
               5) # Networking)
                 loading "Loading networking info..."
                 dialog --no-collapse --colors --title "Networking info" --msgbox "$(ingest_data "femto-utils.sh -n" 15)" 0 0
-                #dialog --no-collapse --colors --title "Networking" --msgbox "$(replace_colors "$(femto-utils.sh -n)")" 0 0
               ;;
               6) # Meshtastic node info)
                 loading "Loading Meshtastic node info..."
                 dialog --no-collapse --colors --title "Meshtastic node info" --msgbox "$(ingest_data "femto-meshtasticd-config.sh -i" 15)" 0 0
-                #dialog --no-collapse --colors --title "Meshtastic node info" --msgbox "$(replace_colors "$(femto-meshtasticd-config.sh -i)")" 0 0
               ;;
               7) break ;;
             esac
@@ -396,7 +391,7 @@ meshtastic_settings() {
     case $meshtastic_choice in
       1) # view node info)
         loading "Getting node info..."
-        dialog --no-collapse --colors --title "Meshtastic node info" --msgbox "$(ingest_data "sudo femto-meshtasticd-config.sh -i" 17)" 0 0
+        dialog --no-collapse --colors --title "Meshtastic node info" --msgbox "$(ingest_data "femto-meshtasticd-config.sh -i" 15)" 0 0
         ;;
       2) # get current configuration URL & QR code)
         loading "Getting Meshtastic QR code and URL..."

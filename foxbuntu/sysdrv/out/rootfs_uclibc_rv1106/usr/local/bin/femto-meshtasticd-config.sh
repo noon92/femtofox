@@ -111,7 +111,7 @@ while getopts ":higkl:q:uU:rR:aA:cpo:sM:Stwuxm" opt; do
       fi
       override_freq=$(echo "$output" | grep -oP '"overrideFrequency":\s*\K[0-9.]+')
       if [ "$override_freq" != "0" ]; then # only display override frequency if not 0
-        output_array+=("Over. freq=$override_freq")
+        output_array+=("Override freq=$override_freq")
       fi
       output_array+=("Public key=$(echo "$output" | grep -oP '"publicKey":\s*"\K[^"]+' | head -n 1)")
       output_array+=("Nodes in db=$(echo "$output" | grep -oP '"![a-zA-Z0-9]+":\s*\{' | wc -l)")
