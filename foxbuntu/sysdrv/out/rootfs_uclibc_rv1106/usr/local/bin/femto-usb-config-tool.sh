@@ -5,6 +5,11 @@ if [[ $EUID -ne 0 ]]; then
   exit 1
 fi
 
+## Initialize working variables
+found_config="false"
+update_wifi="false"
+wifi_command="femto-network-config.sh"
+meshtastic_security_command="femto-meshtasticd-config.sh"
 mount_point="/mnt/usb" # Set the mount point
 
 # Function to log to screen, syslog and logfile to be saved to usb drive
@@ -99,17 +104,20 @@ if [ -f "$mount_point/femtofox-config.txt" ]; then
   # Remove Windows-style carriage returns and save a temporary copy of femtofox-config.txt
   tr -d '\r' < "$mount_point/femtofox-config.txt" > $usb_config
   
-  # Initialize variables
+  # Initialize input variables
+  act_led="enable"
   wifi_ssid=""
   wifi_psk=""
   wifi_country=""
   meshtastic_lora_radio=""
-  found_config="false"
-  update_wifi="false"
-  wifi_command="femto-network-config.sh"
-  meshtastic_security_command="femto-meshtasticd-config.sh"
+  timezone=""
+  meshtastic_url=""
+  meshtastic_legacy_admin=""
+  meshtastic_public_key=""
+  meshtastic_private_key=""
+  meshtastic_admin_key=""
   dont_run_if_log_exists=""
-    
+ 
   # Escape and read the fields from the USB config file if they exist
   while IFS='=' read -r key value; do
     # Skip lines starting with #
@@ -143,8 +151,8 @@ if [ -f "$mount_point/femtofox-config.txt" ]; then
   fi
 
   if [[ -n "$act_led" ]]; then
-    # Update the ssid in the network block
-    log_message "Updating Activity LED status to \`$act_led\`."
+    # Update the activity LED setting
+    log_message "Setting Activity LED status to \`$act_led\`."
     femto-utils.sh -a "$act_led"
   fi
   
