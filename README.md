@@ -53,28 +53,6 @@ There are four methods to get online:
 
 ### [Installation guide](foxbuntu_install.md)
 
-### Pinout:
-|Pin #|Pin ID |Function      |Luckfox |Pin #|Pin ID |Function      |
-|-----|-------|--------------|--------|-----|-------|--------------|
-|1    |VBus   |5V in/out     |        |22   |1V8    |1.8V out      |
-|2    |GND    |              |        |21   |GND    |              |
-|3    |3V3    |3.3V out      |        |20   |4C1    |1v8 IO, SARADC|
-|4/42 |1B2    |Debug UART2-TX|        |19   |4C0    |1v8 IO, SARADC|
-|5/43 |1B3    |Debug UART2-RX|        |18/4 |0A4    |3v3 IO        |
-|6/48 |1C0    |CS0, IO       |        |17/55|1C7    |IRQ, IO       |
-|7/49 |1C1    |CLK, IO       |        |16/54|1C6    |BUSY, IO      |
-|8/50 |1C2    |MOSI, IO      |        |15/59|1D3    |i2c SCL       |
-|9/51 |1C3    |MISO, IO      |        |14/58|1D2    |i2c SDA       |
-|10/52|1C4    |UART4-TX      |        |13/57|1D1    |UART3-RX, NRST|
-|11/53|1C5    |UART4-RX      |        |12/56|1D0    |UART3-TX, RXEN|
-
-Pin ID explanation: **1C6** = GPIO bank **1**, group **C**, pin **6**.
-In Meshtasticd's config.yaml we use GPIO bank 1, and subtract 32 from the pin number.
-
-![pinout](assets/images/luckfox_pinout.png)
-![pinout](assets/images/luckfox_pico_mini_original_wiring_diagram.jpg)
-![pinout](/assets/images/femtofox_pinout.png)
-
 > [!NOTE]
 > The information on this page is given without warranty or guarantee. Links to vendors of products are for informational purposes only.
 > Meshtastic® is a registered trademark of Meshtastic LLC. Meshtastic software components are released under various licenses, see GitHub for details. No warranty is provided - use at your own risk.
