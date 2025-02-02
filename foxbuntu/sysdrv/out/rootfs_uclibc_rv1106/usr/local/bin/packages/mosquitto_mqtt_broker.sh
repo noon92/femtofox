@@ -32,7 +32,8 @@ Arguments:
 -U          Get URL
 -O          Get options supported by this script
 -S          Get service status
--L          Get Install location
+-L          Get install location
+-P          Get package name
 -C          Get Conflicts
 -I          Check if installed. Returns an error if not installed
 EOF
@@ -53,7 +54,7 @@ name="Mosquitto MQTT Broker"   # software name
 author="Eclipse Foundation"   # software author - OPTIONAL
 description="Eclipse Mosquitto is an open source (EPL/EDL licensed) message broker that implements the MQTT protocol versions 5.0, 3.1.1 and 3.1. Mosquitto is lightweight and is suitable for use on all devices from low power single board computers to full servers.\n\nThe MQTT protocol provides a lightweight method of carrying out messaging using a publish/subscribe model. This makes it suitable for Internet of Things messaging such as with low power sensors or mobile devices such as phones, embedded computers or microcontrollers.\n\nThe Mosquitto project also provides a C library for implementing MQTT clients, and the very popular mosquitto_pub and mosquitto_sub command line MQTT clients.\n\nMosquitto is part of the Eclipse Foundation, and is an iot.eclipse.org project. The development is driven by Cedalo."   # software description - OPTIONAL (but strongly recommended!)
 URL="https://mosquitto.org/"   # software URL. Can contain multiple URLs - OPTIONAL
-options="xiugedsrNADUOSCI"   # script options in use by software package. For example, for a package with no service, exclude `edsr`
+options="xiugedsrNADUOSPCI"   # script options in use by software package. For example, for a package with no service, exclude `edsr`
 launch=""   # command to launch software, if applicable
 service_name="mosquitto"   # the name of the service/s, such as `chrony`. REQUIRED if service options are in use. If multiple services, separate by spaces "service1 service2"
 package_name="mosquitto"   # apt package name, if applicable
@@ -139,6 +140,7 @@ while getopts ":h$options" opt; do
       systemctl status $service_name
     ;;
     L) echo -e $location ;;
+    P) echo -e $package_name ;;
     C) echo -e $conflicts ;;
     I) # Option -I (Check if already installed)
       check

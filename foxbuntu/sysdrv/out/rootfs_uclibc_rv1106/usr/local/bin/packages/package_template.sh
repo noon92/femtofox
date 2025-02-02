@@ -33,7 +33,8 @@ Arguments:
 -U          Get URL
 -O          Get options supported by this script
 -S          Get service status
--L          Get Install location
+-L          Get install location
+-P          Get package name
 -C          Get Conflicts
 -I          Check if installed. Returns an error if not installed
 EOF
@@ -53,7 +54,7 @@ name="name"                     # software name
 author="author"                 # software author - OPTIONAL
 description="description"       # software description - OPTIONAL (but strongly recommended!)
 URL="URL"                       # software URL. Can contain multiple URLs - OPTIONAL
-options="hxiuagedsrlNADUOSLCI"  # script options in use by software package. For example, for a package with no service, exclude `edsrS`
+options="hxiuagedsrlNADUOSLPCI"  # script options in use by software package. For example, for a package with no service, exclude `edsrS`
 launch="/opt/package/run.sh"    # command to launch software, if applicable
 service_name="service_name"     # the name of the service/s, such as `chrony`. REQUIRED if service options are in use. If multiple services, separate by spaces "service1 service2"
 package_name="apt_package"      # apt package name, if applicable. Can be multiple packages separated by spaces, but if at least one is installed the package will show as "installed" even if the others aren't
@@ -148,6 +149,7 @@ while getopts ":$options" opt; do
       systemctl status $service_name
     ;;
     L) echo -e $location ;;
+    P) echo -e $package_name ;;
     C) echo -e $conflicts ;;
     I) # Option -I (Check if already installed)
       check

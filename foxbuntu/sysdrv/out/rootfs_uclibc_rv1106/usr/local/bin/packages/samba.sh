@@ -33,7 +33,8 @@ Arguments:
 -U          Get URL
 -O          Get options supported by this script
 -S          Get service status
--L          Get Install location
+-L          Get install location
+-P          Get package name
 -C          Get Conflicts
 -I          Check if installed. Returns an error if not installed
 EOF
@@ -49,14 +50,14 @@ EOF
 # Messages to the user (such as configuration instructions, explanatory error messages, etc) should be given as: `echo "user_message: text"`
 # Everything following `user_message: ` will be displayed prominently to the user, so it must the last thing echoed
 
-user_message="To connect to network share, enter \`\\\\femtofox\\home\` from Windows, \`smb://$(hostname)\\home\` from MacOS or \`smbclient //$(hostname)/femto -U femto\` from Linux.\nDefault configuration shares /home/femto. Edit \`/etc/samba/smb.conf\` to add other shares.\n\nTroubleshooting: if Windows refuses to connect, especially after succeeding previously, hit [win]+R and enter \`net use * /delete\`."
+user_message="To connect to network share, enter \`\\\\femtofox\\home\` in Windows, \`smb://$(hostname)/home\` in MacOS or \`smbclient //$(hostname)/femto -U femto\` in Linux.\nDefault configuration shares /home/femto. Edit \`/etc/samba/smb.conf\` to add other shares.\n\nTroubleshooting: if Windows refuses to connect, especially after succeeding previously, hit [win]+R and enter \`net use * /delete\`."
 init_instructions="To enable file sharing, run \`Initialize\` in the femto-config Samba menu, or enable the Samba service, run \`sudo smbpasswd -a femto\` to set a Samba password, and then restart the Samba service."
 
 name="Samba File Sharing"   # software name
 author="Software Freedom Conservancy"   # software author - OPTIONAL
 description="Femtofox comes with Samba preinstalled but disabled. $init_instructions\n\n$user_message"   # software description - OPTIONAL (but strongly recommended!)
 URL="https://www.samba.org/"   # software URL. Can contain multiple URLs - OPTIONAL
-options="xiuagedsrNADUOSCI"   # script options in use by software package. For example, for a package with no service, exclude `edsr`
+options="xiuagedsrNADUOSPCI"   # script options in use by software package. For example, for a package with no service, exclude `edsr`
 launch=""   # command to launch software, if applicable
 service_name="smbd nmbd"   # the name of the service/s, such as `chrony`. REQUIRED if service options are in use. If multiple services, separate by spaces "service1 service2"
 location=""   # install location REQUIRED if not apt installed. Generally, we use `/opt/software-name`
@@ -157,6 +158,7 @@ while getopts ":h$options" opt; do
       systemctl status $service_name
     ;;
     L) echo -e $location ;;
+    P) echo -e $package_name ;;
     C) echo -e $conflicts ;;
     I) # Option -I (Check if already installed)
       check
