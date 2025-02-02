@@ -15,6 +15,7 @@ Options are:
 -c "COUNTRY"   Set Wi-Fi 2-letter country code (such as US, DE)
 -r             Restart Wi-Fi
 -e             Get ethernet settings
+-i             Get IPv4 addresses
 -w             Get Wi-Fi settings
 -n "HOSTNAME"  Change hostname
 -t             Test internet connection
@@ -37,7 +38,7 @@ if [ $# -eq 0 ]; then
 fi
 
 # Parse options
-while getopts ":hx:Ts:p:c:ewn:tr" opt; do
+while getopts ":hx:Ts:p:c:eiwn:tr" opt; do
   case ${opt} in
     h) # Option -h (help)
       echo -e "$help"
@@ -77,41 +78,51 @@ while getopts ":hx:Ts:p:c:ewn:tr" opt; do
       ;;
     e) # Option -e (ethernet settings)
 status=$(ip link show eth0 | grep -o 'state [A-Za-z]*' | awk '{print $2}')
-echo -e "Ethernet status:  $([ "$status" == "UP" ] && echo -e "\033[4m\033[0;34mconnected\033[0m" || echo -e "\033[0;31mdisconnected\033[0m")"
+echo -e "\
+Eth status:$([ "$status" == "UP" ] && echo -e "\033[4m\033[0;34mconnected\033[0m" || echo -e "\033[0;31mdisconnected\033[0m")"
 if [ "$status" == "UP" ]; then
-  echo "IPv4 Address:     $(ifconfig eth0 | grep 'inet ' | awk '{print $2}')\n\
-IPv6 Address:     $(ifconfig eth0 | grep 'inet6 ' | awk '{print $2}')"
+  echo -e "\
+IPv4 Address:$(ifconfig eth0 | grep 'inet ' | awk '{print $2}')
+IPv6 Address:$(ifconfig eth0 | grep 'inet6 ' | awk '{print $2}')"
 fi
-echo -e "MAC Address:      $(ifconfig eth0 | grep 'ether ' | awk '{print $2}')\n\
-Hostname:         $(hostname).local"
+echo -e "\
+MAC Address:$(ifconfig eth0 | grep 'ether ' | awk '{print $2}')\n\
+Hostname:$(hostname).local"
       ;;
     w) # Option -w (wifi settings)
-    wifi_settings="SSID:             $(grep -m 1 '^\s*ssid=' "$wpa_supplicant_conf" | cut -d '"' -f 2)\n\
-Password:         (hidden)\n\
-Country:          $(grep -m 1 "^country=" "$wpa_supplicant_conf" | cut -d '=' -f 2)"
+    wifi_settings="\
+SSID:$(grep -m 1 '^\s*ssid=' "$wpa_supplicant_conf" | cut -d '"' -f 2)\n\
+Password:(hidden)\n\
+Country:$(grep -m 1 "^country=" "$wpa_supplicant_conf" | cut -d '=' -f 2)"
 
       if ip link show wlan0 2>/dev/null | grep -q "wlan0"; then
-        mac_address_line="MAC address:      $(ifconfig wlan0 | grep ether | awk '{print $2}')\n"
+        mac_address_line="\
+MAC address:$(ifconfig wlan0 | grep ether | awk '{print $2}')"
         if [ "$(cat /etc/wifi_state.txt)" = "up" ]; then
-            echo -e "Wi-Fi status:     \033[4m\033[0;34menabled\033[0m\n\
-Connected to:     $(iwconfig 2>/dev/null | grep -i 'ESSID' | awk -F 'ESSID:"' '{print $2}' | awk -F '"' '{print $1}' | sed 's/^$/none/')\n\
-Signal Strength:  $(iwconfig 2>/dev/null | grep -i 'Signal level' | awk -F 'Signal level=' '{print $2}' | awk '{print $1}')\n\
-Current IP:       $(hostname -I | awk '{print $1}')\n
-Hostname:         $(hostname).local\n\
+            echo -e "\
+Wi-Fi status:\033[4m\033[0;34menabled\033[0m\n\
+Connected to:$(iwconfig 2>/dev/null | grep -i 'ESSID' | awk -F 'ESSID:"' '{print $2}' | awk -F '"' '{print $1}' | sed 's/^$/none/')\n\
+Sig. strength:$(iwconfig 2>/dev/null | grep -i 'Signal level' | awk -F 'Signal level=' '{print $2}' | awk '{print $1}')\n\
+Current IP:$(hostname -I | awk '{print $1}')\n
+Hostname:$(hostname).local\n\
 $mac_address_line"
         else
           if ip link show wlan0 &>/dev/null; then # if wlan0 exists
-            echo -e "Wi-Fi status:     \033[0;31mdisabled\033[0m\n\
+            echo -e "\
+Wi-Fi status:\033[0;31mdisabled\033[0m\n\
 \n\
 $wifi_settings"
           fi
         fi
       else
-        echo -e "Wi-Fi status:     \033[0;31mwlan0 not detected\033[0m\n\
+        echo -e "\
+Wi-Fi status:\033[0;31mwlan0 not detected\033[0m\n\
 \n\
-Wi-Fi settings:\n\
 $wifi_settings"
       fi
+      ;;
+    i) # Option -i (Get all IPv4 addresses)
+      hostname -I | awk '{for(i=1; i<=NF; i++) {if(i>1) printf ", "; printf $i} print ""}'
       ;;
     t) # Option -t (test internet connection)
       # Define ping targets and initialize counter
@@ -129,7 +140,7 @@ $wifi_settings"
       if [ "$successful" -eq 0 ]; then
         echo -e "\033[0;31mNo internet connection detected.\033[0m"
       else
-        echo -e "Internet connection is \033[4m\033[0;32mup\033[0m.\n\nPinged $(echo "${targets[*]}" | sed 's/ /, /g').\nReceived $successful/$total responses."
+        echo -e "Internet connection is \033[4m\033[0;34mup\033[0m.\n\nPinged $(echo "${targets[*]}" | sed 's/ /, /g').\nReceived $successful/$total responses."
       fi
       ;;
     r) # Option -r (restart Wi-Fi)

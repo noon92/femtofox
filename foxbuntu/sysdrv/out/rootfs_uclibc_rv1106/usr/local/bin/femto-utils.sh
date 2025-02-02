@@ -64,24 +64,26 @@ cpu_info() {
   local cpu_speed="$(lscpu | grep "CPU min MHz" | awk '{print int($4)}')-$(lscpu | grep "CPU max MHz" | awk '{print int($4)}')mhz"
   local cpu_serial="$(awk '/Serial/ {print $3}' /proc/cpuinfo)"
 
-  echo -e "Core:             $core\n\
-Model:            $cpu_model\n\
-Architecture:     $cpu_architecture\n\
-Speed:            $cpu_speed x $(nproc) cores\n\
-Temperature:      $cpu_temp\n\
-Serial #          $cpu_serial"
+  echo -e "\
+Core:$core\n\
+Model:$cpu_model\n\
+Architecture:$cpu_architecture\n\
+Speed:$cpu_speed x $(nproc) cores\n\
+Temperature:$cpu_temp\n\
+Serial #:$cpu_serial"
 }
 
 storage_info() {
-  local microsd_size="$(df --block-size=1 / | awk 'NR==2 {total=$2; avail=$4; total_human=sprintf("%.2f", total/1024/1024/1024); avail_human=sprintf("%.2f", avail/1024/1024/1024); printf "%.2f GB   (%.2f%% free)", total_human, (avail/total)*100}')"
-  local memory="$(free -m | awk 'NR==2{printf "%d MB      (%.2f%% free)\n", $2, 100 - (($3/$2)*100)}')"
-  local swap="$(free -m | awk 'NR==3 {if ($2 > 1000) {printf "%.2f GB    (%.2f%% free)", $2/1024, ($4/$2)*100} else {printf "%d MB    (%.2f%% free)", $2, ($4/$2)*100}}')"
-  local mounted_drives="$([ "$(for dir in /mnt/*/; do echo -n "/mnt${dir#"/mnt"} "; done)" ] && echo "Mounted drives:   $(for dir in /mnt/*; do echo -n "/mnt${dir#"/mnt"} "; done | sed 's/\/$//')")"
+  local microsd_size="$(df --block-size=1 / | awk 'NR==2 {total=$2; avail=$4; total_human=sprintf("%.2f", total/1024/1024/1024); avail_human=sprintf("%.2f", avail/1024/1024/1024); printf "%.2f GB (%.2f%% free)", total_human, (avail/total)*100}')"
+  local memory="$(free -m | awk 'NR==2{printf "%d MB (%.2f%% free)\n", $2, 100 - (($3/$2)*100)}')"
+  local swap="$(free -m | awk 'NR==3 {if ($2 > 1000) {printf "%.2f GB    (%.2f%% free)", $2/1024, ($4/$2)*100} else {printf "%d MB (%.2f%% free)", $2, ($4/$2)*100}}')"
+  local mounted_drives="$( [ "$(for dir in /mnt/*/; do [ -d "$dir" ] && echo -n "/mnt${dir#"/mnt"} "; done)" ] && echo "$(for dir in /mnt/*/; do [ -d "$dir" ] && echo -n "/mnt${dir#"/mnt"} "; done | sed 's/\/$//')" || echo "none" )"
 
-  echo -e "microSD size:     $microsd_size\n\
-Memory:           $memory\n\
-Swap:             $swap\n\
-$mounted_drives"
+  echo -e "\
+microSD size:$microsd_size\n\
+Memory:$memory\n\
+Swap:$swap\n\
+Mnted drives:$mounted_drives"
 }
 
 os_info() {
@@ -92,21 +94,22 @@ os_info() {
   local kernel_active_modules="$(lsmod | awk 'NR>1 {print $1}' | tr '\n' ' ' && echo)"
   local kernel_boot_modules="$(modules=$(sed -n '6,$p' /etc/modules | sed ':a;N;$!ba;s/\n/, /g;s/, $//'); [ -z "$modules" ] && echo "none" || echo "$modules")"
 
-  echo -e "Operating System: $os_version\n\
-Kernel version:   $(uname -r)\n\
-Uptime:          $system_uptime\n\
-Logging:          $logging_enabled\n\
-Activity LED:     $act_led\n\
-System time:      $(date)\n\
-K modules active: $kernel_active_modules\n\
-K boot modules:   $kernel_boot_modules"
+  echo -e "\
+OS:$os_version\n\
+Kernel ver:$(uname -r)\n\
+Uptime:$system_uptime\n\
+Logging:$logging_enabled\n\
+Activity LED:$act_led\n\
+System time:$(date)\n\
+K mods active:$kernel_active_modules\n\
+K boot mods:$kernel_boot_modules"
 }
 
 networking_info() {
   local wifi_status="$(femto-network-config.sh -w | grep -v '^$' | grep -v '^Hostname')" #remove hostname line, as it's identical to the one in ethernet settings
   local eth_status="$(femto-network-config.sh -e)"
   echo -e "$wifi_status\n\
----
+
 $eth_status"
 }
 
@@ -119,7 +122,7 @@ peripherals_info() {
   local uart3_state="$([ "$(awk -F= '/^UART3_M1_STATUS/ {print $2}' /etc/luckfox.cfg)" -eq 1 ] && echo "enabled" || echo "disabled")"
   local uart4_state="$([ "$(awk -F= '/^UART4_M1_STATUS/ {print $2}' /etc/luckfox.cfg)" -eq 1 ] && echo "enabled" || echo "disabled")"
   local lora_radio="$(femto-meshtasticd-config.sh -k)"
-  local usb_devices="$(lsusb | grep -v 'root hub' | awk 'NR>0{printf "USB:              "; for(i=7;i<=NF;i++) printf "%s ", $i; print ""} END {if (NR == 0) printf "USB:              none detected"}')"
+  local usb_devices="$(lsusb | grep -v 'root hub' | awk 'NR>0{printf "USB:"; for(i=7;i<=NF;i++) printf "%s ", $i; print ""} END {if (NR == 0) printf "USB:none detected"}')"
   # gather i2c addresses
   i2c_addresses=""    # initialize empty string to collect populated addresses
   while IFS= read -r line; do    # iterate over each row of output (captured at end of while loop)
@@ -136,16 +139,16 @@ peripherals_info() {
   done <<< "$(echo "$(sudo i2cdetect -y 3)")"
   [[ -z "$i2c_addresses" ]] && i2c_addresses="none detected"    # if no addresses found, "none detected"
 
-  echo -e "LoRa radio:       $lora_radio\n\
+  echo -e "LoRa radio:$lora_radio\n\
 $usb_devices\n\
-i2c devices:      $i2c_addresses\n\
-USB mode:         $usb_mode\n\
-SPI-0 state:      $spi0_state\n\
-SPI-0 speed:      $spi0_speed\n\
-i2c-3 state:      $i2c3_state\n\
-i2c-3 speed:      $i2c3_speed\n\
-UART-3 state:     $uart3_state\n\
-UART-4 state:     $uart4_state"
+i2c devices:$i2c_addresses\n\
+USB mode:$usb_mode\n\
+SPI-0 state:$spi0_state\n\
+SPI-0 speed:$spi0_speed\n\
+i2c-3 state:$i2c3_state\n\
+i2c-3 speed:$i2c3_speed\n\
+UART-3 state:$uart3_state\n\
+UART-4 state:$uart4_state"
 }
 
 all_system_info() {
@@ -154,7 +157,7 @@ all_system_info() {
     CPU:\n\
 $(cpu_info)\n\
 \n\
-    OS:\n\
+    Operating System:\n\
 $(os_info)\n\
 \n\
     Storage:\n\

@@ -81,32 +81,46 @@ while getopts ":higkl:q:uU:rR:aA:cpo:sM:Stwuxm" opt; do
       echo -e "$help"
       ;;
     i) # Option -i (Get important node info)
+      declare -a output_array
       output=$(meshtastic --host --info)
-      preset_or_settings="Use preset?       $(echo "$output" | grep -oP '"usePreset":\s*\K\w+')\n"
-      if echo "$output" | grep -qP '"usePreset":\s*true'; then
-        preset_or_settings+="Preset:           $(echo "$output" | grep -oP '"modemPreset":\s*"\K[^"]+')"
-      else
-        preset_or_settings+="\
-Bandwidth:        $(echo "$output" | grep -oP '"bandwidth":\s*\K\w+')\n\
-Spread factor:    $(echo "$output" | grep -oP '"spreadFactor":\s*\K\w+')\n\
-Coding rate:      $(echo "$output" | grep -oP '"codingRate":\s*\K\w+')"
+      output_array+=("Service=$(femto-meshtasticd-config.sh -S)")
+      output_array+=("Version=$(echo "$output" | grep -oP '"firmwareVersion":\s*"\K[^"]+' | head -n 1)")
+      output_array+=("Node name=$(echo "$output" | grep -oP 'Owner:\s*\K.*' | head -n 1)")
+      output_array+=("NodeID=$(echo "!$(printf "%08x\n" $(echo "$output" | grep -oP '"myNodeNum":\s*\K\d+' | head -n 1))")")
+      output_array+=("Nodenum=$(echo "$output" | grep -oP '"myNodeNum":\s*\K\d+' | head -n 1)")
+      output_array+=("TX enabled=$(echo "$output" | grep -oP '"txEnabled":\s*\K\w+')")
+      use_preset=$(echo "$output" | grep -oP '"usePreset":\s*\K\w+')
+      output_array+=("Use preset=$use_preset")
+      if [ "$use_preset" = "true" ]; then # if use-preset is true, then display the preset
+        output_array+=("Preset=$(echo "$output" | grep -oP '"modemPreset":\s*"\K[^"]+')")
+      else # otherwise, display the lora settings
+        output_array+=("Bandwidth=$(echo "$output" | grep -oP '"bandwidth":\s*\K\w+')")
+        output_array+=("Spread factor=$(echo "$output" | grep -oP '"spreadFactor":\s*\K\w+')")
+        output_array+=("Coding rate=$(echo "$output" | grep -oP '"codingRate":\s*\K\w+')")
       fi
-      echo -e "\
-Service status:   $(femto-meshtasticd-config.sh -S)\n\
-Version:          $(echo "$output" | grep -oP '"firmwareVersion":\s*"\K[^"]+' | head -n 1)\n\
-Node name:        $(echo "$output" | grep -oP 'Owner:\s*\K.*' | head -n 1)\n\
-NodeID:           !$(printf "%08x\n" $(echo "$output" | grep -oP '"myNodeNum":\s*\K\d+' | head -n 1))   (nodenum: $(echo "$output" | grep -oP '"myNodeNum":\s*\K\d+' | head -n 1))\n\
-TX enabled?       $(txEnabled=$(echo "$output" | grep -oP '"txEnabled":\s*\K\w+'); [[ "$txEnabled" == "true" ]] && echo "\033[0;34menabled\033[0m" || echo "\033[0;31mdisabled\033[0m")\n\
-Role:             $(echo "$output" | grep -oP '"role":\s*"\K[^"]+' | head -n 1)\n\
-$preset_or_settings\n\
-Frequency offset: $(echo "$output" | grep -oP '"bandwidth":\s*\K\w+')
-Region:           $(echo "$output" | grep -oP '"region":\s*"\K[^"]+')\n\
-Hop limit:        $(echo "$output" | grep -oP '"hopLimit":\s*\K\w+')\n\
-$(channelNum=$(echo "$output" | grep -oP '"channelNum":\s*\K\d+' | head -n 1); [[ -n "$channelNum" && "$channelNum" -gt 0 ]] && echo -e "Frequency slot:   $channelNum\n")\
-$(overrideFrequency=$(echo "$output" | grep -oP '"overrideFrequency":\s*\K[0-9.]+'); [[ -n "$overrideFrequency" && $(echo "$overrideFrequency > 0" | bc) -eq 1 ]] && echo "Override freq:    $overrideFrequency\n")\
-Public key:       $(echo "$output" | grep -oP '"publicKey":\s*"\K[^"]+' | head -n 1)\n\
-Nodes in nodedb:  $(echo "$output" | grep -oP '"![a-zA-Z0-9]+":\s*\{' | wc -l)\
-"
+      output_array+=("Role=$(echo "$output" | grep -oP '"role":\s*"\K[^"]+' | head -n 1)")
+      freq_offset=$(echo "$output" | grep -oP '"bandwidth":\s*\K\w+')
+      if [ "$freq_offset" != 0 ]; then # only display frequency offset if not 0
+        output_array+=("Override freq=$freq_offset")
+      fi
+      output_array+=("Region=$(echo "$output" | grep -oP '"region":\s*"\K[^"]+')")
+      output_array+=("Hop limit=$(echo "$output" | grep -oP '"hopLimit":\s*\K\w+')")
+      freq_slot=$(echo "$output" | grep -oP '"channelNum":\s*\K\d+' | head -n 1)
+      if [ "$freq_slot" != 0 ]; then # only display frequency slot if not 0
+        freq_slot+=("Freq slot=$freq_slot")
+      fi
+      override_freq=$(echo "$output" | grep -oP '"overrideFrequency":\s*\K[0-9.]+')
+      if [ "$override_freq" != "0" ]; then # only display override frequency if not 0
+        output_array+=("Override freq=$override_freq")
+      fi
+      output_array+=("Public key=$(echo "$output" | grep -oP '"publicKey":\s*"\K[^"]+' | head -n 1)")
+      output_array+=("Nodes in db=$(echo "$output" | grep -oP '"![a-zA-Z0-9]+":\s*\{' | wc -l)")
+      # now, echo the array
+      for pair in "${output_array[@]}"; do
+        key=$(echo "$pair" | cut -d'=' -f1)
+        value=$(echo "$pair" | cut -d'=' -f2-)
+        echo "$key:$value"
+      done
       ;;
     g) # Option -g (get config URL)
       url=$(meshtastic --host --qr-all | grep -oP '(?<=Complete URL \(includes all channels\): )https://[^ ]+') #add look for errors
