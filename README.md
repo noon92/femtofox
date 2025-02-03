@@ -42,17 +42,6 @@ The Luckfox Pico Mini is the postage stamp sized heart of the Femtofox - a compa
 
 The preconfigured images will reboot every 24 hours. If the internal clock is accurate, this will be at 3am. Reboot timing is set in `crontab`. To keep accurate time, an RTC module can be installed (see [supported hardware](supported_hardware.md)) or internet connectivity can be utilized for NTP via [Chrony](https://chrony-project.org/).
 
-### [Supported hardware - click here](supported_hardware.md)
-
-### Networking
-There are four methods to get online:
-1. Ethernet over USB - most adapters should be supported, but I've only tested the RTL8152 chipset.
-2. USB wifi  (see [supported hardware](supported_hardware.md)).
-3. Preconfigured Ubuntu images: ethernet via the castellated pins at the bottom of the board. See pinout at the bottom of this readme.
-4. RDNIS via usb - [see this guide](https://web.archive.org/web/20241006173648/https://wiki.luckfox.com/Luckfox-Pico/Luckfox-Pico-Network-Sharing-1/). Note that in the preconfigured images USB is set to host mode, so you'll have to switch back to peripheral with `sudo luckfox-config`. This is not really recommended, but can be used in a pinch.
-
-### [Installation guide](foxbuntu_install.md)
-
 > [!NOTE]
 > The information on this page is given without warranty or guarantee. Links to vendors of products are for informational purposes only.
 > Meshtastic® is a registered trademark of Meshtastic LLC. Meshtastic software components are released under various licenses, see GitHub for details. No warranty is provided - use at your own risk.
