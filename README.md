@@ -8,21 +8,20 @@ The Luckfox Pico Mini is the postage stamp sized heart of the Femtofox - a compa
 
 - [Features](#features)
 - Specifications - coming soon
-- [Supported hardware](./supported_hardware.md)
-- [Installation guide](./foxbuntu_install.md)
+- [Supported hardware](https://github.com/femtofox/femtofox/wiki/Supported-Hardware)
+- [Installation guide](https://github.com/femtofox/femtofox/wiki/Getting-Started)
 - How to order - coming soon
-- DIY instructions - coming soon
-- [Networking](#networking)
-- [USB configuration tool](./usb_config.md) 
+- [DIY instructions](https://github.com/femtofox/Femtofox_Community_Hardware)
+- [USB configuration tool](https://github.com/femtofox/femtofox/wiki/USB-Config-Tool) 
 
 ### Features
-* Tiny size (63x54mm for the Kitchen Sink Edition, 65x30mm for the Smol Edition). Roughly equivalent to a standard Raspberry Pi hat and Pi Zero respectively.
-* Power efficiency (~0.27-0.4w average, depending on radio and mesh congestion)
+* Tiny size (63x54mm for Femtofox, 65x30mm for the Smol Edition). Equivalent to a standard Raspberry Pi hat and Pi Zero respectively.
+* Power efficient (~0.27-0.4w average, depending on radio and mesh congestion)
 * Full Linux CLI (Ubuntu) via our pre-built Foxbuntu image
 * Meshtastic native client support via SPI
-* USB host support - attach USB peripherals (see [supported hardware](supported_hardware.md))
-* USB wifi support (see [supported hardware](supported_hardware.md))
-* RTC support for timekeeping (see [supported hardware](supported_hardware.md))
+* USB host support - attach USB peripherals
+* USB wifi support
+* RTC support for timekeeping
 
 **Accomplished:**
 - [x] Meshtastic native client controlling a LoRa radio (see [supported hardware](supported_hardware.md))
@@ -39,8 +38,6 @@ The Luckfox Pico Mini is the postage stamp sized heart of the Femtofox - a compa
 - [x] Meshtasticd to run LoRa radio over SPI (accomplished, updated image and instructions coming soon)
 - [x] Allow editing of config files by plugging in thumb drive
 - [x] Ability to activate or deactivate WIFI via Meshtastic admin
-
-The preconfigured images will reboot every 24 hours. If the internal clock is accurate, this will be at 3am. Reboot timing is set in `crontab`. To keep accurate time, an RTC module can be installed (see [supported hardware](supported_hardware.md)) or internet connectivity can be utilized for NTP via [Chrony](https://chrony-project.org/).
 
 > [!NOTE]
 > The information on this page is given without warranty or guarantee. Links to vendors of products are for informational purposes only.
