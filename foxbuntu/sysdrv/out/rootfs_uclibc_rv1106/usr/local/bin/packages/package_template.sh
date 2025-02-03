@@ -10,7 +10,7 @@ if [ $# -eq 0 ]; then
 fi
 
 args="$@" # arguments to this script
-interaction="true"
+interactive="true"
 help=$(cat <<EOF
 Arguments:
 -h          This message
@@ -19,6 +19,7 @@ Arguments:
     Actions:
 -i          Install
 -u          Uninstall
+-a          Interactive initialization script: code that must be run to initialize the installation prior to use, but can only be run from terminal
 -g          Upgrade
 -e          Enable service, if applicable
 -d          Disable service, if applicable
@@ -32,7 +33,8 @@ Arguments:
 -U          Get URL
 -O          Get options supported by this script
 -S          Get service status
--L          Get Install location
+-L          Get install location
+-P          Get package name
 -C          Get Conflicts
 -I          Check if installed. Returns an error if not installed
 EOF
@@ -48,25 +50,25 @@ EOF
 # Messages to the user (such as configuration instructions, explanatory error messages, etc) should be given as: `echo "user_message: text"`
 # Everything following `user_message: ` will be displayed prominently to the user, so it must the last thing echoed
 
-
-name="name"   # software name
-author="author"   # software author - OPTIONAL
-description="description"   # software description - OPTIONAL (but strongly recommended!)
-URL="URL"   # software URL. Can contain multiple URLs - OPTIONAL
-options="xiugedsrlNADUOSLCIto"   # script options in use by software package. For example, for a package with no service, exclude `edsr`
-launch=""   # command to launch software, if applicable
-service_name="service_name"   # the name of the service/s, such as `chrony`. REQUIRED if service options are in use. If multiple services, separate by spaces "service1 service2"
-location="/opt/location"   # install location REQUIRED if not apt installed. Generally, we use `/opt/software-name`
-conflicts="package name, other package name"   # comma delineated plain-text list of packages with which this package conflicts. Blank if none. Use the name as it appears in the $name field of the other package. Extra plaintext is allowed, such as "packageA, packageB, any other software that uses the Meshtastic CLI"
+name="name"                     # software name
+author="author"                 # software author - OPTIONAL
+description="description"       # software description - OPTIONAL (but strongly recommended!)
+URL="URL"                       # software URL. Can contain multiple URLs - OPTIONAL
+options="hxiuagedsrlNADUOSLPCI"  # script options in use by software package. For example, for a package with no service, exclude `edsrS`
+launch="/opt/package/run.sh"    # command to launch software, if applicable
+service_name="service_name"     # the name of the service/s, such as `chrony`. REQUIRED if service options are in use. If multiple services, separate by spaces "service1 service2"
+package_name="apt_package"      # apt package name, if applicable. Can be multiple packages separated by spaces, but if at least one is installed the package will show as "installed" even if the others aren't
+location="/opt/location"        # install location REQUIRED if not apt installed. Generally, we use `/opt/software-name`
+conflicts="package1, package2"  # comma delineated plain-text list of packages with which this package conflicts. Blank if none. Use the name as it appears in the $name field of the other package. Extra plaintext is allowed, such as "packageA, packageB, any other software that uses the Meshtastic CLI"
 
 # install script
 install() {
   # for apt packages, this method allows onscreen output during install:
-  # DEBIAN_FRONTEND=noninteractive sudo apt-get install mosquitto -y 2>&1 | tee /dev/tty # allows output to be shown onscreen
+  # DEBIAN_FRONTEND=noninteractive apt-get update -y 2>&1 | tee /dev/tty || { echo "user_message: apt update failed. Is internet connected?"; exit 1; }
+  # DEBIAN_FRONTEND=noninteractive apt-get install $package_name -y 2>&1 | tee /dev/tty || { echo "user_message: apt install failed. Is internet connected?"; exit 1; }
   echo "user_message: Exit message to user, displayed prominently in post-install"
   exit 0 # should be `exit 1` if operation failed
 }
-
 
 # uninstall script
 uninstall() {
@@ -74,6 +76,10 @@ uninstall() {
   exit 0 # should be `exit 1` if operation failed
 }
 
+# code that must be run to initialize the installation prior to use, but can only be run from terminal
+interactive_init() {
+  exit 0 # should be `exit 1` if operation failed
+}
 
 # upgrade script
 upgrade() {
@@ -91,14 +97,14 @@ check() {
   fi
 
   # this works for apt packages
-  if [ dpkg -l | grep -q package-name ] ; then
+  if dpkg-query -W -f='${Status}' $package_name 2>/dev/null | grep -q "install ok installed"; then
     exit 0
   else
     exit 1
   fi
 }
 
-while getopts ":h$options" opt; do
+while getopts ":$options" opt; do
   case ${opt} in
     h) # Option -h (help)
       echo -e "$help"
@@ -111,6 +117,9 @@ while getopts ":h$options" opt; do
       ;;
     u) # Option -u (uninstall)
       uninstall
+      ;;
+    a) # Option -a (interactive initialization)
+      interactive_init
       ;;
     g) # Option -g (upgrade)
       upgrade
@@ -140,6 +149,7 @@ while getopts ":h$options" opt; do
       systemctl status $service_name
     ;;
     L) echo -e $location ;;
+    P) echo -e $package_name ;;
     C) echo -e $conflicts ;;
     I) # Option -I (Check if already installed)
       check
