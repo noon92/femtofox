@@ -38,7 +38,7 @@ The Luckfox Pico Mini is the postage stamp sized heart of the Femtofox - a compa
 - [x] Meshtasticd to run LoRa radio over SPI (accomplished, updated image and instructions coming soon)
 - [x] Allow editing of config files by plugging in thumb drive
 - [x] Ability to activate or deactivate WIFI via Meshtastic admin
-
+ 
 > [!NOTE]
 > The information on this page is given without warranty or guarantee. Links to vendors of products are for informational purposes only.
 > Meshtastic® is a registered trademark of Meshtastic LLC. Meshtastic software components are released under various licenses, see GitHub for details. No warranty is provided - use at your own risk.
