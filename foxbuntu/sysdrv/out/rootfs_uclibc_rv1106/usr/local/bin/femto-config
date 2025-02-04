@@ -201,9 +201,10 @@ utilities() {
     
     case $utilities_choice in
       1) #sysinfo)
-        choice=""   # zero the choice before loading the submenu
+        sysinfo_choice=""   # zero the choice before loading the submenu
         while true; do
-          choice=$(dialog --no-collapse --help-button --help-label "Help" --cancel-label "Back" --default-item "$choice" --item-help --menu "System info" 17 40 5 \
+        echo $sysinfo_choice
+          sysinfo_choice=$(dialog --no-collapse --help-button --help-label "Help" --cancel-label "Back" --default-item "$sysinfo_choice" --item-help --menu "System info" 17 40 5 \
             1 "CPU" "" \
             2 "Operating system" "" \
             3 "Storage & memory" "" \
@@ -219,7 +220,7 @@ utilities() {
           elif [ $exit_status -eq 2 ]; then # Help ("extra") button
             dialog --no-collapse --colors --title "System info help" --msgbox "To get system info in terminal (where it can be copied), enter \`\Zusudo femto-utils.sh -i\Zn\`.\n\nWhen getting Peripherals & Devices (or Complete System Info) without an i2c device connected, it is normal to see error messages on serial console.\n" 0 0
           else
-            case $choice in
+            case $sysinfo_choice in
               1) # CPU)
                 loading "Loading CPU info..."
                 dialog --no-collapse --colors --title "CPU info" --msgbox "$(ingest_data "femto-utils.sh -c" 15)" 0 0
