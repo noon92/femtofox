@@ -4,7 +4,7 @@ After=syslog.target
 After=network.target
 
 [Service]
-ExecStart=/opt/ttyd -W login
+ExecStart=/opt/ttyd -W -6 login
 Type=simple
 Restart=always
 User=root
