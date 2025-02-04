@@ -18,6 +18,8 @@ Options are:
 -n             Networking info
 -o             OS info
 -S             Storage & RAM info
+-t "enable"    Enable/disable/start/stop/check ttyd (http based terminal).  Options: "enable" "disable" "start" "stop" "check"
+
 EOF
 )
 
@@ -89,20 +91,22 @@ Mnted drives:$mounted_drives"
 os_info() {
   local os_version="Foxbuntu v$(grep -oP 'major=\K[0-9]+' /etc/foxbuntu-release).$(grep -oP 'minor=\K[0-9]+' /etc/foxbuntu-release)$(output=$(grep -o 'patch=[1-9][0-9]*' /etc/foxbuntu-release | cut -d= -f2) && [ -n "$output" ] && echo ".$output")$(grep -oP 'hotfix=\K[a-z]+' /etc/foxbuntu-release) ($(lsb_release -d | awk -F'\t' '{print $2}') $(lsb_release -c | awk -F'\t' '{print $2}'))"
   local system_uptime="$(uptime -p | awk '{$1=""; print $0}' | sed -e 's/ day\b/d/g' -e 's/ hour\b/h/g' -e 's/ hours\b/h/g' -e 's/ minute\b/m/g' -e 's/ minutes\b/m/g' | sed 's/,//g')"
-  local logging_enabled="$(logging "check" | sed 's/\x1b\[[0-9;]*m//g')"
-  local act_led="$(femto-utils.sh -a "check" | sed -r 's/\x1B\[[0-9;]*[mK]//g')" #remove color from output
   local kernel_active_modules="$(lsmod | awk 'NR>1 {print $1}' | tr '\n' ' ' && echo)"
   local kernel_boot_modules="$(modules=$(sed -n '6,$p' /etc/modules | sed ':a;N;$!ba;s/\n/, /g;s/, $//'); [ -z "$modules" ] && echo "none" || echo "$modules")"
+  local ttyd_enabled="$(ttyd "check" | sed 's/\x1b\[[0-9;]*m//g')"
+  local logging_enabled="$(logging "check" | sed 's/\x1b\[[0-9;]*m//g')"
+  local act_led="$(femto-utils.sh -a "check" | sed -r 's/\x1B\[[0-9;]*[mK]//g')" #remove color from output
 
   echo -e "\
 OS:$os_version\n\
 Kernel ver:$(uname -r)\n\
 Uptime:$system_uptime\n\
-Logging:$logging_enabled\n\
-Activity LED:$act_led\n\
 System time:$(date)\n\
 K mods active:$kernel_active_modules\n\
-K boot mods:$kernel_boot_modules"
+K boot mods:$kernel_boot_modules\n\
+Web terminal:$ttyd_enabled\n\
+Logging:$logging_enabled\n\
+Activity LED:$act_led"
 }
 
 networking_info() {
@@ -195,7 +199,41 @@ logging() {
   fi
 }
 
-while getopts ":harsl:ipcnoS" opt; do
+ttyd() {
+  if [ "$1" = "disable" ]; then
+    systemctl disable ttyd
+    systemctl stop ttyd
+    echo "Disabled ttyd service."
+    exit 0
+  elif [ "$1" = "enable" ]; then
+    systemctl enable ttyd
+    echo "Enabled ttyd service."
+    systemctl start ttyd
+    exit 0
+  elif [ "$1" = "check" ]; then
+    if systemctl is-enabled ttyd &>/dev/null; then
+      if echo "$(systemctl status ttyd)" | grep -q "active (running)"; then
+        echo -e "\033[4m\033[0;34menabled and running\033[0m"
+      elif echo "$(systemctl status ttyd)" | grep -q "inactive (dead)"; then
+        echo -e "\033[4m\033[0;31menabled but not running\033[0m"
+        exit 1
+      else
+        echo "unknown"
+      fi
+    else
+      echo -e "\033[4m\033[0;31mdisabled\033[0m"
+      exit 1
+    fi
+  elif [ "$1" = "start" ]; then
+  echo "Starting/restarting ttyd service..."
+  systemctl restart ttyd
+  elif [ "$1" = "stop" ]; then
+  echo "Stopping ttyd service..."
+  systemctl stop ttyd
+  fi
+}
+
+while getopts ":harsl:ipcnoSt:" opt; do
   case ${opt} in
     h) # Option -h (help)
       echo -e $help
@@ -213,15 +251,14 @@ while getopts ":harsl:ipcnoS" opt; do
       logger "User requested system halt"
       halt
     ;;
-    l) # Option -l (Logging enable/disable/check)
-      logging $OPTARG
-    ;;
+    l) logging $OPTARG ;; # Option -l (Logging enable/disable/check)
     i) all_system_info ;; # Option -i (sysinfo)
     p) peripherals_info ;; # Option -p (Peripherals info)
     c) cpu_info ;; # Option -c (CPU info)
     n) networking_info ;; # Option -n (Networing info)
     o) os_info ;; # Option -o (OS info)
     S) storage_info ;; # Option -S (Storage & RAM info)
+    t) ttyd $OPTARG ;; # Option -t (ttyd)
     \?) # Unknown option)
       echo -e "Unknown argument $1.\n$help"
     ;;

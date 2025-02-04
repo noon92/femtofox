@@ -37,6 +37,12 @@ echo "Installing dependencies for meshing-around and meshtastic cli..."
 pip3 install requests pyephem pytap2 meshtastic pypubsub geopy maidenhead beautifulsoup4 dadjokes schedule wikipedia googlesearch-python
 if [[ $? -eq 2 ]]; then echo "Error, step failed..."; fi
 
+echo "Downloading ttyd and enabling service..."
+wget -qO- https://api.github.com/repos/tsl0922/ttyd/releases/latest | \
+grep "browser_download_url" | grep "armhf" | cut -d '"' -f 4 | xargs wget -O /opt/ttyd
+chmod +x /opt/ttyd
+systemctl enable ttyd
+
 echo "Setting MOTD..."
 mv /etc/update-motd.d/10-help-text /etc/update-motd.d/10-help-text.bak
 mv /etc/update-motd.d/60-unminimize /etc/update-motd.d/60-unminimize.bak

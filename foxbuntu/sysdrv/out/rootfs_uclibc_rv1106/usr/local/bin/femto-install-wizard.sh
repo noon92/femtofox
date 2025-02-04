@@ -9,10 +9,8 @@ if [[ $EUID -ne 0 ]]; then
   exit 1
 fi
 
-# pause
-pause() {
-  echo "Press any key to continue..."
-  read -n 1 -s -r
+loading() {
+  dialog --no-collapse --infobox "$1" 5 45
 }
 
 title="Install Wizard"
@@ -32,30 +30,61 @@ wizard() {
     femto-config -w
   fi
 
+  femto-config -l #set lora radio model
+
   dialog --title "$title" --cancel-label "Skip" --yesno "\nConfigure Meshtastic?" 8 40
   if [ $? -eq 0 ]; then #unless cancel/no
-    newurl=$(dialog --title "Meshtastic URL" --cancel-label "Skip" --inputbox "New Meshtasticd URL (SHIFT+INS to paste):" 8 50 3>&1 1>&2 2>&3)
+    newurl=$(dialog --title "Meshtastic URL" --inputbox "New Meshtasticd URL (SHIFT+INS to paste):" 8 50 3>&1 1>&2 2>&3)
     if [ -n "$newurl" ]; then #if a URL was entered
-      femto-meshtasticd-config.sh -q "$newurl"
-      pause
+      loading "Sending URL..."
+      dialog --no-collapse --colors --title "Meshtastic URL" --msgbox "$(femto-meshtasticd-config.sh -q "$newurl" && echo -e "\n\Z4Command successful!\Zn\n" || echo -e "\n\Z1Command failed.\Zn\n")" 0 0
     fi
 
-    femto-config -l
+    loading "Getting current public key..."
+    key=$(femto-meshtasticd-config.sh -u)
+    if [ -n "$key" ]; then
+      dialog --no-collapse --title "Meshtastic public key" --yesno "Current public key:\n$key\n\nSet new key?" 9 55
+      if [ $? -eq 0 ]; then #unless cancel/no
+        key=$(dialog --no-collapse --title "Meshtastic public key" --inputbox "New Meshtastic public key (SHIFT+INS to paste):" 8 60 3>&1 1>&2 2>&3)
+        if [ $? -eq 0 ]; then #unless cancel/no
+          loading "Sending command..."
+          dialog --no-collapse --colors --title "Meshtastic public key" --msgbox "$(femto-meshtasticd-config.sh -U "$key" && echo -e "\n\Z4Command successful!\Zn\n" || echo -e "\n\Z1Command failed.\Zn\n")" 0 0
+        fi
+      fi
+    else
+      dialog --no-collapse --colors --title "Meshtastic public key" --msgbox "\Z1Failed to communicate with Meshtasticd.\Zn\n\nIs the service running?\n" 0 0
+    fi
+
+    loading "Getting current private key..."
+    key=$(femto-meshtasticd-config.sh -u)
+    if [ -n "$key" ]; then
+      dialog --no-collapse --title "Meshtastic private key" --yesno "Current private key:\n$key\n\nSet new key?" 9 55
+      if [ $? -eq 0 ]; then #unless cancel/no
+        key=$(dialog --no-collapse --title "Meshtastic private key" --inputbox "New Meshtastic private key (SHIFT+INS to paste):" 8 60 3>&1 1>&2 2>&3)
+        if [ $? -eq 0 ]; then #unless cancel/no
+          loading "Sending command..."
+          dialog --no-collapse --colors --title "Meshtastic private key" --msgbox "$(femto-meshtasticd-config.sh -R "$key" && echo -e "\n\Z4Command successful!\Zn\n" || echo -e "\n\Z1Command failed.\Zn\n")" 0 0
+        fi
+      fi
+    else
+      dialog --no-collapse --colors --title "Meshtastic private key" --msgbox "\Z1Failed to communicate with Meshtasticd.\Zn\n\nIs the service running?\n" 0 0
+    fi
+
 
     key=$(dialog --title "$title" --cancel-label "Skip" --inputbox "Enter Meshtastic admin key (optional). If 3 admin keys are already in Meshtastic, more will be ignored.\n(SHIFT+INS to paste):" 11 50 3>&1 1>&2 2>&3)
     if [ -n "$key" ]; then #if a URL was entered
-      femto-meshtasticd-config.sh -a "$key"
-      pause
+      loading "Sending key..."
+      dialog --no-collapse --colors --title "Meshtastic URL" --msgbox "$(femto-meshtasticd-config.sh -A "$key" && echo -e "\n\Z4Command successful!\Zn\n" || echo -e "\n\Z1Command failed.\Zn\n")" 0 0
     fi
 
     dialog --no-collapse --infobox "Getting current legacy admin state..." 5 45
     state=$(sudo femto-meshtasticd-config.sh -p)
-    if echo "$state" | grep -q "True"; then
-      state="\Z4Enabled\Zn"
-    elif echo "$state" | grep -q "False"; then
-      state="\Z1Disabled\Zn"
-    elif echo "$state" | grep -q "Error"; then
-      state="\Z1Error\Zn"
+    if echo "$state" | grep -q "enabled"; then # poor man's replace ansi colors
+      state="\Z4enabled\Zn"
+    elif echo "$state" | grep -q "disabled"; then
+      state="\Z1disabled\Zn"
+    elif echo "$state" | grep -q "error"; then
+      state="\Z1error\Zn"
     fi
     while true; do
       choice=$(dialog --no-collapse --colors --cancel-label "Skip" --title "Meshtasticd Legacy Admin" --menu "Current state: $state" 12 40 5 \
@@ -69,18 +98,14 @@ wizard() {
       fi
       case $choice in
         1) # enable legacy admin)
-          dialog --no-collapse --title "$title" --yesno "Enable legacy admin channel?\n" 0 0
-          if [ $? -eq 0 ]; then #unless cancel/no
-            dialog --no-collapse --infobox "Sending command..." 5 45
-            dialog --no-collapse --colors --title "$title" --msgbox "$(femto-meshtasticd-config.sh -o "true" && echo -e "\n\Z4Command successful!\Zn\n" || echo -e "\n\Z1Command failed.\Zn\n")" 0 0
-          fi
+          dialog --no-collapse --infobox "Sending command..." 5 45
+          dialog --no-collapse --colors --title "$title" --msgbox "$(femto-meshtasticd-config.sh -o "true" && echo -e "\n\Z4Command successful!\Zn\n" || echo -e "\n\Z1Command failed.\Zn\n")" 0 0
+          break
         ;;
         2) # disable legacy admin)
-          dialog --no-collapse --title "$title" --yesno "Disable legacy admin channel?\n" 0 0
-          if [ $? -eq 0 ]; then #unless cancel/no
-            dialog --no-collapse --infobox "Sending command..." 5 45
-            dialog --no-collapse --colors --title "$title" --msgbox "$(femto-meshtasticd-config.sh -o "false" && echo -e "\n\Z4Command successful!\Zn\n" || echo -e "\n\Z1Command failed.\Zn\n")" 0 0
-          fi
+          dialog --no-collapse --infobox "Sending command..." 5 45
+          dialog --no-collapse --colors --title "$title" --msgbox "$(femto-meshtasticd-config.sh -o "false" && echo -e "\n\Z4Command successful!\Zn\n" || echo -e "\n\Z1Command failed.\Zn\n")" 0 0
+          break
         ;;
         3) break ;;
       esac

@@ -191,19 +191,21 @@ utilities() {
       5 "Run USB configuration tool" "" \
       6 "Run OEM luckfox-config" "" \
       7 "Process viewer/manager" "" \
-      8 "Disable/enable logging" "" \
-      9 "Disable/enable activity LED" "" \
-      10 "Reboot" "" \
-      11 "Shutdown" "" \
+      8 "Disable/enable web terminal" "" \
+      9 "Disable/enable logging" "" \
+      10 "Disable/enable activity LED" "" \
+      11 "Reboot" "" \
+      12 "Shutdown" "" \
       " " "" "" \
-      12 "Back to main menu" "" 3>&1 1>&2 2>&3)
+      13 "Back to main menu" "" 3>&1 1>&2 2>&3)
     [ $? -eq 1 ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
     
     case $utilities_choice in
       1) #sysinfo)
-        choice=""   # zero the choice before loading the submenu
+        sysinfo_choice=""   # zero the choice before loading the submenu
         while true; do
-          choice=$(dialog --no-collapse --help-button --help-label "Help" --cancel-label "Back" --default-item "$choice" --item-help --menu "System info" 17 40 5 \
+        echo $sysinfo_choice
+          sysinfo_choice=$(dialog --no-collapse --help-button --help-label "Help" --cancel-label "Back" --default-item "$sysinfo_choice" --item-help --menu "System info" 17 40 5 \
             1 "CPU" "" \
             2 "Operating system" "" \
             3 "Storage & memory" "" \
@@ -219,7 +221,7 @@ utilities() {
           elif [ $exit_status -eq 2 ]; then # Help ("extra") button
             dialog --no-collapse --colors --title "System info help" --msgbox "To get system info in terminal (where it can be copied), enter \`\Zusudo femto-utils.sh -i\Zn\`.\n\nWhen getting Peripherals & Devices (or Complete System Info) without an i2c device connected, it is normal to see error messages on serial console.\n" 0 0
           else
-            case $choice in
+            case $sysinfo_choice in
               1) # CPU)
                 loading "Loading CPU info..."
                 dialog --no-collapse --colors --title "CPU info" --msgbox "$(ingest_data "femto-utils.sh -c" 15)" 0 0
@@ -286,9 +288,32 @@ $(ingest_data "femto-meshtasticd-config.sh -i" 15)" 0 0
       ;;
       6) luckfox-config ;;
       7) htop ;;
-      8) # logging)
+      8) 
         choice=""   # zero the choice before loading the submenu
         while true; do
+          echo "Checking web terminal status..."
+          ttyd_state=$(replace_colors "$(femto-utils.sh -t "check")")
+          choice=$(dialog --no-collapse --colors --title "Web Terminal" --cancel-label "Back" --default-item "$choice" --item-help --menu "Web terminal available at \Zuhttp://$(hostname)local:7681\Zn\nCurrent state: $ttyd_state" 14 57 2 \
+            $(if ! echo "$ttyd_state" | grep -q 'enabled and running'; then echo "Enable and start (default) x  "; fi) \
+            $(if echo "$ttyd_state" | grep -q 'enabled'; then echo "Disable and stop x  "; fi) \
+            $(if echo "$ttyd_state" | grep -q 'enabled'; then echo "Start/restart ttyd service x  "; fi) \
+            $(if echo "$ttyd_state" | grep -q 'enabled'; then echo "View detailed service status x  "; fi) \
+            " " "" "" \
+            "Return to previous menu" "x" "" 3>&1 1>&2 2>&3)
+          [ $? -eq 1 ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
+          case $choice in
+            "Enable and start (default)") femto-utils.sh -t "enable" ;;
+            "Disable and stop") femto-utils.sh -t "disable" ;;
+            "Start/restart ttyd service") femto-utils.sh -t "start" ;;
+            "View detailed service status") dialog --no-collapse --title "ttyd service status" --msgbox "$(systemctl status ttyd)" 0 0 ;;
+            "Return to previous menu") break ;;
+          esac
+        done
+      ;;
+      9) # logging)
+        choice=""   # zero the choice before loading the submenu
+        while true; do
+          echo "Checking current logging status..."
           choice=$(dialog --no-collapse --colors --title "Logging" --cancel-label "Back" --default-item "$choice" --item-help --menu "Before deploying a Femtofox, it is advisable to disable logging to reduce SD card wear.\nCurrent state: $(replace_colors "$(femto-utils.sh -l "check")")" 14 50 2 \
             1 "Enable (default)" "" \
             2 "Disable" "" \
@@ -302,9 +327,10 @@ $(ingest_data "femto-meshtasticd-config.sh -i" 15)" 0 0
           esac
         done
       ;;
-      9) # logging)
+      10) # activity LED)
         choice=""   # zero the choice before loading the submenu
         while true; do
+          echo "Checking current activity LED status..."
           choice=$(dialog --no-collapse --colors --title "Logging" --cancel-label "Back" --default-item "$choice" --item-help --menu "Before deploying a Femtofox, it is advisable to disable the Activity LED to save power.\nCurrent state: $(replace_colors "$(femto-utils.sh -a "check")")" 14 50 2 \
             1 "Enable (default)" "" \
             2 "Disable" "" \
@@ -318,21 +344,21 @@ $(ingest_data "femto-meshtasticd-config.sh -i" 15)" 0 0
           esac
         done
       ;;
-      10) # reboot)
+      11) # reboot)
         dialog --no-collapse --title "$title" --yesno "Reboot now?\n\nTip: Reboot can also be triggered by long-pressing the BOOT button on the luckfox." 10 45
         if [ $? -eq 0 ]; then #unless cancel/no
           loading "Rebooting..."
           femto-utils.sh -r
         fi
       ;;
-      11) # shutdown)
+      12) # shutdown)
         dialog --no-collapse --colors --title "$title" --yesno "Shut down now?\n\nTo power system back on, disconnect/reconnect power.\n\nThe system shutdown command prevents damage to the filesystem from power interrupts, but does not stop power consumption.\n\nTip: You can also shut down the Femtofox by pressing the BOOT button for 5 seconds or by running \`\Zusudo halt\Zn\`." 14 60
         if [ $? -eq 0 ]; then #unless cancel/no
           loading "Shutting down...\n\nPower consumption will not stop."
           femto-utils.sh -s
         fi
       ;;
-      12) return ;;
+      13) return ;;
     esac
   done
 }
@@ -343,7 +369,7 @@ set_lora_radio() {
   while true; do
     echo "Checking LoRa radio..."
     #Display filename, if exists: $(files=$(ls /etc/meshtasticd/config.d/* 2>/dev/null) && [ -n "$files" ] && echo "\n\nConfiguration files in use:\n$files" | paste -sd, -))
-    choice=$(dialog --no-collapse --colors --cancel-label "Back" --default-item "$choice" --title "Meshtastic LoRa radio" --item-help --menu "Currently configured LoRa radio:\n$(replace_colors "$(femto-meshtasticd-config.sh -k)")$(ls -1 /etc/meshtasticd/config.d 2>/dev/null | paste -sd ', ' - | sed 's/^/ (/; s/$/)/; s/,/, /g' | grep -v '^ ()$')" 19 50 10 \
+    choice=$(dialog --no-collapse --colors --cancel-label "Cancel" --default-item "$choice" --title "Meshtastic LoRa radio" --item-help --menu "Currently configured LoRa radio:\n$(replace_colors "$(femto-meshtasticd-config.sh -k)")$(ls -1 /etc/meshtasticd/config.d 2>/dev/null | paste -sd ', ' - | sed 's/^/ (/; s/$/)/; s/,/, /g' | grep -v '^ ()$')" 19 50 10 \
        "Ebyte e22-900m30s" "(SX1262_TCXO)" "" \
        "Ebyte e22-900m22s" "(SX1262_TCXO)" "" \
        "Ebyte e80-900m22s" "(SX1262_XTAL)" "" \
@@ -537,7 +563,7 @@ meshtastic_settings() {
         dialog --no-collapse --title "Meshtastic Connectivity Test" --yesno "Will send \"test\" to channel 0 and wait for acknowledgement. Will try up to 3 times.\n\nPerform test?" 10 45
         if [ $? -eq 0 ]; then #unless cancel/no
           dialog --no-collapse --infobox "Performing mesh connectivity test.\n\nThis may take a while..." 6 45
-          dialog --no-collapse --colors --title "Meshtasticd service status" --msgbox "$(replace_colors "$(femto-meshtasticd-config.sh -w)")" 0 0
+          dialog --no-collapse --colors --title "Meshtasticd connectivity test" --msgbox "$(replace_colors "$(femto-meshtasticd-config.sh -w)")" 0 0
         fi
       ;;
       7) #manage meshtasticd service)
