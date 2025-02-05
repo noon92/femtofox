@@ -21,14 +21,16 @@ echo "Setting localtime to UTC..."
 rm /etc/localtime
 ln -sf /usr/share/zoneinfo/UTC /etc/localtime
 
-echo "Adding Meshtastic repository..."
-add-apt-repository -y ppa:meshtastic/beta # includes apt update
-
 echo "Installing packages..."
 apt update
-DEBIAN_FRONTEND=noninteractive apt install -y --option Dpkg::Options::="--force-confold" linux-firmware wireless-tools git python3.10-venv libgpiod-dev libyaml-cpp-dev libbluetooth-dev openssl libssl-dev libulfius-dev liborcania-dev evtest screen avahi-daemon protobuf-compiler telnet fonts-noto-color-emoji ninja-build chrony qrencode software-properties-common python-is-python3 python3.10-venv lsof spi-tools python3-luma.oled samba meshtasticd
+DEBIAN_FRONTEND=noninteractive apt install -y --option Dpkg::Options::="--force-confold" linux-firmware wireless-tools git python3.10-venv libgpiod-dev libyaml-cpp-dev libbluetooth-dev openssl libssl-dev libulfius-dev liborcania-dev evtest screen avahi-daemon protobuf-compiler telnet fonts-noto-color-emoji ninja-build chrony qrencode software-properties-common python-is-python3 python3.10-venv lsof spi-tools python3-luma.oled samba
 if [[ $? -eq 2 ]]; then echo "Error, step failed..."; fi
 DEBIAN_FRONTEND=noninteractive apt upgrade -y --option Dpkg::Options::="--force-confold"
+
+# requires software-properties-common, so must be done in a separate command unless added manually
+echo "Adding Meshtastic repository and installing meshtastic..."
+add-apt-repository -y ppa:meshtastic/beta
+DEBIAN_FRONTEND=noninteractive apt install -y --option Dpkg::Options::="--force-confold" meshtasticd
 
 # Tempfix for SEGFAULT
 #wget https://github.com/meshtastic/firmware/releases/download/v2.5.11.8e2a3e5/meshtasticd_2.5.11.8e2a3e5_armhf.deb
