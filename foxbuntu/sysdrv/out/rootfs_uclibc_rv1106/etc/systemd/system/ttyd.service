@@ -1,10 +1,10 @@
 [Unit]
-Description=TTYD
+Description=ttyd Web Terminal
 After=syslog.target
 After=network.target
 
 [Service]
-ExecStart=/opt/ttyd -W -6 login
+ExecStart=/opt/ttyd/ttyd -W -6 login
 Type=simple
 Restart=always
 User=root

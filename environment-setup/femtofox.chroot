@@ -43,8 +43,8 @@ pip3 install requests pyephem pytap2 meshtastic pypubsub geopy maidenhead beauti
 if [[ $? -eq 2 ]]; then echo "Error, step failed..."; fi
 
 echo "Downloading ttyd and enabling service..."
-wget -qO- https://api.github.com/repos/tsl0922/ttyd/releases/latest | grep "browser_download_url" | grep "armhf" | cut -d '"' -f 4 | xargs wget -O /opt/ttyd
-chmod +x /opt/ttyd
+wget -qO- https://api.github.com/repos/tsl0922/ttyd/releases/latest | grep "browser_download_url" | grep "armhf" | cut -d '"' -f 4 | xargs wget -O /opt/ttyd/ttyd
+chmod +x /opt/ttyd/ttyd
 systemctl enable ttyd
 
 echo "Setting MOTD..."
