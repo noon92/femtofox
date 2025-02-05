@@ -17,6 +17,7 @@ This does not appear to be this system's first boot.\n\
 Re-running this script will:\n\
 * Resize filesystem to fit the SD card\n\
 * Allocate the swap file\n\
+* Replace the SSH encryption keys\n\
 * Add terminal type to user femto's .bashrc\n\
 * Set the eth0 MAC to be derivative of CPU serial number\n\
 \n\
@@ -35,19 +36,19 @@ echo -e "\e[32m******* First boot *******\e[0m"
 # pulse LED during firstboot
 (
   while true; do
-  echo 1 > /sys/class/gpio/gpio34/value;
-  sleep 0.5;
-  echo 0 > /sys/class/gpio/gpio34/value;
-  sleep 0.5;
-done
+    echo 1 > /sys/class/gpio/gpio34/value;
+    sleep 0.5;
+    echo 0 > /sys/class/gpio/gpio34/value;
+    sleep 0.5;
+  done
 ) &
 
 # Perform filesystem resize
-  log_message "Resizing filesystem. This can take several minutes, depending on microSD card size and speed"
-  resize2fs /dev/mmcblk1p5
-  resize2fs /dev/mmcblk1p6
-  resize2fs /dev/mmcblk1p7
-  log_message "Resizing filesystem complete"
+log_message "Resizing filesystem. This can take several minutes, depending on microSD card size and speed"
+resize2fs /dev/mmcblk1p5
+resize2fs /dev/mmcblk1p6
+resize2fs /dev/mmcblk1p7
+log_message "Resizing filesystem complete"
 
 	# allocate swap file
 if [ ! -f /swapfile ]; then # check if swap file already exists
@@ -62,9 +63,14 @@ else
 	log_message "Swap file already allocated, skipping"
 fi
 
-# add RTC support - looks unneeded?
-#bash -c 'echo ds1307 0x68 > /sys/class/i2c-adapter/i2c-3/new_device'
-#log_message "Added ds1307/ds3231 RTC support."
+#generate keys
+log_message "Generating new SSH encryption keys. This can take a minute..."
+sudo rm /etc/ssh/ssh_host_*
+sudo ssh-keygen -q -t ed25519 -f /etc/ssh/ssh_host_ed25519_key -N ""
+sudo ssh-keygen -q -t rsa -b 4096 -f /etc/ssh/ssh_host_rsa_key -N ""
+sudo chmod 600 /etc/ssh/ssh_host_*_key
+sudo chmod 644 /etc/ssh/ssh_host_*_key.pub
+sudo chown root:root /etc/ssh/ssh_host_*
 
 # prevent randomized mac address for eth0. If `eth0`` is already present in /etc/network/interfaces, skip
 mac="$(awk '/Serial/ {print $3}' /proc/cpuinfo | tail -c 11 | sed 's/^\(.*\)/a2\1/' | sed 's/\(..\)/\1:/g;s/:$//')"
@@ -85,10 +91,10 @@ lines="export NCURSES_NO_UTF8_ACS=1
 export TERM=xterm-256color
 export LANG=C.UTF-8"
 if ! grep -Fxq "$lines" /home/femto/.bashrc; then # Check if the lines are already in .bashrc
-    echo "$lines" >> /home/femto/.bashrc
-    echo "Added TERM, LANG and NCURSES_NO_UTF8_ACS to .bashrc"
+  echo "$lines" >> /home/femto/.bashrc
+  echo "Added TERM, LANG and NCURSES_NO_UTF8_ACS to .bashrc"
 else
-    echo "TERM, LANG and NCURSES_NO_UTF8_ACS already present in .bashrc, skipping"
+  echo "TERM, LANG and NCURSES_NO_UTF8_ACS already present in .bashrc, skipping"
 fi
 
 # remove first boot flag
