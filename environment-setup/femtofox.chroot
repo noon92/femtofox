@@ -25,6 +25,7 @@ echo "Adding Meshtastic repository..."
 add-apt-repository -y ppa:meshtastic/beta # includes apt update
 
 echo "Installing packages..."
+apt update
 DEBIAN_FRONTEND=noninteractive apt install -y --option Dpkg::Options::="--force-confold" linux-firmware wireless-tools git python3.10-venv libgpiod-dev libyaml-cpp-dev libbluetooth-dev openssl libssl-dev libulfius-dev liborcania-dev evtest screen avahi-daemon protobuf-compiler telnet fonts-noto-color-emoji ninja-build chrony qrencode software-properties-common python-is-python3 python3.10-venv lsof spi-tools python3-luma.oled samba meshtasticd
 if [[ $? -eq 2 ]]; then echo "Error, step failed..."; fi
 DEBIAN_FRONTEND=noninteractive apt upgrade -y --option Dpkg::Options::="--force-confold"
