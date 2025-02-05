@@ -205,7 +205,7 @@ utilities() {
         sysinfo_choice=""   # zero the choice before loading the submenu
         while true; do
         echo $sysinfo_choice
-          sysinfo_choice=$(dialog --no-collapse --help-button --help-label "Help" --cancel-label "Back" --default-item "$sysinfo_choice" --item-help --menu "System info" 17 40 5 \
+          sysinfo_choice=$(dialog --no-collapse --help-button --cancel-label "Back" --default-item "$sysinfo_choice" --item-help --menu "System info" 17 40 5 \
             1 "CPU" "" \
             2 "Operating system" "" \
             3 "Storage & memory" "" \
@@ -293,21 +293,28 @@ $(ingest_data "femto-meshtasticd-config.sh -i" 15)" 0 0
         while true; do
           echo "Checking web terminal status..."
           ttyd_state=$(replace_colors "$(femto-utils.sh -t "check")")
-          choice=$(dialog --no-collapse --colors --title "Web Terminal" --cancel-label "Back" --default-item "$choice" --item-help --menu "Web terminal available at \Zuhttp://$(hostname)local:7681\Zn\nCurrent state: $ttyd_state" 14 57 2 \
+          [[ $ttyd_state == *"running"* ]] && ttyd_state+="\nWeb terminal available at \Zuhttp://$(hostname).local:7681\Zn"
+          choice=$(dialog --no-collapse --colors --title "Web Terminal" --cancel-label "Back" --help-button --default-item "$choice" --item-help --menu "Current state: $ttyd_state" 14 58 2 \
             $(if ! echo "$ttyd_state" | grep -q 'enabled and running'; then echo "Enable and start (default) x  "; fi) \
             $(if echo "$ttyd_state" | grep -q 'enabled'; then echo "Disable and stop x  "; fi) \
             $(if echo "$ttyd_state" | grep -q 'enabled'; then echo "Start/restart ttyd service x  "; fi) \
             $(if echo "$ttyd_state" | grep -q 'enabled'; then echo "View detailed service status x  "; fi) \
             " " "" "" \
             "Return to previous menu" "x" "" 3>&1 1>&2 2>&3)
-          [ $? -eq 1 ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
-          case $choice in
-            "Enable and start (default)") femto-utils.sh -t "enable" ;;
-            "Disable and stop") femto-utils.sh -t "disable" ;;
-            "Start/restart ttyd service") femto-utils.sh -t "start" ;;
-            "View detailed service status") dialog --no-collapse --title "ttyd service status" --msgbox "$(systemctl status ttyd)" 0 0 ;;
-            "Return to previous menu") break ;;
-          esac
+          exit_status=$? # This line checks the exit status of the dialog command
+          if [ $exit_status -eq 1 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
+            break
+          elif [ $exit_status -eq 2 ]; then # Help ("extra") button
+            dialog --no-collapse --colors --title "Web terminal help" --msgbox "Web terminal is a browser based terminal interface, and can be used as a replacement for an SSH client such as PuTTY.\n\nWeb terminal is enabled by default on Foxbuntu." 0 0
+          else
+            case $choice in
+              "Enable and start (default)") femto-utils.sh -t "enable" ;;
+              "Disable and stop") femto-utils.sh -t "disable" ;;
+              "Start/restart ttyd service") femto-utils.sh -t "start" ;;
+              "View detailed service status") dialog --no-collapse --title "ttyd service status" --msgbox "$(systemctl status ttyd)" 0 0 ;;
+              "Return to previous menu") break ;;
+            esac
+          fi
         done
       ;;
       9) # logging)
