@@ -18,7 +18,9 @@ Options are:
 -n             Networking info
 -o             OS info
 -S             Storage & RAM info
--t "enable"    Enable/disable/start/stop/check ttyd (http based terminal).  Options: "enable" "disable" "start" "stop" "check"
+-t "enable"    Enable/disable/start/stop/check ttyd (web terminal).  Options: "enable" "disable" "start" "stop" "check"
+-T             Generate/overwrite ttyd encryption keys
+-E             Generate/overwrite SSH encryption keys
 
 EOF
 )
@@ -233,7 +235,7 @@ ttyd() {
   fi
 }
 
-while getopts ":harsl:ipcnoSt:" opt; do
+while getopts ":harsl:ipcnoSt:TE" opt; do
   case ${opt} in
     h) # Option -h (help)
       echo -e $help
@@ -258,7 +260,22 @@ while getopts ":harsl:ipcnoSt:" opt; do
     n) networking_info ;; # Option -n (Networing info)
     o) os_info ;; # Option -o (OS info)
     S) storage_info ;; # Option -S (Storage & RAM info)
-    t) ttyd $OPTARG ;; # Option -t (ttyd)
+    t) ttyd $OPTARG ;; # Option -t (ttyd service manager)
+    T) # Option -T (new ttyd SSL keys)
+      openssl req -new -newkey rsa:4096 -days 3650 -nodes -x509 -keyout /etc/ssl/private/ttyd.key -out /etc/ssl/certs/ttyd.crt   -subj "/CN=$(hostname)" -addext "subjectAltName=DNS:$(hostname)"
+      chmod 600 /etc/ssl/private/ttyd.key
+      chmod 644 /etc/ssl/certs/ttyd.crt
+      systemctl restart ttyd
+    ;;
+    E) # Option -E (new SSH encryption keys)
+      rm /etc/ssh/ssh_host_*
+      ssh-keygen -t ed25519 -f /etc/ssh/ssh_host_ed25519_key -N ""
+      ssh-keygen -t rsa -b 4096 -f /etc/ssh/ssh_host_rsa_key -N ""
+      chmod 600 /etc/ssh/ssh_host_*_key
+      chmod 644 /etc/ssh/ssh_host_*_key.pub
+      chown root:root /etc/ssh/ssh_host_*
+      systemctl restart ssh
+    ;;
     \?) # Unknown option)
       echo -e "Unknown argument $1.\n$help"
     ;;

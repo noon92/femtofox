@@ -150,6 +150,8 @@ $wifi_settings"
       sed -i "s/$(hostname)/$OPTARG/g" /etc/hosts
       hostnamectl set-hostname "$OPTARG"
       systemctl restart avahi-daemon
+      echo "Regenerating web terminal ssl keys..."
+      femto-utils.sh -T
       ;;
     \?)  # Invalid option
       echo "Invalid option: -$OPTARG"
