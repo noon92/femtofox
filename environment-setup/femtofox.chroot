@@ -62,6 +62,7 @@ systemctl enable femto-usb-config-tool.service
 systemctl enable femto-boot-complete.service
 systemctl enable wifi-mesh-control
 
+systemctl disable apt-daily.timer
 systemctl disable unattended-upgrades
 systemctl disable smbd nmbd # samba services, can be enabled via menu
 systemctl disable NetworkManager
