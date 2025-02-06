@@ -28,3 +28,9 @@ form_item_readonly_color = (BLUE,WHITE,ON)
 
 # Item help-text color
 itemhelp_color = (BLACK,BLUE,OFF)
+
+# Selected tag color (menu items)
+tag_selected_color = (WHITE,BLUE,ON)
+
+# Tag color (menu items)
+tag_color = (BLACK,WHITE,OFF)
