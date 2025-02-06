@@ -4,7 +4,7 @@ After=syslog.target
 After=network.target
 
 [Service]
-ExecStart=/opt/ttyd/ttyd -W -6 login
+ExecStart=/opt/ttyd/ttyd -W -6 --ssl --ssl-key /etc/ssl/private/ttyd.key --ssl-cert /etc/ssl/certs/ttyd.crt -i 0.0.0.0 login
 Type=simple
 Restart=always
 User=root

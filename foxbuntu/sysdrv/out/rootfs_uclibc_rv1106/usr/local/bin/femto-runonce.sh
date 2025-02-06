@@ -63,14 +63,13 @@ else
 	log_message "Swap file already allocated, skipping"
 fi
 
-#generate keys
+#generate SSH keys
 log_message "Generating new SSH encryption keys. This can take a minute..."
-sudo rm /etc/ssh/ssh_host_*
-sudo ssh-keygen -q -t ed25519 -f /etc/ssh/ssh_host_ed25519_key -N ""
-sudo ssh-keygen -q -t rsa -b 4096 -f /etc/ssh/ssh_host_rsa_key -N ""
-sudo chmod 600 /etc/ssh/ssh_host_*_key
-sudo chmod 644 /etc/ssh/ssh_host_*_key.pub
-sudo chown root:root /etc/ssh/ssh_host_*
+femto-utils.sh -E
+
+#generate ttyd SSL keys
+log_message "Generating new Web Terminal SSL encryption keys. This can take a minute..."
+femto-utils.sh -T
 
 # prevent randomized mac address for eth0. If `eth0`` is already present in /etc/network/interfaces, skip
 mac="$(awk '/Serial/ {print $3}' /proc/cpuinfo | tail -c 11 | sed 's/^\(.*\)/a2\1/' | sed 's/\(..\)/\1:/g;s/:$//')"
