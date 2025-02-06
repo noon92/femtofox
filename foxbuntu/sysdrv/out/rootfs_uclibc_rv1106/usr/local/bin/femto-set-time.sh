@@ -19,15 +19,6 @@ If no argument is specified, a menu system will be used. Options are:
 EOF
 )
 
-log_message() {
-  logger $1
-  if [ $arg_count -eq 0 ]; then
-    dialog --msgbox "$1" 12 50
-  else
-    echo -e $1
-  fi
-}
-
 set_timezone() {
   echo "Setting time zone..."
   ln -f -s /usr/share/zoneinfo/$1 /etc/localtime >/dev/null 2>&1
@@ -68,7 +59,7 @@ done
 if [ $arg_count -eq 0 ]; then # if the script was launched with no arguments, then load the UI.
   echo "Loading current time settings..."
   current_timezone=$(timedatectl show --property=Timezone --value)
-  dialog --no-collapse --title "$title" --yesno "Current system time: $(date +"%H:%M:%S")\nCurrent time zone:   $current_timezone ($(date +"UTC%z" | sed -E 's/GMT([+-])0?([0-9]{1,2})00/GMT\1\2/'))\n$(hwclock >/dev/null 2>&1 && echo "RTC module found!" || echo "RTC module not found.")\n\nSet new time and timezone?" 10 60
+  dialog --no-collapse --title "System time" --yesno "Current system time: $(date +"%H:%M:%S")\nCurrent time zone:   $current_timezone ($(date +"UTC%z" | sed -E 's/GMT([+-])0?([0-9]{1,2})00/GMT\1\2/'))\n$(hwclock >/dev/null 2>&1 && echo "RTC module found!" || echo "RTC module not found.")\n\nSet new time and timezone?" 10 60
   if [ $? -eq 1 ]; then #unless cancel/no
     exit 0
   fi
@@ -85,7 +76,7 @@ if [ $arg_count -eq 0 ]; then # if the script was launched with no arguments, th
   options_str=$(printf '%s\n' "${options[@]}")
   
   # Show timezone selection menu with preselection of current timezone
-  selected_timezone=$(dialog --title "Select Time Zone" \
+  selected_timezone=$(dialog --title "Set Time Zone" \
                             --default-item "$current_timezone" \
                             --menu "Current time zone: $current_timezone (UTC$(date +%z))" 20 60 10 \
                             $(printf "%s " "${options[@]}") 3>&1 1>&2 2>&3)
@@ -97,7 +88,7 @@ if [ $arg_count -eq 0 ]; then # if the script was launched with no arguments, th
     exit 1
   fi
 
-  DATE=$(dialog --title "Select Date" --calendar "Current date: $(date "+%B %d, %Y") \nPress [TAB] to select." 0 0 $(date +%d) $(date +%m) $(date +%Y) 3>&1 1>&2 2>&3)
+  DATE=$(dialog --title "Set Date" --calendar "Current date: $(date "+%B %d, %Y") \nPress [TAB] to select." 0 0 $(date +%d) $(date +%m) $(date +%Y) 3>&1 1>&2 2>&3)
   if [ $? -ne 0 ]; then
     exit 1
   fi
@@ -106,7 +97,16 @@ if [ $arg_count -eq 0 ]; then # if the script was launched with no arguments, th
   if [ $? -eq 1 ]; then #if cancel/no
     exit 1
   fi
-  log_message "$(set_timestamp $(date -d "$DATE $TIME" +%s))"
-  exit $? #exit status matches set_timestamp exit status
+  
+  msg="$(set_timestamp $(date -d "$DATE $TIME" +%s))"
+  exit_status=$?
+
+  logger $msg
+  if [ $arg_count -eq 0 ]; then
+    dialog --msgbox "$msg" 13 50
+  else
+    echo -e $msg
+  fi
+  exit $exit_status #exit status matches set_timestamp exit status
 
 fi

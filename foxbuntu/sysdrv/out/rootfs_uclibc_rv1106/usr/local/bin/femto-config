@@ -425,12 +425,48 @@ set_lora_radio() {
   done
 }
 
+legacy_admin() {
+  choice=""   # zero the choice before loading the submenu
+  while true; do
+    loading "Getting current legacy admin state..."
+    choice=$(dialog --no-collapse --colors --title "Legacy Admin" --default-item "$choice" --help-button --item-help --menu "If the node you Femtofox needs to administer or be administered by is running 2.4.x or earlier, you should set this to Enabled.\n\nCurrent state: $(replace_colors "$(femto-meshtasticd-config.sh -p)")" 16 65 5 \
+      1 "Enable" "" \
+      2 "Disable (default)" "" \
+      " " "" "" \
+      3 "Return to previous menu" "" 3>&1 1>&2 2>&3)
+    exit_status=$? # This line checks the exit status of the dialog command
+    if [ $exit_status -eq 1 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
+      break
+    elif [ $exit_status -eq 2 ]; then # Help ("extra") button
+      dialog --no-collapse --colors --title "System info help" --msgbox "For Meshtastic versions 2.4.x and earlier, remote admin is achieved by creating a secondary channel named admin with a shared PSK. In this setup, messages exchanged on this channel are encrypted only with the channel's PSK, allowing any node in the channel to administer others.\n\nFor more information:\nhttps://meshtastic.org/docs/configuration/remote-admin/\n" 0 0
+    else
+      case $choice in
+        1) # enable legacy admin)
+          dialog --no-collapse --title "Legacy Admin" --yesno "Enable legacy admin channel?\n" 0 0
+          if [ $? -eq 0 ]; then #unless cancel/no
+            loading "Sending command..."
+            dialog --no-collapse --colors --title "Legacy admin" --msgbox "$(femto-meshtasticd-config.sh -o "true" && echo -e "\n\Z4Command successful!\Zn\n" || echo -e "\n\Z1Command failed.\Zn\n")" 0 0
+          fi
+        ;;
+        2) # disable legacy admin)
+          dialog --no-collapse --title "Legacy Admin" --yesno "Disable legacy admin channel?\n" 0 0
+          if [ $? -eq 0 ]; then #unless cancel/no
+            loading "Sending command..."
+            dialog --no-collapse --colors --title "Legacy admin" --msgbox "$(femto-meshtasticd-config.sh -o "false" && echo -e "\n\Z4Command successful!\Zn\n" || echo -e "\n\Z1Command failed.\Zn\n")" 0 0
+          fi
+        ;;
+        3) break ;;
+      esac
+    fi
+  done
+}
+
 # Function to handle Meshtasticd settings
 meshtastic_settings() {
   local title="Meshtastic Settings"
   while true; do
     echo "Checking Meshtasticd service state..."
-    meshtastic_choice=$(dialog --no-collapse --colors --title "$title" --cancel-label "Back" --default-item "$meshtastic_choice" --item-help --menu "Meshtasticd service is $(replace_colors "$(femto-meshtasticd-config.sh -S)")$(femto-meshtasticd-config.sh -k | grep -q 'simulated' && echo '\n\Z1Warning: using simulated radio\Zn')" 20 50 4 \
+    meshtastic_choice=$(dialog --no-collapse --colors --title "$title" --cancel-label "Back" --default-item "$meshtastic_choice" --item-help --menu "Meshtasticd service is $(replace_colors "$(femto-meshtasticd-config.sh -S)")$(femto-meshtasticd-config.sh -k | grep -q 'simulated' && echo '\n\Z1Warning: using simulated radio\Zn')" 19 50 4 \
       1 "View node info" "" \
       2 "View configuration URL & QR code" "" \
       3 "Set new configuration URL" "" \
@@ -532,33 +568,7 @@ meshtastic_settings() {
               fi
             ;;
             6) # legacy admin)
-              choice=""   # zero the choice before loading the submenu
-              while true; do
-                loading "Getting current legacy admin state..."
-                choice=$(dialog --no-collapse --colors --title "Legacy Admin" --default-item "$choice" --item-help --menu "Current state: $(replace_colors "$(femto-meshtasticd-config.sh -p)")" 12 40 5 \
-                  1 "Enable" "" \
-                  2 "Disable (default)" "" \
-                  " " "" "" \
-                  3 "Return to previous menu" "" 3>&1 1>&2 2>&3)
-                [ $? -eq 1 ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
-                case $choice in
-                  1) # enable legacy admin)
-                    dialog --no-collapse --title "Legacy Admin" --yesno "Enable legacy admin channel?\n" 0 0
-                    if [ $? -eq 0 ]; then #unless cancel/no
-                      loading "Sending command..."
-                      dialog --no-collapse --colors --title "Legacy admin" --msgbox "$(femto-meshtasticd-config.sh -o "true" && echo -e "\n\Z4Command successful!\Zn\n" || echo -e "\n\Z1Command failed.\Zn\n")" 0 0
-                    fi
-                  ;;
-                  2) # disable legacy admin)
-                    dialog --no-collapse --title "Legacy Admin" --yesno "Disable legacy admin channel?\n" 0 0
-                    if [ $? -eq 0 ]; then #unless cancel/no
-                      loading "Sending command..."
-                      dialog --no-collapse --colors --title "Legacy admin" --msgbox "$(femto-meshtasticd-config.sh -o "false" && echo -e "\n\Z4Command successful!\Zn\n" || echo -e "\n\Z1Command failed.\Zn\n")" 0 0
-                    fi
-                  ;;
-                  3) break ;;
-                esac
-              done
+              legacy_admin
             ;;
             7) # return to previous menu)
               break
@@ -715,15 +725,19 @@ help="If script is run without arguments, femto-config menu will load.\n\
 Options are:\n\
 -h           This message\n\
 -l           Set LoRa radio model menu\n\
+-L           Meshtastic legacy admin menu\n\
 -w           Set Wi-Fi config menu\
 "
-while getopts ":hlwL:i" opt; do
+while getopts ":hlwLi" opt; do
   case ${opt} in
     h) # Option -h (help)
       echo -e $help
       ;;
     l) # Option -l (set lora radio)
       set_lora_radio
+    ;;
+    L) # Option -L (Meshtastic legacy admin menu)
+      legacy_admin
     ;;
     w) # Option -w (Wi-Fi config)
       wifi_config
