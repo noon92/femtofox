@@ -27,15 +27,25 @@ DEBIAN_FRONTEND=noninteractive apt install -y --option Dpkg::Options::="--force-
 if [[ $? -eq 2 ]]; then echo "Error, step failed..."; fi
 DEBIAN_FRONTEND=noninteractive apt upgrade -y --option Dpkg::Options::="--force-confold"
 
+# requires software-properties-common, so must be done in a separate command unless added manually
+echo "Adding Meshtastic repository and installing meshtastic..."
+add-apt-repository -y ppa:meshtastic/beta
+DEBIAN_FRONTEND=noninteractive apt install -y --option Dpkg::Options::="--force-confold" meshtasticd
+
 # Tempfix for SEGFAULT
-wget https://github.com/meshtastic/firmware/releases/download/v2.5.11.8e2a3e5/meshtasticd_2.5.11.8e2a3e5_armhf.deb
-DEBIAN_FRONTEND=noninteractive apt install -y --option Dpkg::Options::="--force-confold" ./meshtasticd_2.5.11.8e2a3e5_armhf.deb
-rm ./meshtasticd_2.5.11.8e2a3e5_armhf.deb
+#wget https://github.com/meshtastic/firmware/releases/download/v2.5.11.8e2a3e5/meshtasticd_2.5.11.8e2a3e5_armhf.deb
+#DEBIAN_FRONTEND=noninteractive apt install -y --option Dpkg::Options::="--force-confold" ./meshtasticd_2.5.11.8e2a3e5_armhf.deb
+#rm ./meshtasticd_2.5.11.8e2a3e5_armhf.deb
 
 echo "Installing dependencies for meshing-around and meshtastic cli..."
 #pip config set global.extra-index-url https://www.piwheels.org/simple
 pip3 install requests pyephem pytap2 meshtastic pypubsub geopy maidenhead beautifulsoup4 dadjokes schedule wikipedia googlesearch-python
 if [[ $? -eq 2 ]]; then echo "Error, step failed..."; fi
+
+echo "Downloading ttyd and enabling service..."
+wget -qO- https://api.github.com/repos/tsl0922/ttyd/releases/latest | grep "browser_download_url" | grep "armhf" | cut -d '"' -f 4 | xargs wget -O /opt/ttyd/ttyd
+chmod +x /opt/ttyd/ttyd
+systemctl enable ttyd
 
 echo "Setting MOTD..."
 mv /etc/update-motd.d/10-help-text /etc/update-motd.d/10-help-text.bak

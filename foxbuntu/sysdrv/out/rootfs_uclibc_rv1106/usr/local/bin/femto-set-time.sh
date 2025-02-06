@@ -41,7 +41,7 @@ for i in {1..5}; do
       echo "Time Zone updated to:\n$(timedatectl show --property=Timezone --value) $(date +%Z) (UTC$(date +%:z))\nSystem time updated to:\n$(date)\n\nNew time successfully saved to RTC.\nTime & date are also set automatically from internet, if connected."
       return 0
     else
-      echo "System time updated to:\n$(date)\n\nUnable to communicate with RTC module. An RTC module can remember system time between reboots/power outages.\nTime & date are also set automatically from internet, if connected."
+      echo "System time updated to:\n$(date) ($(date +"UTC%z" | sed -E 's/GMT([+-])0?([0-9]{1,2})00/GMT\1\2/'))\n\nUnable to communicate with RTC module. An RTC module can remember system time between reboots/power outages.\nTime & date are also set automatically from internet, if connected."
       return 0
     fi
   fi
@@ -66,6 +66,12 @@ while getopts ":t:T:h" opt; do
 done
 
 if [ $arg_count -eq 0 ]; then # if the script was launched with no arguments, then load the UI.
+  echo "Loading current time settings..."
+  current_timezone=$(timedatectl show --property=Timezone --value)
+  dialog --no-collapse --title "$title" --yesno "Current system time: $(date +"%H:%M:%S")\nCurrent time zone:   $current_timezone ($(date +"UTC%z" | sed -E 's/GMT([+-])0?([0-9]{1,2})00/GMT\1\2/'))\n$(hwclock >/dev/null 2>&1 && echo "RTC module found!" || echo "RTC module not found.")\n\nSet new time and timezone?" 10 60
+  if [ $? -eq 1 ]; then #unless cancel/no
+    exit 0
+  fi
   # Fetch available time zones
   echo "Loading time zones..."
   timezones=$(timedatectl list-timezones)
@@ -77,8 +83,7 @@ if [ $arg_count -eq 0 ]; then # if the script was launched with no arguments, th
 
   # Convert options array to string
   options_str=$(printf '%s\n' "${options[@]}")
-  current_timezone=$(timedatectl show --property=Timezone --value)
-
+  
   # Show timezone selection menu with preselection of current timezone
   selected_timezone=$(dialog --title "Select Time Zone" \
                             --default-item "$current_timezone" \
@@ -92,7 +97,7 @@ if [ $arg_count -eq 0 ]; then # if the script was launched with no arguments, th
     exit 1
   fi
 
-  DATE=$(dialog --title "Select Date" --calendar "Current date: $(date "+%B %d, %Y")\nPress [TAB] to select." 0 0 $(date +%d) $(date +%m) $(date +%Y) 3>&1 1>&2 2>&3)
+  DATE=$(dialog --title "Select Date" --calendar "Current date: $(date "+%B %d, %Y") \nPress [TAB] to select." 0 0 $(date +%d) $(date +%m) $(date +%Y) 3>&1 1>&2 2>&3)
   if [ $? -ne 0 ]; then
     exit 1
   fi
