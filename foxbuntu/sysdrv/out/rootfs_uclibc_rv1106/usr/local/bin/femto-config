@@ -305,7 +305,7 @@ $(ingest_data "femto-meshtasticd-config.sh -i" 15)" 0 0
           if [ $exit_status -eq 1 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
             break
           elif [ $exit_status -eq 2 ]; then # Help ("extra") button
-            dialog --no-collapse --colors --title "Web terminal help" --msgbox "Web terminal is a browser based terminal interface, and can be used as a replacement for an SSH client such as PuTTY.\nSSL encryption is provided by keys generated during first-boot. Your browser may give a warning about the self-signed encryption certificate.\n\nWeb terminal is provided by ttyd.\nLicense for ttyd: \`cat /opt/ttyd/license\`.\nFor more details, see: \Zuhttps://github.com/tsl0922/ttyd\Zn\n\nWeb terminal is enabled by default on Foxbuntu." 0 0
+            dialog --no-collapse --colors --title "Web terminal help" --msgbox "Web terminal is a browser based terminal interface, and can be used as a replacement for an SSH client such as PuTTY.\nSSL encryption is provided by keys generated during first-boot. Your browser may give a warning (net::ERR_CERT_AUTHORITY_INVALID) about the self-signed encryption certificate. This is normal. In Chromium (Chrome, Edge) click \"Advanced\" and \"Continue to femtofox.local (unsafe)\".\n\nWeb terminal is provided by ttyd.\nLicense for ttyd: \`cat /opt/ttyd/license\`.\nFor more details, see: \Zuhttps://github.com/tsl0922/ttyd\Zn\n\nWeb terminal is enabled by default on Foxbuntu." 0 0
           else
             case $choice in
               "Enable and start (default)") femto-utils.sh -t "enable" ;;
