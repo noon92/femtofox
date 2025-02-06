@@ -16,25 +16,24 @@ loading() {
 title="Install Wizard"
 
 wizard() {
-
   femto-set-time.sh
 
-  new_hostname=$(dialog --title "$title" --cancel-label "Skip" --inputbox "Enter hostname:" 8 40 $(hostname) 3>&1 1>&2 2>&3)
+  dialog --title "$title" --cancel-label "Skip" --yesno "\nConfigure network settings?" 8 40
   if [ $? -eq 0 ]; then #unless cancel/no
-    femto-network-config.sh -n "$new_hostname"
-    dialog --title "$title" --msgbox "\nFemtofox is now reachable at\n$new_hostname.local" 8 40
-  fi
-
-  dialog --title "$title" --cancel-label "Skip" --yesno "\nConfigure Wi-Fi settings?" 8 40
-  if [ $? -eq 0 ]; then #unless cancel/no
+    new_hostname=$(dialog --title "$title" --cancel-label "Skip" --inputbox "Enter hostname:" 8 40 $(hostname) 3>&1 1>&2 2>&3)
+    if [ $? -eq 0 ]; then #unless cancel/no
+      femto-network-config.sh -n "$new_hostname"
+      dialog --title "$title" --msgbox "\nFemtofox is now reachable at\n$new_hostname.local" 8 40
+    fi
+  
     femto-config -w
   fi
 
-  femto-config -l #set lora radio model
-
   dialog --title "$title" --cancel-label "Skip" --yesno "\nConfigure Meshtastic?" 8 40
   if [ $? -eq 0 ]; then #unless cancel/no
-    newurl=$(dialog --title "Meshtastic URL" --inputbox "New Meshtasticd URL (SHIFT+INS to paste):" 8 50 3>&1 1>&2 2>&3)
+    femto-config -l #set lora radio model
+    
+    newurl=$(dialog --title "Meshtastic URL" --inputbox "New Meshtasticd URL (SHIFT+INS to paste):" 8 60 3>&1 1>&2 2>&3)
     if [ -n "$newurl" ]; then #if a URL was entered
       loading "Sending URL..."
       dialog --no-collapse --colors --title "Meshtastic URL" --msgbox "$(femto-meshtasticd-config.sh -q "$newurl" && echo -e "\n\Z4Command successful!\Zn\n" || echo -e "\n\Z1Command failed.\Zn\n")" 0 0
@@ -69,7 +68,6 @@ wizard() {
     else
       dialog --no-collapse --colors --title "Meshtastic private key" --msgbox "\Z1Failed to communicate with Meshtasticd.\Zn\n\nIs the service running?\n" 0 0
     fi
-
 
     key=$(dialog --title "$title" --cancel-label "Skip" --inputbox "Enter Meshtastic admin key (optional). If 3 admin keys are already in Meshtastic, more will be ignored.\n(SHIFT+INS to paste):" 11 50 3>&1 1>&2 2>&3)
     if [ -n "$key" ]; then #if a URL was entered
@@ -116,7 +114,7 @@ wizard() {
 }
 
 dialog --title "$title" --yesno "\
-The install wizard will allow you to configure all the settings necessary to run your Femtofox.\n\
+The install wizard will allow you to configure all the basic settings necessary to run your Femtofox.\n\
 \n\
 Running this wizard will overwrite some current settings.\n\n\
 Proceed?" 13 50
