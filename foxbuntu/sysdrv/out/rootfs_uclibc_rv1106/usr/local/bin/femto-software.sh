@@ -88,7 +88,8 @@ package_menu() {
     echo "Loading package menu..."
     # for each line, check if it's supported by the package, display it if the current install state of the package is appropriate (example: don't display "install" if the package is already installed, don't display "stop service" for a package with no services)
     service_state=$(femto-utils.sh -C "$($package_dir/$1.sh -E)")
-    choice=$(dialog --no-collapse --colors --title "$($package_dir/$1.sh -N)" --cancel-label "Back" --default-item "$choice" --menu "$(if $package_dir/$1.sh -O | grep -q 'S' && $package_dir/$1.sh -I; then echo "Service status: $(femto-utils.sh -R "$service_state")"; fi)" 18 45 5 \
+    if $package_dir/$1.sh -O | grep -q 'G' && $package_dir/$1.sh -I; then license_button="--help-button --help-label License"; fi
+    choice=$(dialog --no-collapse --colors --title "$($package_dir/$1.sh -N)" --cancel-label "Back" --default-item "$choice" $license_button --menu "$(if $package_dir/$1.sh -O | grep -q 'S' && $package_dir/$1.sh -I; then echo "Service status: $(femto-utils.sh -R "$service_state")"; fi)" 18 45 5 \
       $(if $package_dir/$1.sh -O | grep -q 'l' && $package_dir/$1.sh -I; then echo "Run software x"; fi) \
       $(if $package_dir/$1.sh -O | grep -q 'i' && ! $package_dir/$1.sh -I; then echo "Install x"; fi) \
       $(if $package_dir/$1.sh -O | grep -q 'u' && $package_dir/$1.sh -I; then echo "Uninstall x"; fi) \
@@ -101,21 +102,27 @@ package_menu() {
       $(if $package_dir/$1.sh -O | grep -q 'S' && $package_dir/$1.sh -I; then echo "Detailed service status x"; fi) \
       " " "" \
       "Back to software manager" "" 3>&1 1>&2 2>&3)
-    [ $? -eq 1 ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
-    # execute the actual commands
-    case $choice in
-      "Run software") echo "Launching $($package_dir/$1.sh -N)..." && eval "$package_dir/$1.sh -l" ;;
-      "Install") install $1 ;;
-      "Uninstall") uninstall $1 ;;
-      "Initialize") initialize $1 ;;
-      "Upgrade") upgrade $1 ;;
-      "Enable service") echo "Enabling and starting service..." && eval "$package_dir/$1.sh -e" && eval "$package_dir/$1.sh -r" ;;
-      "Disable service") echo "Disabling and stopping service..." && eval "$package_dir/$1.sh -d" && eval "$package_dir/$1.sh -s" ;;
-      "Stop service") echo "Stopping service..." && eval "$package_dir/$1.sh -s" ;;
-      "Start/restart service") echo "Starting/restarting service..." && eval "$package_dir/$1.sh -r" ;;
-      "Detailed service status") echo "Getting service status..." && dialog --no-collapse --title "$title" --msgbox "$(eval "$package_dir/$1.sh -S")" 0 0 ;;
-      "Back to software manager") break ;;
-    esac
+      exit_status=$? # This line checks the exit status of the dialog command
+      if [ $exit_status -eq 1 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
+        break
+      elif [ $exit_status -eq 2 ]; then # Help ("extra") button
+        dialog --no-collapse --colors --title "$($package_dir/$1.sh -N) License" --msgbox "$($package_dir/$1.sh -G)" 0 0
+      else
+        # execute the actual commands
+        case $choice in
+          "Run software") echo "Launching $($package_dir/$1.sh -N)..." && eval "$($package_dir/$1.sh -l)" ;;
+          "Install") install $1 ;;
+          "Uninstall") uninstall $1 ;;
+          "Initialize") initialize $1 ;;
+          "Upgrade") upgrade $1 ;;
+          "Enable service") echo "Enabling and starting service..." && eval "$package_dir/$1.sh -e" && eval "$package_dir/$1.sh -r" ;;
+          "Disable service") echo "Disabling and stopping service..." && eval "$package_dir/$1.sh -d" && eval "$package_dir/$1.sh -s" ;;
+          "Stop service") echo "Stopping service..." && eval "$package_dir/$1.sh -s" ;;
+          "Start/restart service") echo "Starting/restarting service..." && eval "$package_dir/$1.sh -r" ;;
+          "Detailed service status") echo "Getting service status..." && dialog --no-collapse --title "$title" --msgbox "$(eval "$package_dir/$1.sh -S")" 0 0 ;;
+          "Back to software manager") break ;;
+        esac
+      fi
   done
 }
 
