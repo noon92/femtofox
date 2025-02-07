@@ -120,18 +120,18 @@ package_menu() {
 
 # generate menu from filenames in /usr/local/bin/packages
 while true; do
-  menu_entries=()
+  menu_entries=("Package name" "Installed?" "" "")
   index=1
   for file in /usr/local/bin/packages/*.sh; do
     filename=$(basename "$file" .sh)
     [[ "$filename" == "package_template" ]] && continue # skip package_template.sh
-    menu_entries+=("$index" "$(/usr/local/bin/packages/"$filename".sh -N)")
-    ((index++))
+    menu_entries+=("$(/usr/local/bin/packages/"$filename".sh -N)" "$($package_dir/$filename.sh -I && echo "✅ " || echo "❌ ")")
+    ((index++)) # keeping an index to determine menu window height
   done
 
   menu_entries+=(" " "")  # add blank line and "Back to Main Menu" entry
-  menu_entries+=("$index" "Back to main menu")
-  software_option=$(dialog --no-collapse --cancel-label "Back" --default-item "$software_option" --menu "$title" $((9 + index)) 50 $((index + 1)) "${menu_entries[@]}" 3>&1 1>&2 2>&3)
+  menu_entries+=("Back to main menu" "")
+  software_option=$(dialog --no-collapse --cancel-label "Back" --default-item "$software_option" --menu "$title" $((11 + index)) 50 $((index + 3)) "${menu_entries[@]}" 3>&1 1>&2 2>&3)
   [ $? -eq 1 ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
     
   case_block="  case \$software_option in"
@@ -140,12 +140,12 @@ while true; do
     filename=$(basename "$file" .sh)
     [[ "$filename" == "package_template" ]] && continue # skip package_template.sh
     case_block+="
-      $index) package_intro \"$filename\" ;;"
+      \"$(/usr/local/bin/packages/"$filename".sh -N)\") package_intro \"$filename\" ;;"
     ((index++))
   done
 
   case_block+="
-      $index) break ;;
+      \"Back to main menu\") break ;;
     esac" #add return to main menu option
   eval "$case_block" # Execute the generated case statement
 done
