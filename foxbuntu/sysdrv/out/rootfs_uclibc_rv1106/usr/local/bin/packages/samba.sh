@@ -33,6 +33,7 @@ Arguments:
 -U          Get URL
 -O          Get options supported by this script
 -S          Get service status
+-E          Get service nam
 -L          Get install location
 -P          Get package name
 -C          Get Conflicts
@@ -57,7 +58,7 @@ name="Samba File Sharing"   # software name
 author="Software Freedom Conservancy"   # software author - OPTIONAL
 description="Femtofox comes with Samba preinstalled but disabled. $init_instructions\n\n$user_message"   # software description - OPTIONAL (but strongly recommended!)
 URL="https://www.samba.org/"   # software URL. Can contain multiple URLs - OPTIONAL
-options="xiuagedsrNADUOSPCI"   # script options in use by software package. For example, for a package with no service, exclude `edsr`
+options="xiuagedsrNADUOSEPCI"   # script options in use by software package. For example, for a package with no service, exclude `edsr`
 launch=""   # command to launch software, if applicable
 service_name="smbd nmbd"   # the name of the service/s, such as `chrony`. REQUIRED if service options are in use. If multiple services, separate by spaces "service1 service2"
 location=""   # install location REQUIRED if not apt installed. Generally, we use `/opt/software-name`
@@ -156,6 +157,9 @@ while getopts ":h$options" opt; do
     O) echo -e $options ;;
     S) # Option -S (Get service status)
       systemctl status $service_name
+    ;;
+    E) # Option -E (Get service name)
+      echo $service_name
     ;;
     L) echo -e $location ;;
     P) echo -e $package_name ;;

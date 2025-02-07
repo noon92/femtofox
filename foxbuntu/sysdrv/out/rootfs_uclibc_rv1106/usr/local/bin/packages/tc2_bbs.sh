@@ -32,6 +32,7 @@ Arguments:
 -U          Get URL
 -O          Get options supported by this script
 -S          Get service status
+-E          Get service nam
 -L          Get Install location
 -C          Get Conflicts
 -I          Check if installed. Returns an error if not installed
@@ -53,7 +54,7 @@ name="TC²-BBS"   # software name
 author="The Comms Channel"   # software author - OPTIONAL
 description="The TC²-BBS system integrates with Meshtastic devices. The system allows for message handling, bulletin boards, mail systems, and a channel directory."   # software description - OPTIONAL (but strongly recommended!)
 URL="https://github.com/TheCommsChannel/TC2-BBS-mesh"   # software URL. Can contain multiple URLs - OPTIONAL
-options="xiugedsrNADUOSLCI"   # script options in use by software package. For example, for a package with no service, exclude `edsr`
+options="xiugedsrNADUOSELCI"   # script options in use by software package. For example, for a package with no service, exclude `edsr`
 launch="python /opt/TC2-BBS-mesh/server.py"   # command to launch software, if applicable
 service_name="mesh-bbs"   # the name of the service/s, such as `chrony`. REQUIRED if service options are in use. If multiple services, separate by spaces "service1 service2"
 location="/opt/TC2-BBS-mesh"   # install location REQUIRED if not apt installed. Generally, we use `/opt/software-name`
@@ -161,6 +162,9 @@ while getopts ":h$options" opt; do
     O) echo -e $options ;;
     S) # Option -S (Get service status)
       systemctl status $service_name
+    ;;
+    E) # Option -E (Get service name)
+      echo $service_name
     ;;
     L) echo -e $location ;;
     C) echo -e $conflicts ;;

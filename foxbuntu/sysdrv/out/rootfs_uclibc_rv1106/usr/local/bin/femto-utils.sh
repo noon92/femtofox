@@ -19,9 +19,9 @@ Options are:
 -o             OS info
 -S             Storage & RAM info
 -t "enable"    Enable/disable/start/stop/check ttyd (web terminal).  Options: "enable" "disable" "start" "stop" "check"
--T             Generate/overwrite ttyd encryption keys
 -E             Generate/overwrite SSH encryption keys
-
+-C "service"   Check if service is enabled, disabled, running
+-R "command"   Replace colors for dialog menus
 EOF
 )
 
@@ -95,7 +95,7 @@ os_info() {
   local system_uptime="$(uptime -p | awk '{$1=""; print $0}' | sed -e 's/ day\b/d/g' -e 's/ hour\b/h/g' -e 's/ hours\b/h/g' -e 's/ minute\b/m/g' -e 's/ minutes\b/m/g' | sed 's/,//g')"
   local kernel_active_modules="$(lsmod | awk 'NR>1 {print $1}' | tr '\n' ' ' && echo)"
   local kernel_boot_modules="$(modules=$(sed -n '6,$p' /etc/modules | sed ':a;N;$!ba;s/\n/, /g;s/, $//'); [ -z "$modules" ] && echo "none" || echo "$modules")"
-  local ttyd_enabled="$(ttyd "check" | sed 's/\x1b\[[0-9;]*m//g')"
+  local ttyd_enabled="$(femto-utils.sh -C "ttyd")"
   local logging_enabled="$(logging "check" | sed 's/\x1b\[[0-9;]*m//g')"
   local act_led="$(femto-utils.sh -a "check" | sed -r 's/\x1B\[[0-9;]*[mK]//g')" #remove color from output
 
@@ -201,41 +201,59 @@ logging() {
   fi
 }
 
-ttyd() {
-  if [ "$1" = "disable" ]; then
-    systemctl disable ttyd
-    systemctl stop ttyd
-    echo "Disabled ttyd service."
-    exit 0
-  elif [ "$1" = "enable" ]; then
-    systemctl enable ttyd
-    echo "Enabled ttyd service."
-    systemctl start ttyd
-    exit 0
-  elif [ "$1" = "check" ]; then
-    if systemctl is-enabled ttyd &>/dev/null; then
-      if echo "$(systemctl status ttyd)" | grep -q "active (running)"; then
-        echo -e "\033[4m\033[0;34menabled and running\033[0m"
-      elif echo "$(systemctl status ttyd)" | grep -q "inactive (dead)"; then
-        echo -e "\033[4m\033[0;31menabled but not running\033[0m"
-        exit 1
-      else
-        echo "unknown"
-      fi
-    else
-      echo -e "\033[4m\033[0;31mdisabled\033[0m"
-      exit 1
-    fi
-  elif [ "$1" = "start" ]; then
-  echo "Starting/restarting ttyd service..."
-  systemctl restart ttyd
-  elif [ "$1" = "stop" ]; then
-  echo "Stopping ttyd service..."
-  systemctl stop ttyd
-  fi
+# Dialog uses a different method to display colors, and is limited to only these 8.
+replace_colors() {
+  input="$1"
+  input="${input//$(echo -e '\033[0;30m')/\\Z0}"   # black
+  input="${input//$(echo -e '\033[0;31m')/\\Z1}"   # red
+  input="${input//$(echo -e '\033[0;32m')/\\Z2}"   # green
+  input="${input//$(echo -e '\033[0;33m')/\\Z3}"   # yellow
+  input="${input//$(echo -e '\033[0;34m')/\\Z4}"   # blue
+  input="${input//$(echo -e '\033[0;35m')/\\Z5}"   # magenta
+  input="${input//$(echo -e '\033[0;36m')/\\Z6}"   # cyan
+  input="${input//$(echo -e '\033[0;37m')/\\Z7}"   # white
+  input="${input//$(echo -e '\033[7m')/\\Zr}"      # invert
+  input="${input//$(echo -e '\033[4m')/\\Zu}"      # underline
+  input="${input//$(echo -e '\033[0m')/\\Zn}"      # reset
+  echo "$input"
 }
 
-while getopts ":harsl:ipcnoSt:TE" opt; do
+# this has been moved to /usr/local/bin/packages/ttyd.sh under the aegis of femto_software.sh
+# ttyd() {
+#   if [ "$1" = "disable" ]; then
+#     systemctl disable ttyd
+#     systemctl stop ttyd
+#     echo "Disabled ttyd service."
+#     exit 0
+#   elif [ "$1" = "enable" ]; then
+#     systemctl enable ttyd
+#     echo "Enabled ttyd service."
+#     systemctl start ttyd
+#     exit 0
+#   elif [ "$1" = "check" ]; then
+#     if systemctl is-enabled ttyd &>/dev/null; then
+#       if echo "$(systemctl status ttyd)" | grep -q "active (running)"; then
+#         echo -e "\033[4m\033[0;34menabled and running\033[0m"
+#       elif echo "$(systemctl status ttyd)" | grep -q "inactive (dead)"; then
+#         echo -e "\033[4m\033[0;31menabled but not running\033[0m"
+#         exit 1
+#       else
+#         echo "unknown"
+#       fi
+#     else
+#       echo -e "\033[4m\033[0;31mdisabled\033[0m"
+#       exit 1
+#     fi
+#   elif [ "$1" = "start" ]; then
+#   echo "Starting/restarting ttyd service..."
+#   systemctl restart ttyd
+#   elif [ "$1" = "stop" ]; then
+#   echo "Stopping ttyd service..."
+#   systemctl stop ttyd
+#   fi
+# }
+
+while getopts ":harsl:ipcnoSEC:R:" opt; do
   case ${opt} in
     h) # Option -h (help)
       echo -e $help
@@ -260,13 +278,6 @@ while getopts ":harsl:ipcnoSt:TE" opt; do
     n) networking_info ;; # Option -n (Networing info)
     o) os_info ;; # Option -o (OS info)
     S) storage_info ;; # Option -S (Storage & RAM info)
-    t) ttyd $OPTARG ;; # Option -t (ttyd service manager)
-    T) # Option -T (new ttyd SSL keys)
-      openssl req -new -newkey rsa:4096 -days 3650 -nodes -x509 -keyout /etc/ssl/private/ttyd.key -out /etc/ssl/certs/ttyd.crt   -subj "/CN=$(hostname)" -addext "subjectAltName=DNS:$(hostname)"
-      chmod 600 /etc/ssl/private/ttyd.key
-      chmod 644 /etc/ssl/certs/ttyd.crt
-      systemctl restart ttyd
-    ;;
     E) # Option -E (new SSH encryption keys)
       rm /etc/ssh/ssh_host_*
       ssh-keygen -t ed25519 -f /etc/ssh/ssh_host_ed25519_key -N ""
@@ -275,6 +286,32 @@ while getopts ":harsl:ipcnoSt:TE" opt; do
       chmod 644 /etc/ssh/ssh_host_*_key.pub
       chown root:root /etc/ssh/ssh_host_*
       systemctl restart ssh
+    ;;
+    C) # Option -C (Check service)
+      if systemctl is-enabled $OPTARG &>/dev/null; then
+        if echo "$(systemctl status $OPTARG)" | grep -q "active (running)"; then
+          echo -e "\033[4m\033[0;34menabled and running\033[0m"
+          exit 0
+        elif echo "$(systemctl status $OPTARG)" | grep -q "inactive (dead)"; then
+          echo -e "\033[4m\033[0;31menabled but not running\033[0m"
+          exit 1
+        elif echo "$(systemctl status $OPTARG)" | grep -q "failed"; then
+          echo -e "\033[4m\033[0;31menabled but failed\033[0m"
+          exit 1
+        elif echo "$(systemctl status $OPTARG)" | grep -q "activating"; then
+          echo -e "\033[4m\033[0;31menabled, activating\033[0m"
+          exit 2
+        else
+          echo "unknown"
+          exit 2
+        fi
+      else
+        echo -e "\033[4m\033[0;31mdisabled\033[0m"
+        exit 1
+      fi
+    ;;
+    R) 
+      replace_colors "$OPTARG"
     ;;
     \?) # Unknown option)
       echo -e "Unknown argument $1.\n$help"
