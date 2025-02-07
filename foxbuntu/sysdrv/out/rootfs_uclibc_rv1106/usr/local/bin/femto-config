@@ -170,7 +170,7 @@ networking_settings() {
       ;;
       7) # Test internet connection)
         loading "Testing internet connection..."
-        dialog --no-collapse --title "Internet connectivity test" --colors --msgbox "$(replace_colors "$(femto-network-config.sh -t)")" 8 40
+        dialog --no-collapse --title "Internet connectivity test" --colors --msgbox "$(replace_colors "$(femto-network-config.sh -t)")" 9 40
       ;;
       8)
         return
@@ -751,7 +751,7 @@ done
 
 # Main menu
 while true; do
-  main_menu_choice=$(dialog --no-collapse --cancel-label "Exit" --default-item "$main_menu_choice" --item-help --menu "Femtofox Config" 16 40 5 \
+  main_menu_choice=$(dialog --no-collapse --cancel-label "Exit" --backtitle "Foxbuntu v$(grep -oP 'major=\K[0-9]+' /etc/foxbuntu-release).$(grep -oP 'minor=\K[0-9]+' /etc/foxbuntu-release)$(output=$(grep -o 'patch=[1-9][0-9]*' /etc/foxbuntu-release | cut -d= -f2) && [ -n "$output" ] && echo ".$output")$(grep -oP 'hotfix=\K[a-z]+' /etc/foxbuntu-release)" --default-item "$main_menu_choice" --item-help --menu "Femtofox Config" 16 40 5 \
     1 "Settings wizard" "" \
     2 "Networking" "" \
     3 "Meshtastic" "" \
