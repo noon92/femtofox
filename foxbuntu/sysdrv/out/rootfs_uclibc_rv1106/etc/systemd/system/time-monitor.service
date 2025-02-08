@@ -1,0 +1,12 @@
+[Unit]
+Description=Monitor time changes and restart meshtasticd
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/time_monitor.sh
+Restart=always
+User=root
+
+[Install]
+WantedBy=multi-user.target
+
