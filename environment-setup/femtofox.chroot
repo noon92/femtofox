@@ -61,7 +61,6 @@ systemctl enable femto-runonce.service
 systemctl enable femto-usb-config-tool.service
 systemctl enable femto-boot-complete.service
 systemctl enable wifi-mesh-control
-systemctl enable time-monitor
 
 systemctl disable apt-daily.timer
 systemctl disable unattended-upgrades
