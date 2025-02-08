@@ -151,14 +151,14 @@ $wifi_settings"
       hostnamectl set-hostname "$OPTARG"
       systemctl restart avahi-daemon
       echo "Regenerating web terminal ssl keys..."
-      /usr/local/bin/packages/ttyd.sh -k
+      femto-utils.sh -T
       ;;
-    \?)  # Invalid option)
+    \?)  # Invalid option
       echo "Invalid option: -$OPTARG"
       echo -e "$help"
       exit 1
       ;;
-    :) # Missing argument for option)
+    :) # Missing argument for option
       echo "Option -$OPTARG requires a setting."
       echo -e "$help"
       exit 1

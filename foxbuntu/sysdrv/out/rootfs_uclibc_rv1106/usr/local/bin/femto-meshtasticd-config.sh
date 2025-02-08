@@ -146,15 +146,11 @@ while getopts ":higkl:q:uU:rR:aA:cpo:sM:Stwuxm" opt; do
         eval $prepare
         cp /etc/meshtasticd/available.d/femtofox/femtofox_SX1262_XTAL.yaml /etc/meshtasticd/config.d
         systemctl restart meshtasticd
-      elif [ "$OPTARG" = "lora-meshstick-1262" ]; then
-        eval $prepare
-        cp /etc/meshtasticd/available.d/lora-meshstick-1262.yaml /etc/meshtasticd/config.d/femtofox_lora-meshstick-1262.yaml # ugly code for the special case of the meshstick, which is not femto. Allows it to be detected by femto scripts and removed if radio changes
-        systemctl restart meshtasticd
       elif [ "$OPTARG" = "none" ]; then
         eval $prepare
         systemctl restart meshtasticd
       else
-        echo "$OPTARG is not a valid option. Options are \`lr1121_tcxo\`, \`sx1262_tcxo\`, \`sx1262_xtal\`, \`lora-meshstick-1262\`, \`none\` (simradio)"
+        echo "$OPTARG is not a valid option. Options are \`lr1121_tcxo\`, \`sx1262_tcxo\`, \`sx1262_xtal\`, \`none\` (simradio)"
       fi
       ;;
     q) # Option -q (set config URL)
@@ -224,7 +220,17 @@ while getopts ":higkl:q:uU:rR:aA:cpo:sM:Stwuxm" opt; do
       fi
       ;;
     S) # Option -S (Get Meshtasticd Service state)
-      femto-utils.sh -C "meshtasticd" # this functionality has been moved
+      if systemctl is-enabled meshtasticd &>/dev/null; then
+        if echo "$(systemctl status meshtasticd)" | grep -q "active (running)"; then
+          echo -e "\033[4m\033[0;34menabled and running\033[0m"
+        elif echo "$(systemctl status meshtasticd)" | grep -q "inactive (dead)"; then
+          echo -e "\033[4m\033[0;31menabled but not running\033[0m"
+        else
+          echo "unknown"
+        fi
+      else
+        echo -e "\033[4m\033[0;31mdisabled\033[0m"
+      fi
       ;;
     t) # Option -t (stop Meshtasticd service)
       systemctl stop meshtasticd

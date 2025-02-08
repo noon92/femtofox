@@ -33,9 +33,7 @@ Arguments:
 -U          Get URL
 -O          Get options supported by this script
 -S          Get service status
--E          Get service name
 -L          Get install location
--G          Get license
 -P          Get package name
 -C          Get Conflicts
 -I          Check if installed. Returns an error if not installed
@@ -56,13 +54,11 @@ name="name"                     # software name
 author="author"                 # software author - OPTIONAL
 description="description"       # software description - OPTIONAL (but strongly recommended!)
 URL="URL"                       # software URL. Can contain multiple URLs - OPTIONAL
-options="hxiuagedsrlNADUOSELGPCI"  # script options in use by software package. For example, for a package with no service, exclude `edsrS`
+options="hxiuagedsrlNADUOSLPCI"  # script options in use by software package. For example, for a package with no service, exclude `edsrS`
 launch="/opt/package/run.sh"    # command to launch software, if applicable
-license="/opt/package/license"  # file to cat to display license
 service_name="service_name"     # the name of the service/s, such as `chrony`. REQUIRED if service options are in use. If multiple services, separate by spaces "service1 service2"
 package_name="apt_package"      # apt package name, if applicable. Can be multiple packages separated by spaces, but if at least one is installed the package will show as "installed" even if the others aren't
 location="/opt/location"        # install location REQUIRED if not apt installed. Generally, we use `/opt/software-name`
-license="$location/LICENSE"     # file to cat to display license
 conflicts="package1, package2"  # comma delineated plain-text list of packages with which this package conflicts. Blank if none. Use the name as it appears in the $name field of the other package. Extra plaintext is allowed, such as "packageA, packageB, any other software that uses the Meshtastic CLI"
 
 # install script
@@ -106,11 +102,6 @@ check() {
   else
     exit 1
   fi
-}
-
-# display license - limit to 2000 chars
-license() {
-  echo -e "Contents of $license:\n\n   $([[ -f "$license" ]] && awk -v max=2000 -v file="$license" '{ len += length($0) + 1; if (len <= max) print; else if (!cut) { cut=1; printf "%s...\n\nFile truncated, see %s for complete license.", substr($0, 1, max - len + length($0)), file; exit } }' "$license")"
 }
 
 while getopts ":$options" opt; do
@@ -157,13 +148,7 @@ while getopts ":$options" opt; do
     S) # Option -S (Get service status)
       systemctl status $service_name
     ;;
-    E) # Option -E (Get service name)
-      echo $service_name
-    ;;
     L) echo -e $location ;;
-    G) # Option -G (Get license) 
-      license
-    ;;
     P) echo -e $package_name ;;
     C) echo -e $conflicts ;;
     I) # Option -I (Check if already installed)
