@@ -255,28 +255,28 @@ while getopts ":harsl:ipcnoSEC:R:" opt; do
     ;;
     C) # Option -C (Check service)
       if systemctl is-enabled $OPTARG &>/dev/null; then
-        state="\033[0;34m\033[4menabled\e[39m, "
+        state_message="\033[0;34m\033[4menabled\e[39m, "
       else
-        state="\033[0;31m\033[4mdisabled\e[39m, "
-        exit_state=1
+        state_message="\033[0;31m\033[4mdisabled\e[39m, "
       fi
-      if echo "$(systemctl status $OPTARG)" | grep -q "active (running)"; then
-        state+="\033[0;34mrunning\e[0m"
+      full_status=$(systemctl status $OPTARG)
+      if echo $full_status | grep -q "active (running)"; then
+        state_message+="\033[0;34mrunning\e[0m"
         exit_state=0
-      elif echo "$(systemctl status $OPTARG)" | grep -q "inactive (dead)"; then
-        state+="\033[0;31mnot running\e[0m"
+      elif echo $full_status | grep -q "inactive (dead)"; then
+        state_message+="\033[0;31mnot running\e[0m"
         exit_state=1
-      elif echo "$(systemctl status $OPTARG)" | grep -q "failed"; then
-        state+="\033[0;31mfailed\e[0m"
+      elif echo $full_status | grep -q "failed"; then
+        state_message+="\033[0;31mfailed\e[0m"
         exit_state=1
-      elif echo "$(systemctl status $OPTARG)" | grep -q "activating"; then
-        state+="activating\e[0m"
+      elif echo $full_status | grep -q "activating"; then
+        state_message+="activating\e[0m"
         exit_state=2
       else
-        state+="unknown\e[0m"
+        state_message+="unknown\e[0m"
         exit_state=2
       fi
-      echo -e "$state"
+      echo -e "$state_message"
       exit $exit_state
     ;;
     R) 
