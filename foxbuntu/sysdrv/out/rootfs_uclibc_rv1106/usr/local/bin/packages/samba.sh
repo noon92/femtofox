@@ -33,7 +33,9 @@ Arguments:
 -U          Get URL
 -O          Get options supported by this script
 -S          Get service status
+-E          Get service name
 -L          Get install location
+-G          Get license
 -P          Get package name
 -C          Get Conflicts
 -I          Check if installed. Returns an error if not installed
@@ -50,17 +52,18 @@ EOF
 # Messages to the user (such as configuration instructions, explanatory error messages, etc) should be given as: `echo "user_message: text"`
 # Everything following `user_message: ` will be displayed prominently to the user, so it must the last thing echoed
 
-user_message="To connect to network share, enter \`\\\\femtofox\\home\` in Windows, \`smb://$(hostname)/home\` in MacOS or \`smbclient //$(hostname)/femto -U femto\` in Linux.\nDefault configuration shares /home/femto. Edit \`/etc/samba/smb.conf\` to add other shares.\n\nTroubleshooting: if Windows refuses to connect, especially after succeeding previously, hit [win]+R and enter \`net use * /delete\`."
-init_instructions="To enable file sharing, run \`Initialize\` in the femto-config Samba menu, or enable the Samba service, run \`sudo smbpasswd -a femto\` to set a Samba password, and then restart the Samba service."
+user_message="To connect to network share, enter \`\\\\femtofox\\home\` in Windows, \`smb://$(hostname)/home\` in MacOS or \`smbclient //$(hostname)/femto -U femto\` in Linux. Default configuration shares /home/femto. Edit \`/etc/samba/smb.conf\` to add other shares.\n\nTroubleshooting: if Windows refuses to connect after succeeding previously, hit [win]+R and enter \`net use * /delete\`."
+init_instructions="To enable file sharing, run \`Initialize\` in the femto-config Samba menu to set a Samba password."
 
 name="Samba File Sharing"   # software name
 author="Software Freedom Conservancy"   # software author - OPTIONAL
 description="Femtofox comes with Samba preinstalled but disabled. $init_instructions\n\n$user_message"   # software description - OPTIONAL (but strongly recommended!)
 URL="https://www.samba.org/"   # software URL. Can contain multiple URLs - OPTIONAL
-options="xiuagedsrNADUOSPCI"   # script options in use by software package. For example, for a package with no service, exclude `edsr`
+options="xiuagedsrNADUOSEGPCI"   # script options in use by software package. For example, for a package with no service, exclude `edsr`
 launch=""   # command to launch software, if applicable
 service_name="smbd nmbd"   # the name of the service/s, such as `chrony`. REQUIRED if service options are in use. If multiple services, separate by spaces "service1 service2"
 location=""   # install location REQUIRED if not apt installed. Generally, we use `/opt/software-name`
+license="/usr/share/doc/samba/copyright"     # file to cat to display license
 package_name="samba"   # apt package name, if applicable
 conflicts=""   # comma delineated plain-text list of packages with which this package conflicts. Blank if none. Use the name as it appears in the $name field of the other package. Extra plaintext is allowed, such as "packageA, packageB, any other software that uses the Meshtastic CLI"
 
@@ -80,8 +83,6 @@ install() {
 # uninstall script
 uninstall() {
   DEBIAN_FRONTEND=noninteractive apt remove -y $package_name 2>&1 | tee /dev/tty
-  echo "Removing unused dependencies..."
-  DEBIAN_FRONTEND=noninteractive apt autoremove -y $package_name 2>&1 | tee /dev/tty
   echo "user_message: Some files may remain on system. To remove, run \`sudo apt remove --purge $package_name -y\` and \`sudo apt autoremove -y\`."
   exit 0 # should be `exit 1` if operation failed
 }
@@ -96,7 +97,7 @@ interactive_init() {
   exit 0
 }
 
-#upgrade script
+# upgrade script
 upgrade() {
   echo "apt update can take a long while..."
   DEBIAN_FRONTEND=noninteractive apt-get update -y 2>&1 | tee /dev/tty | grep -q "Err" && { echo "user_message: apt update failed. Is internet connected?"; exit 1; }
@@ -111,6 +112,11 @@ if dpkg-query -W -f='${Status}' $package_name 2>/dev/null | grep -q "install ok 
 else
   exit 1
 fi
+}
+
+# display license
+license() {
+  echo -e "Contents of $license:\n\n   $([[ -f "$license" ]] && awk -v max=2000 -v file="$license" '{ len += length($0) + 1; if (len <= max) print; else if (!cut) { cut=1; printf "%s...\n\nFile truncated, see %s for complete license.", substr($0, 1, max - len + length($0)), file; exit } }' "$license")"
 }
 
 while getopts ":h$options" opt; do
@@ -157,7 +163,15 @@ while getopts ":h$options" opt; do
     S) # Option -S (Get service status)
       systemctl status $service_name
     ;;
-    L) echo -e $location ;;
+    E) # Option -E (Get service name)
+      echo $service_name
+    ;;
+    L) # Option -L (location)
+      echo -e $location
+    ;;
+    G) # Option -G (Get license) 
+      license
+    ;;
     P) echo -e $package_name ;;
     C) echo -e $conflicts ;;
     I) # Option -I (Check if already installed)

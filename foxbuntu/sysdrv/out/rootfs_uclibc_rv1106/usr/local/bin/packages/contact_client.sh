@@ -10,10 +10,11 @@ help=$(cat <<EOF
 Arguments:
 -h          This message
     Environment - must be first argument:
--x          User UI is not terminal (script interactive unavailable)
+-x          User UI is not terminal (script interaction unavailable)
     Actions:
 -i          Install
 -u          Uninstall
+-a          Interactive initialization script: code that must be run to initialize the installation prior to use, but can only be run from terminal
 -g          Upgrade
 -e          Enable service, if applicable
 -d          Disable service, if applicable
@@ -27,7 +28,10 @@ Arguments:
 -U          Get URL
 -O          Get options supported by this script
 -S          Get service status
--L          Get Install location
+-E          Get service name
+-L          Get install location
+-G          Get license
+-P          Get package name
 -C          Get Conflicts
 -I          Check if installed. Returns an error if not installed
 EOF
@@ -48,10 +52,11 @@ name="Contact"   # software name
 author="pdxlocations"   # software author - OPTIONAL
 description="A Text-Based Console UI for Meshtastic Nodes. Formerly called Curse Client.\nAfter install, run \`contact\` to launch."   # software description - OPTIONAL (but strongly recommended!)
 URL="https://github.com/pdxlocations/contact/"   # software URL. Can contain multiple URLs - OPTIONAL
-options="xiuglNADUOLCI"   # script options in use by software package. For example, for a package with no service, exclude `edsrS`
+options="xiuglNADUOLGCI"   # script options in use by software package. For example, for a package with no service, exclude `edsrS`
 launch="python /opt/contact/main.py --host"   # command to launch software, if applicable
 service_name=""   # the name of the service/s, such as `chrony`. REQUIRED if service options are in use. If multiple services, separate by spaces "service1 service2"
 location="/opt/contact"   # install location REQUIRED if not apt installed. Generally, we use `/opt/software-name`
+license="$location/LICENSE"     # file to cat to display license
 conflicts=""   # comma delineated plain-text list of packages with which this package conflicts. Blank if none. Use the name as it appears in the $name field of the other package. Extra plaintext is allowed, such as "packageA, packageB, any other software that uses the Meshtastic CLI"
 
 
@@ -68,6 +73,7 @@ install() {
     echo "user_message: Git clone failed. Is internet connected?"
     exit 1
   fi
+  pip install -r $location/requirements.txt
   chown -R femto $location #give ownership of installation directory to $user
   git config --global --add safe.directory $location # prevents git error when updating
   echo "Creating \`contact\` shortcut."
@@ -115,6 +121,11 @@ check() {
   fi
 }
 
+# display license
+license() {
+  echo -e "Contents of $license:\n\n   $([[ -f "$license" ]] && awk -v max=2000 -v file="$license" '{ len += length($0) + 1; if (len <= max) print; else if (!cut) { cut=1; printf "%s...\n\nFile truncated, see %s for complete license.", substr($0, 1, max - len + length($0)), file; exit } }' "$license")"
+}
+
 while getopts ":h$options" opt; do
   case ${opt} in
     h) # Option -h (help)
@@ -157,6 +168,9 @@ while getopts ":h$options" opt; do
       systemctl status $service_name
     ;;
     L) echo -e $location ;;
+    G) # Option -G (Get license) 
+      license
+    ;;
     C) echo -e $conflicts ;;
     I) # Option -I (Check if already installed)
       check
