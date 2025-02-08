@@ -98,8 +98,8 @@ package_menu() {
       $(if $package_dir/$1.sh -O | grep -q 'g' && $package_dir/$1.sh -I; then echo "Upgrade x"; fi) \
       $(if $package_dir/$1.sh -O | grep -q 'e' && $package_dir/$1.sh -I && [[ ! $service_state =~ "enabled" ]]; then echo "Enable service x"; fi) \
       $(if $package_dir/$1.sh -O | grep -q 'e' && $package_dir/$1.sh -I && [[ ! $service_state =~ "disabled" ]]; then echo "Disable service x"; fi) \
-      $(if $package_dir/$1.sh -O | grep -q 'e' && $package_dir/$1.sh -I && [[ ! $service_state =~ "not running" ]] && [[ ! $service_state =~ "disabled" ]]; then echo "Stop service x"; fi) \
-      $(if $package_dir/$1.sh -O | grep -q 'e' && $package_dir/$1.sh -I && [[ $service_state =~ "enabled" ]]; then echo "Start/restart service x"; fi) \
+      $(if $package_dir/$1.sh -O | grep -q 'e' && $package_dir/$1.sh -I && [[ ! $service_state =~ "not running" ]]; then echo "Stop service x"; fi) \
+      $(if $package_dir/$1.sh -O | grep -q 'e' && $package_dir/$1.sh -I; then echo "Start/restart service x"; fi) \
       $(if $package_dir/$1.sh -O | grep -q 'S' && $package_dir/$1.sh -I; then echo "Detailed service status x"; fi)"
       menu_count=$(( $(echo "$menu_list" | grep -o " x" | wc -l) $(if $package_dir/$1.sh -O | grep -q 'e' && $package_dir/$1.sh -I; then echo "+1"; fi) )) # count the number of menu items by counting how many times " x" shows up, +1 if there's a service. This is a stupid way to do this, but because each menu item only contains one space (the rest being space-sized invisible chars) it works. It's late at night, OKAY?!
       choice=$(dialog --no-collapse --colors --title "$($package_dir/$1.sh -N)" --cancel-label "Back" --default-item "$choice" $license_button --menu "$(if $package_dir/$1.sh -O | grep -q 'S' && $package_dir/$1.sh -I; then echo "Service status: $(femto-utils.sh -R "$service_state")"; fi)" $(( menu_count + 9 )) 45 $(( menu_count + 3 )) \
