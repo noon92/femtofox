@@ -11,22 +11,19 @@ Options are:
 EOF
 )
 
-anykey="echo -e \"\nPress any key to continue...\n\" && read -n 1 -s -r"
+pause() {
+  echo -e "\nPress any key to continue..."
+  read -n 1 -s -r
+}
 
 femtofox_short_license="\
-Femtofox and Foxbuntu are published under CC BY-NC-ND - noncommercial.\n\
+Femtofox is comprised of two projects, with two different licenses:\n\
+1. Femtofox - the hardware, which is licensed \"CC BY-NC-ND - noncommercial\". Summary: you may copy and share and modify the hardware files, but cannot sell them without license from Femtofox, and must give attribution to Femtofox.\n\
+2. Foxbuntu - refers to the modifications to Ubuntu made as part of the Femtofox project, which is licensed GNU GPLv3. Summary: you may use, modify and distribute (including for commercial purposes) Foxbuntu, but must give attribution to Femtofox and distribute this license with your project. Any modified version must remain open source.\n\
+\n\
 For more information, visit us at www.femtofox.com.\n\
 \n\
-Summary:\n\
-You can share Femtofox and Foxbuntu or make modifications, but can't sell it except by arrangement (license) with us.\n\
-In this context, Foxbuntu refers to the modifications to Ubuntu made as part of the Femtofox project.\n\
-\n\
-Boilerplate:\n\
-Attribution — You must give appropriate credit, provide a link to the license, and indicate if changes were made.\n\
-You may do so in any reasonable manner, but not in any way that suggests the licensor endorses you or your use.\n\
-NonCommercial — You may not use the material for commercial purposes.\n\
-NoDerivatives — If you remix, transform, or build upon the material, you may not distribute the modified material (for commercial purposes).\n\
-\n\
+View the long licenses for more information.\n\
 Contact us to license Femtofox."
 
 meshtastic_license="\
@@ -91,7 +88,7 @@ https://www.femtofox.com\n\
     u) # Option -u (Ubuntu licenses)
       echo "$ubuntu_license"
       ;;
-    \?)  # Invalid option
+    \?)  # Invalid option)
       echo "Invalid option: -$OPTARG"
       echo -e "$help"
       exit 1
@@ -102,13 +99,13 @@ done
 # if no arguments, show all licenses
 if [ $# -eq 0 ]; then
   echo "$femtofox_short_license"
-  eval $anykey
+  pause
   echo "$(cat /usr/share/doc/femtofox/long_license)"
-  eval $anykey
+  pause
   echo "$meshtastic_license"
-  eval $anykey
+  pause
   echo "$luckfox_license"
-  eval $anykey
+  pause
   eval "$ubuntu_license"
-  eval $anykey
+  pause
 fi

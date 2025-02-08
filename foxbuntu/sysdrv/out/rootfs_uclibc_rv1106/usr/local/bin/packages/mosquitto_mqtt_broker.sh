@@ -19,6 +19,7 @@ Arguments:
     Actions:
 -i          Install
 -u          Uninstall
+-a          Interactive initialization script: code that must be run to initialize the installation prior to use, but can only be run from terminal
 -g          Upgrade
 -e          Enable service, if applicable
 -d          Disable service, if applicable
@@ -32,7 +33,9 @@ Arguments:
 -U          Get URL
 -O          Get options supported by this script
 -S          Get service status
+-E          Get service name
 -L          Get install location
+-G          Get license
 -P          Get package name
 -C          Get Conflicts
 -I          Check if installed. Returns an error if not installed
@@ -54,11 +57,12 @@ name="Mosquitto MQTT Broker"   # software name
 author="Eclipse Foundation"   # software author - OPTIONAL
 description="Eclipse Mosquitto is an open source (EPL/EDL licensed) message broker that implements the MQTT protocol versions 5.0, 3.1.1 and 3.1. Mosquitto is lightweight and is suitable for use on all devices from low power single board computers to full servers.\n\nThe MQTT protocol provides a lightweight method of carrying out messaging using a publish/subscribe model. This makes it suitable for Internet of Things messaging such as with low power sensors or mobile devices such as phones, embedded computers or microcontrollers.\n\nThe Mosquitto project also provides a C library for implementing MQTT clients, and the very popular mosquitto_pub and mosquitto_sub command line MQTT clients.\n\nMosquitto is part of the Eclipse Foundation, and is an iot.eclipse.org project. The development is driven by Cedalo."   # software description - OPTIONAL (but strongly recommended!)
 URL="https://mosquitto.org/"   # software URL. Can contain multiple URLs - OPTIONAL
-options="xiugedsrNADUOSPCI"   # script options in use by software package. For example, for a package with no service, exclude `edsr`
+options="xiugedsrNADUOSEGPCI"   # script options in use by software package. For example, for a package with no service, exclude `edsr`
 launch=""   # command to launch software, if applicable
 service_name="mosquitto"   # the name of the service/s, such as `chrony`. REQUIRED if service options are in use. If multiple services, separate by spaces "service1 service2"
 package_name="mosquitto"   # apt package name, if applicable
 location=""   # install location REQUIRED if not apt installed. Generally, we use `/opt/software-name`
+license="usr/share/doc/mosquitto/copyright"     # file to cat to display license
 conflicts=""   # comma delineated plain-text list of packages with which this package conflicts. Blank if none. Use the name as it appears in the $name field of the other package. Extra plaintext is allowed, such as "packageA, packageB, any other software that uses the Meshtastic CLI"
 
 # install script
@@ -96,6 +100,11 @@ if dpkg-query -W -f='${Status}' $package_name 2>/dev/null | grep -q "install ok 
 else
   exit 1
 fi
+}
+
+# display license
+license() {
+  echo -e "Contents of $license:\n\n   $([[ -f "$license" ]] && awk -v max=2000 -v file="$license" '{ len += length($0) + 1; if (len <= max) print; else if (!cut) { cut=1; printf "%s...\n\nFile truncated, see %s for complete license.", substr($0, 1, max - len + length($0)), file; exit } }' "$license")"
 }
 
 while getopts ":h$options" opt; do
@@ -139,7 +148,13 @@ while getopts ":h$options" opt; do
     S) # Option -S (Get service status)
       systemctl status $service_name
     ;;
+    E) # Option -E (Get service name)
+      echo $service_name
+    ;;
     L) echo -e $location ;;
+    G) # Option -G (Get license) 
+      license
+    ;;
     P) echo -e $package_name ;;
     C) echo -e $conflicts ;;
     I) # Option -I (Check if already installed)

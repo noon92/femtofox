@@ -69,7 +69,7 @@ femto-utils.sh -E
 
 #generate ttyd SSL keys
 log_message "Generating new Web Terminal SSL encryption keys. This can take a minute..."
-femto-utils.sh -T
+/usr/local/bin/packages/ttyd.sh -k
 
 # prevent randomized mac address for eth0. If `eth0`` is already present in /etc/network/interfaces, skip
 mac="$(awk '/Serial/ {print $3}' /proc/cpuinfo | tail -c 11 | sed 's/^\(.*\)/a2\1/' | sed 's/\(..\)/\1:/g;s/:$//')"
