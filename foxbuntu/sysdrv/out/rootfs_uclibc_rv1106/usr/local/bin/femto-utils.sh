@@ -256,7 +256,7 @@ replace_colors() {
 while getopts ":harsl:ipcnoSEC:R:" opt; do
   case ${opt} in
     h) # Option -h (help)
-      echo -e $help
+      echo -e "$help"
       ;;
     a) # Option -a (ACT LED enable/disable/check)
       act_led $2
