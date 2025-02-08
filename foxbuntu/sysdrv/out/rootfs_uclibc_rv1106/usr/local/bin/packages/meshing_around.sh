@@ -69,6 +69,7 @@ install() {
     echo "user_message: Git clone failed. Is internet connected?"
     exit 1
   fi
+  pip install -r $location/requirements.txt
   if [ "$interactive" = "true" ]; then #interactive install
     interactive_init
   else
@@ -127,7 +128,7 @@ check() {
 
 # display license
 license() {
-  echo -e "Contents of $license:\n   $([[ -f "$license" ]] && awk -v max=2000 -v file="$license" '{ len += length($0) + 1; if (len <= max) print; else if (!cut) { cut=1; printf "%s...\n\nFile truncated, see %s for complete license.", substr($0, 1, max - len + length($0)), file; exit } }' "$license")"
+  echo -e "Contents of $license:\n\n   $([[ -f "$license" ]] && awk -v max=2000 -v file="$license" '{ len += length($0) + 1; if (len <= max) print; else if (!cut) { cut=1; printf "%s...\n\nFile truncated, see %s for complete license.", substr($0, 1, max - len + length($0)), file; exit } }' "$license")"
 }
 
 while getopts ":h$options" opt; do

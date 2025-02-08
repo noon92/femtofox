@@ -83,8 +83,6 @@ install() {
 # uninstall script
 uninstall() {
   DEBIAN_FRONTEND=noninteractive apt remove -y $package_name 2>&1 | tee /dev/tty
-  echo "Removing unused dependencies..."
-  DEBIAN_FRONTEND=noninteractive apt autoremove -y $package_name 2>&1 | tee /dev/tty
   echo "user_message: Some files may remain on system. To remove, run \`sudo apt remove --purge $package_name -y\` and \`sudo apt autoremove -y\`."
   exit 0 # should be `exit 1` if operation failed
 }
@@ -118,7 +116,7 @@ fi
 
 # display license
 license() {
-  echo -e "Contents of $license:\n   $([[ -f "$license" ]] && awk -v max=2000 -v file="$license" '{ len += length($0) + 1; if (len <= max) print; else if (!cut) { cut=1; printf "%s...\n\nFile truncated, see %s for complete license.", substr($0, 1, max - len + length($0)), file; exit } }' "$license")"
+  echo -e "Contents of $license:\n\n   $([[ -f "$license" ]] && awk -v max=2000 -v file="$license" '{ len += length($0) + 1; if (len <= max) print; else if (!cut) { cut=1; printf "%s...\n\nFile truncated, see %s for complete license.", substr($0, 1, max - len + length($0)), file; exit } }' "$license")"
 }
 
 while getopts ":h$options" opt; do

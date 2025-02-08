@@ -62,7 +62,7 @@ launch=""   # command to launch software, if applicable
 service_name="mosquitto"   # the name of the service/s, such as `chrony`. REQUIRED if service options are in use. If multiple services, separate by spaces "service1 service2"
 package_name="mosquitto"   # apt package name, if applicable
 location=""   # install location REQUIRED if not apt installed. Generally, we use `/opt/software-name`
-license="$location/LICENSE"     # file to cat to display license
+license="usr/share/doc/mosquitto/copyright"     # file to cat to display license
 conflicts=""   # comma delineated plain-text list of packages with which this package conflicts. Blank if none. Use the name as it appears in the $name field of the other package. Extra plaintext is allowed, such as "packageA, packageB, any other software that uses the Meshtastic CLI"
 
 # install script
@@ -104,7 +104,7 @@ fi
 
 # display license
 license() {
-  echo -e "Contents of $license:\n   $([[ -f "$license" ]] && awk -v max=2000 -v file="$license" '{ len += length($0) + 1; if (len <= max) print; else if (!cut) { cut=1; printf "%s...\n\nFile truncated, see %s for complete license.", substr($0, 1, max - len + length($0)), file; exit } }' "$license")"
+  echo -e "Contents of $license:\n\n   $([[ -f "$license" ]] && awk -v max=2000 -v file="$license" '{ len += length($0) + 1; if (len <= max) print; else if (!cut) { cut=1; printf "%s...\n\nFile truncated, see %s for complete license.", substr($0, 1, max - len + length($0)), file; exit } }' "$license")"
 }
 
 while getopts ":h$options" opt; do
