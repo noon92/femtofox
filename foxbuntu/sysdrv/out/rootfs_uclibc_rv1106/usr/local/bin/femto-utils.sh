@@ -214,49 +214,15 @@ replace_colors() {
   input="${input//$(echo -e '\033[0;37m')/\\Z7}"   # white
   input="${input//$(echo -e '\033[7m')/\\Zr}"      # invert
   input="${input//$(echo -e '\033[4m')/\\Zu}"      # underline
-  input="${input//$(echo -e '\033[0m')/\\Zn}"      # reset
+  input="${input//$(echo -e '\e[39m')/\\Z0}"      # reset colors not underline
+    input="${input//$(echo -e '\033[0m')/\\Zn}"      # reset all
   echo "$input"
 }
-
-# this has been moved to /usr/local/bin/packages/ttyd.sh under the aegis of femto_software.sh
-# ttyd() {
-#   if [ "$1" = "disable" ]; then
-#     systemctl disable ttyd
-#     systemctl stop ttyd
-#     echo "Disabled ttyd service."
-#     exit 0
-#   elif [ "$1" = "enable" ]; then
-#     systemctl enable ttyd
-#     echo "Enabled ttyd service."
-#     systemctl start ttyd
-#     exit 0
-#   elif [ "$1" = "check" ]; then
-#     if systemctl is-enabled ttyd &>/dev/null; then
-#       if echo "$(systemctl status ttyd)" | grep -q "active (running)"; then
-#         echo -e "\033[4m\033[0;34menabled and running\033[0m"
-#       elif echo "$(systemctl status ttyd)" | grep -q "inactive (dead)"; then
-#         echo -e "\033[4m\033[0;31menabled but not running\033[0m"
-#         exit 1
-#       else
-#         echo "unknown"
-#       fi
-#     else
-#       echo -e "\033[4m\033[0;31mdisabled\033[0m"
-#       exit 1
-#     fi
-#   elif [ "$1" = "start" ]; then
-#   echo "Starting/restarting ttyd service..."
-#   systemctl restart ttyd
-#   elif [ "$1" = "stop" ]; then
-#   echo "Stopping ttyd service..."
-#   systemctl stop ttyd
-#   fi
-# }
 
 while getopts ":harsl:ipcnoSEC:R:" opt; do
   case ${opt} in
     h) # Option -h (help)
-      echo -e $help
+      echo -e "$help"
       ;;
     a) # Option -a (ACT LED enable/disable/check)
       act_led $2
@@ -289,26 +255,30 @@ while getopts ":harsl:ipcnoSEC:R:" opt; do
     ;;
     C) # Option -C (Check service)
       if systemctl is-enabled $OPTARG &>/dev/null; then
-        if echo "$(systemctl status $OPTARG)" | grep -q "active (running)"; then
-          echo -e "\033[4m\033[0;34menabled and running\033[0m"
-          exit 0
-        elif echo "$(systemctl status $OPTARG)" | grep -q "inactive (dead)"; then
-          echo -e "\033[4m\033[0;31menabled but not running\033[0m"
-          exit 1
-        elif echo "$(systemctl status $OPTARG)" | grep -q "failed"; then
-          echo -e "\033[4m\033[0;31menabled but failed\033[0m"
-          exit 1
-        elif echo "$(systemctl status $OPTARG)" | grep -q "activating"; then
-          echo -e "\033[4m\033[0;31menabled, activating\033[0m"
-          exit 2
-        else
-          echo "unknown"
-          exit 2
-        fi
+        state_message="\033[0;34m\033[4menabled\e[39m, "
       else
-        echo -e "\033[4m\033[0;31mdisabled\033[0m"
-        exit 1
+        state_message="\033[0;31m\033[4mdisabled\e[39m, "
+        exit_state=1
       fi
+      full_status=$(systemctl status $OPTARG)
+      if echo $full_status | grep -q "active (running)"; then
+        state_message+="\033[0;34mrunning\e[0m"
+        exit_state=0
+      elif echo $full_status | grep -q "inactive (dead)"; then
+        state_message+="\033[0;31mnot running\e[0m"
+        exit_state=1
+      elif echo $full_status | grep -q "failed"; then
+        state_message+="\033[0;31mfailed\e[0m"
+        exit_state=1
+      elif echo $full_status | grep -q "activating"; then
+        state_message+="activating\e[0m"
+        exit_state=2
+      else
+        state_message+="unknown\e[0m"
+        exit_state=2
+      fi
+      echo -e "$state_message"
+      exit $exit_state
     ;;
     R) 
       replace_colors "$OPTARG"
