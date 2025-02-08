@@ -253,7 +253,7 @@ while getopts ":harsl:ipcnoSEC:R:" opt; do
       chown root:root /etc/ssh/ssh_host_*
       systemctl restart ssh
     ;;
-    C) # Option -C (Check service)
+    C) # Option -C (Check service status)
       if systemctl is-enabled $OPTARG &>/dev/null; then
         state_message="\033[0;34m\033[4menabled\e[39m, "
       else
