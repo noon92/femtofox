@@ -88,6 +88,7 @@ package_menu() {
     echo "Loading package menu..."
     # for each line, check if it's supported by the package, display it if the current install state of the package is appropriate (example: don't display "install" if the package is already installed, don't display "stop service" for a package with no services)
     service_state=$(femto-utils.sh -C "$($package_dir/$1.sh -E)")
+    license_button=""
     if $package_dir/$1.sh -O | grep -q 'G' && $package_dir/$1.sh -I; then license_button="--help-button --help-label License"; fi
     menu_list="\
       $(if $package_dir/$1.sh -O | grep -q 'l' && $package_dir/$1.sh -I; then echo "Run software x"; fi) \
