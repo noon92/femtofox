@@ -258,7 +258,6 @@ while getopts ":harsl:ipcnoSEC:R:" opt; do
         state_message="\033[0;34m\033[4menabled\e[39m, "
       else
         state_message="\033[0;31m\033[4mdisabled\e[39m, "
-        exit_state=1
       fi
       full_status=$(systemctl status $OPTARG)
       if echo $full_status | grep -q "active (running)"; then
