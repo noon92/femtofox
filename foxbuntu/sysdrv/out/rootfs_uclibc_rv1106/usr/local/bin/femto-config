@@ -547,15 +547,15 @@ meshtastic_settings() {
         while true; do
           echo "Checking Meshtasticd service state..."
           local service_state="$(femto-utils.sh -R "$(femto-utils.sh -C "meshtasticd")")"
-          choice=$(dialog --no-collapse --colors --cancel-label "Back" --title "Meshtasticd Service" --default-item "$choice" --menu "Meshtasticd service is $service_state$(femto-meshtasticd-config.sh -k | grep -q 'simulated' && echo '\n\Z1Using simulated radio\Zn')" 17 52 5 \
+          choice=$(dialog --no-collapse --colors --cancel-label "Back" --title "Meshtasticd Service" --default-item "$choice" --menu "Meshtasticd service is $service_state$(femto-meshtasticd-config.sh -k | grep -q 'simulated' && echo '\n\Z1Using simulated radio\Zn')" 16 52 5 \
             "View detailed service status" "x" \
-            " " " " \
-            $(if echo "$service_state" | grep -q 'enabled'; then echo "Start/restart service x"; fi) \
-            $(if echo "$service_state" | grep -q 'enabled and running'; then echo "Stop service x"; fi) \
-            $(if echo "$service_state" | grep -q 'enabled'; then echo "   "; fi) \
+            " " "" \
+            "Start/restart service" "x" \
+            $(if ! echo "$service_state" | grep -q 'not running'; then echo "Stop service x"; fi) \
+            " " "" \
             $(if echo "$service_state" | grep -q 'disabled'; then echo "Enable service x"; fi) \
             $(if echo "$service_state" | grep -q 'enabled'; then echo "Disable service x"; fi) \
-            " " " " \
+            " " "" \
             "Back to previous menu" "x" 3>&1 1>&2 2>&3)
           [ $? -eq 1 ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
           case $choice in
@@ -567,14 +567,14 @@ meshtastic_settings() {
               dialog --no-collapse --title "$title" --yesno "Start/restart Meshtasticd service?" 6 45
               if [ $? -eq 0 ]; then #unless cancel/no
                 femto-meshtasticd-config.sh -s
-                dialog --no-collapse --msgbox "Meshtasticd service started/restarted." 6 45
+                dialog --no-collapse --colors --msgbox "Sent \`\Zusystemctl restart meshtasticd\Zn\` command to system.\n\nMeshtasticd should be running." 9 50
               fi
             ;;
             "Stop service")
-              dialog --no-collapse --colors --title "$title" --yesno "Stop Meshtasticd service?\n\nThis will take the node \Zu\Z1OFFLINE\Zn.\n\nMeshtasticd will automatically restart on boot if not disabled." 11 50
+              dialog --no-collapse --colors --title "$title" --yesno "Stop Meshtasticd service?\n\nThis will take the node \Zu\Z1OFFLINE\Zn.\n\nMeshtasticd will automatically restart on boot service if enabled." 11 50
               if [ $? -eq 0 ]; then #unless cancel/no
                 femto-meshtasticd-config.sh -t
-                dialog --no-collapse --msgbox "Meshtasticd service stopped." 6 45
+                dialog --no-collapse --colors --msgbox "Sent \`\Zusystemctl stop meshtasticd\Zn\` command to system.\n\nMeshtasticd should be stopped." 9 50
               fi
             ;;
             "Enable service")
@@ -588,7 +588,7 @@ meshtastic_settings() {
               dialog --no-collapse --colors --title "$title" --yesno "Disable Meshtasticd service?\n\nThis will take the node \Zu\Z1OFFLINE\Zn and will not restart!" 9 50
               if [ $? -eq 0 ]; then #unless cancel/no
                 femto-meshtasticd-config.sh -M "disable"
-                dialog --no-collapse --colors --msgbox "Sent \`\Zusystemctl disable meshtasticd\Zn\` and \`\Zusystemctl stop meshtasticd\Zn\` commands to system.\n\nMeshtasticd is disabled and stopped." 10 50
+                dialog --no-collapse --colors --msgbox "Sent \`\Zusystemctl disable meshtasticd\Zn\` and \`\Zusystemctl stop meshtasticd\Zn\` commands to system.\n\nMeshtasticd should be disabled and stopped." 10 50
               fi
             ;;
             "Back to previous menu") break ;; 
