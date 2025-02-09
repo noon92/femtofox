@@ -230,25 +230,7 @@ utilities() {
               ;;
               7) # Complete system info)
                 loading "Loading complete system info..."
-                dialog --no-collapse --colors --title "Meshtastic node info" --msgbox "\
-            Femtofox
-    CPU:
-$(ingest_data "femto-utils.sh -c" 15)
-
-    Operating System:
-$(ingest_data "femto-utils.sh -o" 15)
-
-    Storage:
-$(ingest_data "femto-utils.sh -S" 15)
-
-    Networking (wlan0 & eth0):
-$(ingest_data "femto-utils.sh -p" 15)
-
-    Peripherals:
-$(ingest_data "femto-utils.sh -n" 15)
-
-    Meshtasticd:
-$(ingest_data "femto-meshtasticd-config.sh -i" 15)" 0 0
+                dialog --no-collapse --colors --title "Meshtastic node info" --msgbox "$(ingest_data "femto-utils.sh -i" 15)" 0 0
               ;;
               8) break ;;
             esac
