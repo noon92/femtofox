@@ -96,6 +96,14 @@ else
   echo "TERM, LANG and NCURSES_NO_UTF8_ACS already present in .bashrc, skipping"
 fi
 
+# Add a cheeky alias to .bash_aliases
+if ! grep -Fxq "alias sfc='sudo femto-config'" /home/femto/.bash_aliases; then # Check if the lines are already in .bash_aliases
+  echo "alias sfc='sudo femto-config'" >> /home/femto/.bash_aliases
+  echo "alias sfc='sudo femto-config' to .bash_aliases"
+else
+  echo "alias sfc='sudo femto-config' already present in .bash_aliases, skipping"
+fi
+
 # remove first boot flag
 sed -i -E 's/^first_boot=.*/first_boot=false/' /etc/femto.conf
 log_message "Removing first boot flag and rebooting in 5 seconds..."
