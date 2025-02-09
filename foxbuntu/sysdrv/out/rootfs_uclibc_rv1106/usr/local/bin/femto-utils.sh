@@ -61,8 +61,8 @@ act_led() {
 }
 
 cpu_info() {
-  local core="$(cat /sys/firmware/devicetree/base/model | tr -d '\0')"
-  local cpu_model="$(dmesg | grep "soc_id" | sed -n 's/.*soc_id: //p' | tr -d '\0')"; cpu_model="${cpu_model:-$(cat /proc/device-tree/compatible | sed 's/.*,\([^,]*\)$/\1/' | tr -d '\0')}"
+  local core="Luckfox Pico"
+  local cpu_model="$(tr -d '\0' </proc/device-tree/compatible | awk -F, '{print $1, $NF}')"
   local cpu_architecture="$(uname -m) ($(dpkg --print-architecture) $(python3 -c "import platform; print(platform.architecture()[0])"))"
   local cpu_temp="$(echo "scale=1; $(cat /sys/class/thermal/thermal_zone0/temp) / 1000" | bc)°C"
   local cpu_speed="$(lscpu | grep "CPU min MHz" | awk '{print int($4)}')-$(lscpu | grep "CPU max MHz" | awk '{print int($4)}')mhz"
