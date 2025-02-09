@@ -230,7 +230,7 @@ utilities() {
               ;;
               7) # Complete system info)
                 loading "Loading complete system info..."
-                dialog --no-collapse --colors --title "Meshtastic node info" --msgbox "$(ingest_data "femto-utils.sh -i" 15)" 0 0
+                dialog --no-collapse --colors --title "Complete system info" --msgbox "$(ingest_data "femto-utils.sh -i" 15)" 0 0
               ;;
               8) break ;;
             esac
