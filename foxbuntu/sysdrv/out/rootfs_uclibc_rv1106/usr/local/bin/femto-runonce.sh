@@ -19,13 +19,14 @@ Re-running this script will:\n\
 * Allocate the swap file\n\
 * Replace the SSH encryption keys\n\
 * Add terminal type to user femto's .bashrc\n\
+* Add a shortcut \`sfc\` to femto's .bashrc\n\
 * Set the eth0 MAC to be derivative of CPU serial number\n\
 \n\
 Finally, the Femtofox will reboot.\n\
 \n\
 Re-running this script after first boot should not cause any harm, but may not work as expected.\n\
 \n\
-Proceed?" 19 60
+Proceed?" 20 60
   if [ $? -eq 1 ]; then #if cancel/no
     exit 0
   fi
@@ -94,6 +95,14 @@ if ! grep -Fxq "$lines" /home/femto/.bashrc; then # Check if the lines are alrea
   echo "Added TERM, LANG and NCURSES_NO_UTF8_ACS to .bashrc"
 else
   echo "TERM, LANG and NCURSES_NO_UTF8_ACS already present in .bashrc, skipping"
+fi
+
+# Add a cheeky alias to .bash_aliases
+if ! grep -Fxq "alias sfc='sudo femto-config'" /home/femto/.bashrc; then # Check if the lines are already in .bash_aliases
+  echo "alias sfc='sudo femto-config'" >> /home/femto/.bashrc
+  echo "Added alias sfc='sudo femto-config' to .bashrc"
+else
+  echo "alias sfc='sudo femto-config' already present in .bashrc, skipping"
 fi
 
 # remove first boot flag
