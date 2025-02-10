@@ -1,0 +1,12 @@
+[Unit]
+Description=Sync wifi updown with Meshtastic
+After=meshtasticd.service
+
+[Service]
+ExecStart=/usr/local/bin/femto-wifi-mesh-control.sh
+Restart=always
+RestartSec=5
+User=root
+
+[Install]
+WantedBy=multi-user.target

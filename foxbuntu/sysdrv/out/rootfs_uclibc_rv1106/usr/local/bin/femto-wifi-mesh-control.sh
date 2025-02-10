@@ -17,11 +17,13 @@ get_mobile_wifi_state() {
 set_mobile_wifi_state() {
     local state="$1"
     local meshtastic_output
+
     if [[ "$state" == "up" ]]; then
-        meshtastic_output=$(meshtastic --host 127.0.0.1 --set network.wifi_enabled true 2>&1)
+        meshtastic_output=$(meshtastic --host 127.0.0.1 --set network.wifi_enabled true 2>&1 || true)
     else
-        meshtastic_output=$(meshtastic --host 127.0.0.1 --set network.wifi_enabled false 2>&1)
+        meshtastic_output=$(meshtastic --host 127.0.0.1 --set network.wifi_enabled false 2>&1 || true)
     fi
+
     log "Set Meshtastic Wi-Fi state to $state. Output: $meshtastic_output"
 }
 
@@ -67,8 +69,8 @@ monitor_changes() {
 
     while true; do
         PID=$(ps -C meshtasticd -o pid= | tr -d ' ')
-        #if [[ -n "$PID" ]] && sudo lsof /dev/spidev0.0 | grep -q "$PID"; then
-        if [[ -n "$PID" ]] && sudo lsof /dev/spidev0.0 | grep -q "$PID" && [[ -d /sys/class/net/wlan0 ]]; then
+        #if [[ -n "$PID" ]] && sudo lsof /dev/spidev0.0 | grep -q "$PID" && [[ -d /sys/class/net/wlan0 ]]; then
+        if [[ -n "$PID" ]] && sudo lsof /dev/spidev0.0 | grep -q "$PID" && [[ -d /sys/class/net/wlan0 ]] && systemctl is-active --quiet meshtasticd; then
           local current_mobile_state current_wlan_state
           current_mobile_state=$(get_mobile_wifi_state)
           current_wlan_state=$(cat /sys/class/net/wlan0/operstate)
