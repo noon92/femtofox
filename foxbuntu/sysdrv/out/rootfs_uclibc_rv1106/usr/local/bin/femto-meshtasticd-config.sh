@@ -101,7 +101,7 @@ while getopts ":higkl:q:uU:rR:aA:cpo:sM:Stwuxm" opt; do
       output_array+=("Role=$(echo "$output" | grep -oP '"role":\s*"\K[^"]+' | head -n 1)")
       freq_offset=$(echo "$output" | grep -oP '"bandwidth":\s*\K\w+')
       if [ "$freq_offset" != 0 ]; then # only display frequency offset if not 0
-        output_array+=("Override freq=$freq_offset")
+        output_array+=("Freq offset=$freq_offset")
       fi
       output_array+=("Region=$(echo "$output" | grep -oP '"region":\s*"\K[^"]+')")
       output_array+=("Hop limit=$(echo "$output" | grep -oP '"hopLimit":\s*\K\w+')")
@@ -110,7 +110,7 @@ while getopts ":higkl:q:uU:rR:aA:cpo:sM:Stwuxm" opt; do
         freq_slot+=("Freq slot=$freq_slot")
       fi
       override_freq=$(echo "$output" | grep -oP '"overrideFrequency":\s*\K[0-9.]+')
-      if [ "$override_freq" != "0" ]; then # only display override frequency if not 0
+      if [ "$override_freq" != "0.0" ]; then # only display override frequency if not 0.0
         output_array+=("Override freq=$override_freq")
       fi
       output_array+=("Public key=$(echo "$output" | grep -oP '"publicKey":\s*"\K[^"]+' | head -n 1)")

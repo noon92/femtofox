@@ -142,7 +142,7 @@ peripherals_info() {
         fi
       done
     fi
-  done <<< "$(echo "$(sudo i2cdetect -y 3)")"
+  done <<< "$(echo "$(timeout 3 i2cdetect -y 3)")" # when no i2c devices are connected, i2cdetect tries to connect for a solid 25 seconds. The timeout prevents this
   [[ -z "$i2c_addresses" ]] && i2c_addresses="none detected"    # if no addresses found, "none detected"
 
   echo -e "LoRa radio:$lora_radio\n\
