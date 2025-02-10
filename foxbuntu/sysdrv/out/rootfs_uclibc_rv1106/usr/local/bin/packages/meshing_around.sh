@@ -36,6 +36,7 @@ Arguments:
 -E          Get service name
 -L          Get install location
 -G          Get license
+-T          Get license name
 -P          Get package name
 -C          Get Conflicts
 -I          Check if installed. Returns an error if not installed
@@ -56,11 +57,12 @@ name="Meshing Around" # software name
 author="Spud" # software author - OPTIONAL
 description="Meshing Around is a feature-rich bot designed to enhance your Meshtastic network experience with a variety of powerful tools and fun features. Connectivity and utility through text-based message delivery. Whether you're looking to perform network tests, send messages, or even play games, mesh_bot.py has you covered." # software description - OPTIONAL (but strongly recommended!)
 URL="https://github.com/SpudGunMan/meshing-around" # software URL. Can contain multiple URLs - OPTIONAL
-options="xiuagedsrNADUOSELGCI"   # script options in use by software package. For example, for a package with no service, exclude `edsr`
+options="xiuagedsrNADUOSELGTCI"   # script options in use by software package. For example, for a package with no service, exclude `edsr`
 launch=""   # command to launch software, if applicable
 service_name="mesh_bot pong_bot mesh_bot_reporting" # the name of the service, such as `chrony`. REQUIRED if service options are in use. If multiple services, separate by spaces "service1 service2"
 location="/opt/meshing-around" # install location REQUIRED if not apt installed. Generally, we use `/opt/software-name`
 license="$location/LICENSE"     # file to cat to display license
+license_name="GPL3"             # license name, such as MIT, GPL3, custom, whatever. short text string
 conflicts="TC²-BBS, any other \"full control\" style bots" # comma delineated plain-text list of packages with which this package conflicts. Use the name as it appears in the $name field of the other package. Extra plaintext is allowed, such as "packageA, packageB, any other software that uses the Meshtastic CLI"
 
 # install script
@@ -182,6 +184,9 @@ while getopts ":h$options" opt; do
     L) echo -e $location ;;
     G) # Option -G (Get license) 
       license
+    ;;
+    T) # Option -T (Get license name) 
+      echo $license_name
     ;;
     C) echo -e $conflicts ;;
     I) # Option -I (Check if already installed)

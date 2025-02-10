@@ -36,6 +36,7 @@ Arguments:
 -E          Get service name
 -L          Get install location
 -G          Get license
+-T          Get license name
 -P          Get package name
 -C          Get Conflicts
 -I          Check if installed. Returns an error if not installed
@@ -56,13 +57,14 @@ name="name"                     # software name
 author="author"                 # software author - OPTIONAL
 description="description"       # software description - OPTIONAL (but strongly recommended!)
 URL="URL"                       # software URL. Can contain multiple URLs - OPTIONAL
-options="hxiuagedsrlNADUOSELGPCI"  # script options in use by software package. For example, for a package with no service, exclude `edsrS`
+options="hxiuagedsrlNADUOSELGTPCI"  # script options in use by software package. For example, for a package with no service, exclude `edsrS`
 launch="/opt/package/run.sh"    # command to launch software, if applicable
 license="/opt/package/license"  # file to cat to display license
 service_name="service_name"     # the name of the service/s, such as `chrony`. REQUIRED if service options are in use. If multiple services, separate by spaces "service1 service2"
 package_name="apt_package"      # apt package name, if applicable. Can be multiple packages separated by spaces, but if at least one is installed the package will show as "installed" even if the others aren't
 location="/opt/location"        # install location REQUIRED if not apt installed. Generally, we use `/opt/software-name`
 license="$location/LICENSE"     # file to cat to display license
+license_name="GPL3"             # license name, such as MIT, GPL3, custom, whatever. short text string
 conflicts="package1, package2"  # comma delineated plain-text list of packages with which this package conflicts. Blank if none. Use the name as it appears in the $name field of the other package. Extra plaintext is allowed, such as "packageA, packageB, any other software that uses the Meshtastic CLI"
 
 # install script
@@ -163,6 +165,9 @@ while getopts ":$options" opt; do
     L) echo -e $location ;;
     G) # Option -G (Get license) 
       license
+    ;;
+    T) # Option -T (Get license name) 
+      echo $license_name
     ;;
     P) echo -e $package_name ;;
     C) echo -e $conflicts ;;

@@ -36,11 +36,10 @@ Arguments:
 -E          Get service name
 -L          Get install location
 -G          Get license
+-T          Get license name
 -P          Get package name
 -C          Get Conflicts
 -I          Check if installed. Returns an error if not installed
-    Custom for this package:
--k          Generate/overwrite ttyd encryption keys
 EOF
 )
 
@@ -58,12 +57,13 @@ name="ttyd Web Terminal"                 # software name
 author="Shuanglei Tao"                   # software author - OPTIONAL
 description="ttyd is a simple command-line tool for sharing terminal over the web.\n\nWhen running, ttyd is available at https://$(hostname).local:7681\nttyd is installed and enabled by default on Foxbuntu.\n\nSSL encryption is provided by keys generated during first-boot or during installation. Your browser may give a warning (net::ERR_CERT_AUTHORITY_INVALID) about the self-signed encryption certificate. This is normal. In Chromium (Chrome, Edge) click \"Advanced\" and \"Continue to femtofox.local (unsafe)\""       # software description - OPTIONAL (but strongly recommended!)
 URL="https://github.com/tsl0922/ttyd"    # software URL. Can contain multiple URLs - OPTIONAL
-options="hxiugedsrNADUOSELGCIk"            # script options in use by software package. For example, for a package with no service, exclude `edsrS`
+options="hxiugedsrNADUOSELGTCIk"            # script options in use by software package. For example, for a package with no service, exclude `edsrS`
 launch=""                                # command to launch software, if applicable
 service_name="ttyd"                      # the name of the service/s, such as `chrony`. REQUIRED if service options are in use. If multiple services, separate by spaces "service1 service2"
 package_name=""                          # apt package name, if applicable. Can be multiple packages separated by spaces, but if at least one is installed the package will show as "installed" even if the others aren't
 location="/opt/ttyd"                     # install location REQUIRED if not apt installed. Generally, we use `/opt/software-name`
 license="$location/LICENSE"              # file to cat to display license
+license_name="MIT"             # license name, such as MIT, GPL3, custom, whatever. short text string
 conflicts=""                             # comma delineated plain-text list of packages with which this package conflicts. Blank if none. Use the name as it appears in the $name field of the other package. Extra plaintext is allowed, such as "packageA, packageB, any other software that uses the Meshtastic CLI"
 
 # install script
@@ -188,6 +188,9 @@ while getopts ":$options" opt; do
     L) echo -e $location ;;
     G) # Option -G (Get license) 
       license
+    ;;
+    T) # Option -T (Get license name) 
+      echo $license_name
     ;;
     P) echo -e $package_name ;;
     C) echo -e $conflicts ;;
