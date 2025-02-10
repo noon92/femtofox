@@ -36,6 +36,7 @@ Arguments:
 -E          Get service name
 -L          Get install location
 -G          Get license
+-T          Get license name
 -P          Get package name
 -C          Get Conflicts
 -I          Check if installed. Returns an error if not installed
@@ -59,11 +60,12 @@ name="Samba File Sharing"   # software name
 author="Software Freedom Conservancy"   # software author - OPTIONAL
 description="Femtofox comes with Samba preinstalled but disabled. $init_instructions\n\n$user_message"   # software description - OPTIONAL (but strongly recommended!)
 URL="https://www.samba.org/"   # software URL. Can contain multiple URLs - OPTIONAL
-options="xiuagedsrNADUOSEGPCI"   # script options in use by software package. For example, for a package with no service, exclude `edsr`
+options="xiuagedsrNADUOSEGTPCI"   # script options in use by software package. For example, for a package with no service, exclude `edsr`
 launch=""   # command to launch software, if applicable
 service_name="smbd nmbd"   # the name of the service/s, such as `chrony`. REQUIRED if service options are in use. If multiple services, separate by spaces "service1 service2"
 location=""   # install location REQUIRED if not apt installed. Generally, we use `/opt/software-name`
 license="/usr/share/doc/samba/copyright"     # file to cat to display license
+license_name="GPL3"             # license name, such as MIT, GPL3, custom, whatever. short text string
 package_name="samba"   # apt package name, if applicable
 conflicts=""   # comma delineated plain-text list of packages with which this package conflicts. Blank if none. Use the name as it appears in the $name field of the other package. Extra plaintext is allowed, such as "packageA, packageB, any other software that uses the Meshtastic CLI"
 
@@ -171,6 +173,9 @@ while getopts ":h$options" opt; do
     ;;
     G) # Option -G (Get license) 
       license
+    ;;
+    T) # Option -T (Get license name) 
+      echo $license_name
     ;;
     P) echo -e $package_name ;;
     C) echo -e $conflicts ;;

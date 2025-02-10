@@ -36,6 +36,7 @@ Arguments:
 -E          Get service name
 -L          Get install location
 -G          Get license
+-T          Get license name
 -P          Get package name
 -C          Get Conflicts
 -I          Check if installed. Returns an error if not installed
@@ -57,11 +58,12 @@ name="Mosquitto MQTT Client"   # software name
 author="Eclipse Foundation"   # software author - OPTIONAL
 description="Eclipse Mosquitto is an open source (EPL/EDL licensed) message broker that implements the MQTT protocol versions 5.0, 3.1.1 and 3.1. Mosquitto is lightweight and is suitable for use on all devices from low power single board computers to full servers.\n\nThe MQTT protocol provides a lightweight method of carrying out messaging using a publish/subscribe model. This makes it suitable for Internet of Things messaging such as with low power sensors or mobile devices such as phones, embedded computers or microcontrollers.\n\nThe Mosquitto project also provides a C library for implementing MQTT clients, and the very popular mosquitto_pub and mosquitto_sub command line MQTT clients.\n\nMosquitto is part of the Eclipse Foundation, and is an iot.eclipse.org project. The development is driven by Cedalo."   # software description - OPTIONAL (but strongly recommended!)
 URL="https://mosquitto.org/"   # software URL. Can contain multiple URLs - OPTIONAL
-options="xiugedsrNADUOSEGPCI"   # script options in use by software package. For example, for a package with no service, exclude `edsr`
+options="xiugedsrNADUOSEGTPCI"   # script options in use by software package. For example, for a package with no service, exclude `edsr`
 launch=""   # command to launch software, if applicable
 service_name=""   # the name of the service/s, such as `chrony`. REQUIRED if service options are in use. If multiple services, separate by spaces "service1 service2"
 location=""   # install location REQUIRED if not apt installed. Generally, we use `/opt/software-name`
 license="usr/share/doc/mosquitto-clients/copyright"     # file to cat to display license
+license_name="EPL/EDL"             # license name, such as MIT, GPL3, custom, whatever. short text string
 package_name="mosquitto-clients"   # apt package name, if applicable
 conflicts=""   # comma delineated plain-text list of packages with which this package conflicts. Blank if none. Use the name as it appears in the $name field of the other package. Extra plaintext is allowed, such as "packageA, packageB, any other software that uses the Meshtastic CLI"
 
@@ -152,6 +154,9 @@ while getopts ":h$options" opt; do
     L) echo -e $location ;;
     G) # Option -G (Get license) 
       license
+    ;;
+    T) # Option -T (Get license name) 
+      echo $license_name
     ;;
     P) echo -e $package_name ;;
     C) echo -e $conflicts ;;
