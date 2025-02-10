@@ -69,16 +69,17 @@ upgrade() {
 package_intro() {
   echo "Loading package info..."
   # check if each field in the package info is supported by the package, and if so get it and insert it into the package info dialog
-  dialog --no-collapse --colors --title "$title" --msgbox "\
+  dialog --no-collapse --colors --title "$title" --yes-label "Continue" --no-label "Back" --yesno "\
     $($package_dir/$1.sh -N)\n\
         $(if $package_dir/$1.sh -O | grep -q 'A'; then echo -e "by $($package_dir/$1.sh -A)"; fi)\n\
 $(if $package_dir/$1.sh -O | grep -q 'D'; then echo "\n$($package_dir/$1.sh -D)"; fi)\n\
 \n\
 $(echo "Currently:       " && $package_dir/$1.sh -I && echo "\Zuinstalled\Zn" || echo "\Zunot installed\Zn")\n\
-$($package_dir/$1.sh -I && echo "Service status:  \Zu$(femto-utils.sh -C "$($package_dir/$1.sh -E)" | sed 's/\x1b\[[0-9;]*m//g')\Zn\n")\
+$([ -n "$($package_dir/$1.sh -E)" ] && $package_dir/$1.sh -I && echo "Service status:  \Zu$(femto-utils.sh -C "$($package_dir/$1.sh -E)" | sed 's/\x1b\[[0-9;]*m//g')\Zn\n")\
 $(if output=$($package_dir/$1.sh -L); [ -n "$output" ]; then echo "Installs to:     \Zu$output\Zn\n"; fi)\
 $(if output=$($package_dir/$1.sh -C); [ -n "$output" ]; then echo "Conflicts with:  \Zu$output\Zn\n"; fi)\
 $(if $package_dir/$1.sh -O | grep -q 'U'; then echo "\nFor more information, visit $($package_dir/$1.sh -U)"; fi)" 0 0
+  [ $? -eq 1 ] && return 1 #if cancel/no
   package_menu $1 # after user hits "OK", move on to package menu
 }
 
