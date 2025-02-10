@@ -67,9 +67,12 @@ upgrade() {
 
 # build and display package intro
 package_intro() {
-  echo "Loading package info..."
-  # check if each field in the package info is supported by the package, and if so get it and insert it into the package info dialog
-  dialog --no-collapse --colors --title "$title" --yes-label "Continue" --no-label "Back" --yesno "\
+  while true; do
+    echo "Loading package info..."
+    license_button=""
+    if $package_dir/$1.sh -O | grep -q 'G' && $package_dir/$1.sh -I; then license_button="--help-button --help-label License"; fi
+    # check if each field in the package info is supported by the package, and if so get it and insert it into the package info dialog
+    dialog --no-collapse --colors --title "$title" $license_button --yes-label "Continue" --no-label "Back" --yesno "\
     $($package_dir/$1.sh -N)\n\
         $(if $package_dir/$1.sh -O | grep -q 'A'; then echo -e "by $($package_dir/$1.sh -A)"; fi)\n\
 $(if $package_dir/$1.sh -O | grep -q 'D'; then echo "\n$($package_dir/$1.sh -D)"; fi)\n\
@@ -79,8 +82,16 @@ $([ -n "$($package_dir/$1.sh -E)" ] && $package_dir/$1.sh -I && echo "Service st
 $(if output=$($package_dir/$1.sh -L); [ -n "$output" ]; then echo "Installs to:     \Zu$output\Zn\n"; fi)\
 $(if output=$($package_dir/$1.sh -C); [ -n "$output" ]; then echo "Conflicts with:  \Zu$output\Zn\n"; fi)\
 $(if $package_dir/$1.sh -O | grep -q 'U'; then echo "\nFor more information, visit $($package_dir/$1.sh -U)"; fi)" 0 0
-  [ $? -eq 1 ] && return 1 #if cancel/no
-  package_menu $1 # after user hits "OK", move on to package menu
+    exit_status=$? # This line checks the exit status of the dialog command
+    if [ $exit_status -eq 1 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
+      return
+    elif [ $exit_status -eq 2 ]; then # Help ("extra") button
+      dialog --no-collapse --colors --title "$($package_dir/$1.sh -N) License" --msgbox "$($package_dir/$1.sh -G)" 0 0
+    else
+      package_menu $1 # after user hits "OK", move on to package menu
+      return
+    fi
+  done
 }
 
 package_menu() {
@@ -89,8 +100,6 @@ package_menu() {
     echo "Loading package menu..."
     # for each line, check if it's supported by the package, display it if the current install state of the package is appropriate (example: don't display "install" if the package is already installed, don't display "stop service" for a package with no services)
     service_state=$(femto-utils.sh -C "$($package_dir/$1.sh -E)")
-    license_button=""
-    if $package_dir/$1.sh -O | grep -q 'G' && $package_dir/$1.sh -I; then license_button="--help-button --help-label License"; fi
     menu_list="\
       $(if $package_dir/$1.sh -O | grep -q 'l' && $package_dir/$1.sh -I; then echo "Run software x"; fi) \
       $(if $package_dir/$1.sh -O | grep -q 'i' && ! $package_dir/$1.sh -I; then echo "Install x"; fi) \
@@ -103,31 +112,25 @@ package_menu() {
       $(if $package_dir/$1.sh -O | grep -q 'e' && $package_dir/$1.sh -I; then echo "Start/restart service x"; fi) \
       $(if $package_dir/$1.sh -O | grep -q 'S' && $package_dir/$1.sh -I; then echo "Detailed service status x"; fi)"
       menu_count=$(( $(echo "$menu_list" | grep -o " x" | wc -l) $(if $package_dir/$1.sh -O | grep -q 'e' && $package_dir/$1.sh -I; then echo "+1"; fi) )) # count the number of menu items by counting how many times " x" shows up, +1 if there's a service. This is a stupid way to do this, but because each menu item only contains one space (the rest being space-sized invisible chars) it works. It's late at night, OKAY?!
-      choice=$(dialog --no-collapse --colors --title "$($package_dir/$1.sh -N)" --cancel-label "Back" --default-item "$choice" $license_button --menu "$(if $package_dir/$1.sh -O | grep -q 'S' && $package_dir/$1.sh -I; then echo "Service status: $(femto-utils.sh -R "$service_state")"; fi)" $(( menu_count + 9 )) 45 $(( menu_count + 3 )) \
+      choice=$(dialog --no-collapse --colors --title "$($package_dir/$1.sh -N)" --cancel-label "Back" --default-item "$choice" --menu "$(if $package_dir/$1.sh -O | grep -q 'S' && $package_dir/$1.sh -I; then echo "Service status: $(femto-utils.sh -R "$service_state")"; fi)" $(( menu_count + 9 )) 45 $(( menu_count + 3 )) \
       $menu_list \
       " " "" \
       "Back to software manager" "" 3>&1 1>&2 2>&3)
-      exit_status=$? # This line checks the exit status of the dialog command
-      if [ $exit_status -eq 1 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
-        break
-      elif [ $exit_status -eq 2 ]; then # Help ("extra") button
-        dialog --no-collapse --colors --title "$($package_dir/$1.sh -N) License" --msgbox "$($package_dir/$1.sh -G)" 0 0
-      else
-        # execute the actual commands
-        case $choice in
-          "Run software") echo "Launching $($package_dir/$1.sh -N)..." && eval "$($package_dir/$1.sh -l)" ;;
-          "Install") install $1 ;;
-          "Uninstall") uninstall $1 ;;
-          "Initialize") initialize $1 ;;
-          "Upgrade") upgrade $1 ;;
-          "Enable service") echo "Enabling and starting service..." && eval "$package_dir/$1.sh -e" && eval "$package_dir/$1.sh -r" ;;
-          "Disable service") echo "Disabling and stopping service..." && eval "$package_dir/$1.sh -d" && eval "$package_dir/$1.sh -s" ;;
-          "Stop service") echo "Stopping service..." && eval "$package_dir/$1.sh -s" ;;
-          "Start/restart service") echo "Starting/restarting service..." && eval "$package_dir/$1.sh -r" ;;
-          "Detailed service status") echo "Getting service status..." && dialog --no-collapse --title "$title" --msgbox "$(eval "$package_dir/$1.sh -S")" 0 0 ;;
-          "Back to software manager") break ;;
-        esac
-      fi
+      [ $? -eq 1 ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
+      # execute the actual commands
+      case $choice in
+        "Run software") echo "Launching $($package_dir/$1.sh -N)..." && eval "$($package_dir/$1.sh -l)" ;;
+        "Install") install $1 ;;
+        "Uninstall") uninstall $1 ;;
+        "Initialize") initialize $1 ;;
+        "Upgrade") upgrade $1 ;;
+        "Enable service") echo "Enabling and starting service..." && eval "$package_dir/$1.sh -e" && eval "$package_dir/$1.sh -r" ;;
+        "Disable service") echo "Disabling and stopping service..." && eval "$package_dir/$1.sh -d" && eval "$package_dir/$1.sh -s" ;;
+        "Stop service") echo "Stopping service..." && eval "$package_dir/$1.sh -s" ;;
+        "Start/restart service") echo "Starting/restarting service..." && eval "$package_dir/$1.sh -r" ;;
+        "Detailed service status") echo "Getting service status..." && dialog --no-collapse --title "$title" --msgbox "$(eval "$package_dir/$1.sh -S")" 0 0 ;;
+        "Back to software manager") break ;;
+      esac
   done
 }
 

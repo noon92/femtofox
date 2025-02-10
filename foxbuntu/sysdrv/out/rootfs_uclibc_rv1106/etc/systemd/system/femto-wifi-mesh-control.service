@@ -1,11 +1,11 @@
 [Unit]
 Description=Meshtastic control of wifi
 After=meshtasticd.service
-Requires=meshtasticd.service
 
 [Service]
-ExecStart=/usr/local/bin/wifi-mesh-control.sh
+ExecStart=/usr/local/bin/femto-wifi-mesh-control.sh
 Restart=always
+RestartSec=5
 User=root
 
 [Install]
