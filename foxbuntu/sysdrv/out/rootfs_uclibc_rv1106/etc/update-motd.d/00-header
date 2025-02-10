@@ -15,7 +15,7 @@ fi
 foxbuntu_version=$(grep -oP 'major=\K[0-9]+' /etc/foxbuntu-release).$(grep -oP 'minor=\K[0-9]+' /etc/foxbuntu-release)$(output=$(grep -o 'patch=[1-9][0-9]*' /etc/foxbuntu-release | cut -d= -f2) && [ -n "$output" ] && echo ".$output")$(grep -oP 'hotfix=\K[a-z]+' /etc/foxbuntu-release)
 spaces=$((11 - ${#foxbuntu_version}))
 
-printf "                 For settings, run \`\033[0;31msudo femto-config\033[0m\` or \`\033[0;31msfc\033[0m\`\n"
+printf "                     For settings, run \`\033[0;31msudo femto-config\033[0m\`\n"
 printf "                  Made for Femtofox  https://www.femtofox.com\n"
 printf "               Foxbuntu v$foxbuntu_version%*s%s(%s)\n\n" $spaces "" "$DISTRIB_DESCRIPTION" "$(uname -r)"
 
