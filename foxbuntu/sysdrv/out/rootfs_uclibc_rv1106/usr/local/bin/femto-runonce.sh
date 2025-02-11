@@ -18,15 +18,16 @@ Re-running this script will:\n\
 * Resize filesystem to fit the SD card\n\
 * Allocate the swap file\n\
 * Replace the SSH encryption keys\n\
-* Add terminal type to user femto's .bashrc\n\
-* Add a shortcut \`sfc\` to femto's .bashrc\n\
+* Replace the Web Terminal SSL encryption keys\n\
 * Set the eth0 MAC to be derivative of CPU serial number\n\
+* Add terminal type to user femto's .bashrc\n\
+* Add a shortcut \`sfc\` to user femto's .bashrc\n\
 \n\
 Finally, the Femtofox will reboot.\n\
 \n\
 Re-running this script after first boot should not cause any harm, but may not work as expected.\n\
 \n\
-Proceed?" 20 60
+Proceed?" 22 60
   if [ $? -eq 1 ]; then #if cancel/no
     exit 0
   fi
@@ -45,7 +46,7 @@ echo -e "\e[32m******* First boot *******\e[0m"
 ) &
 
 # Perform filesystem resize
-log_message "Resizing filesystem. This can take several minutes, depending on microSD card size and speed"
+log_message "Resizing filesystem..."
 resize2fs /dev/mmcblk1p5
 resize2fs /dev/mmcblk1p6
 resize2fs /dev/mmcblk1p7
@@ -53,7 +54,7 @@ log_message "Resizing filesystem complete"
 
 	# allocate swap file
 if [ ! -f /swapfile ]; then # check if swap file already exists
-	log_message "Allocating swap file. This can take up to 10 minutes, depending on microSD card speed"
+	log_message "Allocating swap file..."
   fallocate -l 1G /swapfile
   chmod 600 /swapfile
   mkswap /swapfile > /dev/null
@@ -92,17 +93,17 @@ export TERM=xterm-256color
 export LANG=C.UTF-8"
 if ! grep -Fxq "$lines" /home/femto/.bashrc; then # Check if the lines are already in .bashrc
   echo "$lines" >> /home/femto/.bashrc
-  echo "Added TERM, LANG and NCURSES_NO_UTF8_ACS to .bashrc"
+  log_message "Added TERM, LANG and NCURSES_NO_UTF8_ACS to .bashrc"
 else
-  echo "TERM, LANG and NCURSES_NO_UTF8_ACS already present in .bashrc, skipping"
+  log_message "TERM, LANG and NCURSES_NO_UTF8_ACS already present in .bashrc, skipping"
 fi
 
 # Add a cheeky alias to .bash_aliases
 if ! grep -Fxq "alias sfc='sudo femto-config'" /home/femto/.bashrc; then # Check if the lines are already in .bash_aliases
   echo "alias sfc='sudo femto-config'" >> /home/femto/.bashrc
-  echo "Added alias sfc='sudo femto-config' to .bashrc"
+  log_message "Added \`alias sfc='sudo femto-config'\` to .bashrc"
 else
-  echo "alias sfc='sudo femto-config' already present in .bashrc, skipping"
+  log_message "\`alias sfc='sudo femto-config'\` already present in .bashrc, skipping"
 fi
 
 # remove first boot flag
