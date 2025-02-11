@@ -115,8 +115,9 @@ networking_settings() {
       5 "Restart networking" "" \
       6 "Set hostname" "" \
       7 "Test internet connection" "" \
+      8 "Manage Meshtastic wifi sync" "" \
       " " "" "" \
-      8 "Back to main menu" "" 3>&1 1>&2 2>&3)
+      9 "Back to main menu" "" 3>&1 1>&2 2>&3)
     [ $? -eq 1 ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
     case $networking_choice in
       1) # Turn Wi-Fi on/off)
@@ -166,7 +167,68 @@ networking_settings() {
         loading "Testing internet connection..."
         dialog --no-collapse --title "Internet connectivity test" --colors --msgbox "$(femto-utils.sh -R "$(femto-network-config.sh -t)")" 9 40
       ;;
-      8)
+      8) # Manage Meshtastic wifi sync)
+        choice=""   # zero the choice before loading the submenu
+        while true; do
+          echo "Checking Meshtastic wifi sync service state..."
+          local service_state="$(femto-utils.sh -R "$(femto-utils.sh -C "femto-wifi-mesh-control")")"
+          choice=$(dialog --no-collapse --colors --help-button --cancel-label "Back" --title "Meshtastic wifi sync Service" --default-item "$choice" --menu "Meshtastic wifi sync service is $service_state" 16 60 5 \
+            "View detailed service status" "x" \
+            " " "" \
+            "Start/restart service" "x" \
+            $(if ! echo "$service_state" | grep -q 'not running'; then echo "Stop service x"; fi) \
+            " " "" \
+            $(if echo "$service_state" | grep -q 'disabled'; then echo "Enable service x"; fi) \
+            $(if echo "$service_state" | grep -q 'enabled'; then echo "Disable service x"; fi) \
+            " " "" \
+            "Back to previous menu" "x" 3>&1 1>&2 2>&3)
+          exit_status=$? # This line checks the exit status of the dialog command
+          if [ $exit_status -eq 1 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
+            break
+          elif [ $exit_status -eq 2 ]; then # Help ("extra") button
+            dialog --no-collapse --colors --title "Meshtastic wifi sync service help" --msgbox "The Meshtastic wifi sync service synchronizes wifi settings with Meshtastic wifi settings. This allows you to use remote node administration to enable/disable Femtofox wifi.\n\nIn future, this will also allow you to reconfigure SSID and password.\n" 0 0
+          else
+            case $choice in
+              "View detailed service status") 
+                echo "Getting Meshtastic wifi sync service status..."
+                dialog --no-collapse --title "Meshtastic wifi sync service status" --msgbox "$(systemctl status femto-wifi-mesh-control)" 0 0
+              ;;
+              "Start/restart service") 
+                dialog --no-collapse --title "$title" --yesno "Start/restart Meshtastic wifi sync service?" 7 45
+                if [ $? -eq 0 ]; then #unless cancel/no
+                  systemctl restart femto-wifi-mesh-control
+                  dialog --no-collapse --colors --msgbox "Sent \`\Zusystemctl restart femto-wifi-mesh-control wifi sync\Zn\` command to system.\n\nMeshtastic wifi sync should be running." 10 60
+                fi
+              ;;
+              "Stop service")
+                dialog --no-collapse --colors --title "$title" --yesno "Stop Meshtastic wifi sync service?\n\nThis will take the node \Zu\Z1OFFLINE\Zn.\n\nMeshtastic wifi sync will automatically restart on boot service if enabled." 11 50
+                if [ $? -eq 0 ]; then #unless cancel/no
+                  systemctl stop femto-wifi-mesh-control
+                  dialog --no-collapse --colors --msgbox "Sent \`\Zusystemctl stop femto-wifi-mesh-control\Zn\` command to system.\n\nMeshtastic wifi sync should be stopped." 9 60
+                fi
+              ;;
+              "Enable service")
+                dialog --no-collapse --title "$title" --yesno "Enable Meshtastic wifi sync service?" 6 45
+                if [ $? -eq 0 ]; then #unless cancel/no
+                  systemctl enable femto-wifi-mesh-control
+                  systemctl start femto-wifi-mesh-control
+                  dialog --no-collapse --colors --msgbox "Sent \`\Zusystemctl enable femto-wifi-mesh-control\Zn\` and \`\Zusystemctl start femto-wifi-mesh-control\Zn\` commands to system.\n\nMeshtastic wifi sync should be running." 10 60
+                fi
+              ;;
+              "Disable service")
+                dialog --no-collapse --colors --title "$title" --yesno "Disable Meshtastic wifi sync service?\n\nThis will take the node \Zu\Z1OFFLINE\Zn and will not restart!" 9 50
+                if [ $? -eq 0 ]; then #unless cancel/no
+                  systemctl disable femto-wifi-mesh-control
+                  systemctl stop femto-wifi-mesh-control
+                  dialog --no-collapse --colors --msgbox "Sent \`\Zusystemctl disable femto-wifi-mesh-control\Zn\` and \`\Zusystemctl stop femto-wifi-mesh-control\Zn\` commands to system.\n\nMeshtastic wifi sync should be disabled and stopped." 10 60
+                fi
+              ;;
+              "Back to previous menu") break ;; 
+            esac
+          fi
+        done
+      ;;
+      9)
         return
       ;;
     esac
