@@ -1,5 +1,5 @@
 [Unit]
-Description=Meshtastic control of wifi
+Description=Sync wifi updown with Meshtastic
 After=meshtasticd.service
 
 [Service]

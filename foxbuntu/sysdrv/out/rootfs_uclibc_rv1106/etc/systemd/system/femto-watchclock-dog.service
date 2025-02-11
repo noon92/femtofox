@@ -1,5 +1,5 @@
 [Unit]
-Description=Monitor time jumps and restart meshtasticd
+Description=Watchclock-dog
 After=network.target
 
 [Service]
