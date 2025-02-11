@@ -107,7 +107,7 @@ networking_settings() {
   wpa_supplicant_conf="/etc/wpa_supplicant/wpa_supplicant.conf"
   choice=""   # zero the choice before loading the submenu
   while true; do
-    networking_choice=$(dialog --no-collapse --cancel-label "Back" --backtitle "IPv4 address:  $(femto-network-config.sh -i)" --default-item "$networking_choice" --title "$title" --item-help --menu "" 16 40 4 \
+    networking_choice=$(dialog --no-collapse --cancel-label "Back" --backtitle "IPv4 address:  $(femto-network-config.sh -i)" --default-item "$networking_choice" --title "$title" --item-help --menu "" 17 40 4 \
       1 "Turn Wi-Fi on/off" "" \
       2 "View Wi-Fi settings" "" \
       3 "Change Wi-Fi settings" "" \
