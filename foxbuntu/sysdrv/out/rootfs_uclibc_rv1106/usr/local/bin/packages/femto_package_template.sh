@@ -2,7 +2,7 @@
 ### For package maintainer:
 # Fill the following fields and choose the options that are in use by this package
 # Populate the install, uninstall and upgrade functions
-# Remember that this script may be launched in terminal, via web UI or another method, so inputs aren't really possible
+# Remember that this script may be launched in terminal, via web UI or another method, so inputs aren't always possible
 # This system supports both interactive and non-interactive installs. For non-interactive installs, $interaction="false". In this cause special instructions to the user should be given as user_message, such as `After installation, edit /opt/software/config.ini`
 # Successful operations should `exit 0`, fails should `exit 1`
 # Messages to the user (such as configuration instructions, explanatory error messages, etc) should be given as: `echo "user_message: text"`
