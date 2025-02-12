@@ -1,6 +1,6 @@
 [Unit]
 Description=Foxbuntu First Boot
-After=meshtasticd.service
+After=rc-local.service
 Before=serial-getty@ttyFIQ0.service
 DefaultDependencies=no
 
