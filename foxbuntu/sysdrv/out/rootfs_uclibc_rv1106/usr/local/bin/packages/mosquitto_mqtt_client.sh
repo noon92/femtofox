@@ -1,53 +1,9 @@
 #!/bin/bash
-if [[ $EUID -ne 0 ]]; then
-   echo "This script must be run as root. Try \`sudo\`."
-   exit 1
-fi
-if [ $# -eq 0 ]; then
-  echo "No arguments provided."
-  echo -e "$help"
-  exit 1
-fi
-
-args="$@" # arguments to this script
-interaction="true"
-help=$(cat <<EOF
-Arguments:
--h          This message
-    Environment - must be first argument:
--x          User UI is not terminal (script interaction unavailable)
-    Actions:
--i          Install
--u          Uninstall
--a          Interactive initialization script: code that must be run to initialize the installation prior to use, but can only be run from terminal
--g          Upgrade
--e          Enable service, if applicable
--d          Disable service, if applicable
--s          Stop service
--r          Start/Restart
--l          Command to run software
-    Information:
--N          Get name
--A          Get author
--D          Get description
--U          Get URL
--O          Get options supported by this script
--S          Get service status
--E          Get service name
--L          Get install location
--G          Get license
--T          Get license name
--P          Get package name
--C          Get Conflicts
--I          Check if installed. Returns an error if not installed
-EOF
-)
 
 ### For package maintainer:
 # Fill the following fields and choose the options that are in use by this package
 # Populate the install, uninstall and upgrade functions
 # Remember that this script may be launched in terminal, via web UI or another method, so inputs aren't really possible
-# Arguments to the script are stored in $args
 # This system supports both interactive and non-interactive installs. For non-interactive installs, $interaction="false". In this cause special instructions to the user should be given as user_message, such as `After installation, edit /opt/software/config.ini`
 # Successful operations should `exit 0`, fails should `exit 1`
 # Messages to the user (such as configuration instructions, explanatory error messages, etc) should be given as: `echo "user_message: text"`
