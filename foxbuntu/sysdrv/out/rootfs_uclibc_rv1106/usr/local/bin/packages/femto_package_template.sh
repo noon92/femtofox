@@ -2,7 +2,7 @@
 ### For package maintainer:
 # Fill the following fields and choose the options that are in use by this package
 # Populate the install, uninstall and upgrade functions
-# Remember that this script may be launched in terminal, via web UI or another method, so inputs aren't really possible
+# Remember that this script may be launched in terminal, via web UI or another method, so inputs aren't always possible
 # This system supports both interactive and non-interactive installs. For non-interactive installs, $interaction="false". In this cause special instructions to the user should be given as user_message, such as `After installation, edit /opt/software/config.ini`
 # Successful operations should `exit 0`, fails should `exit 1`
 # Messages to the user (such as configuration instructions, explanatory error messages, etc) should be given as: `echo "user_message: text"`
@@ -50,19 +50,19 @@ upgrade() {
 
 # Check if already installed. `exit 0` if yes, `exit 1` if no
 check() {
-  # the following works for cloned repos, but not for apt installs
-  if [ -d "$location" ]; then
-    exit 0
-  else
-    exit 1
-  fi
+  ## the following works for cloned repos, but not for apt installs
+  # if [ -d "$location" ]; then
+  #   exit 0
+  # else
+  #   exit 1
+  # fi
 
-  # this works for apt packages
-  if dpkg-query -W -f='${Status}' $package_name 2>/dev/null | grep -q "install ok installed"; then
-    exit 0
-  else
-    exit 1
-  fi
+  ## this works for apt packages
+  # if dpkg-query -W -f='${Status}' $package_name 2>/dev/null | grep -q "install ok installed"; then
+  #   exit 0
+  # else
+  #   exit 1
+  # fi
 }
 
 # display license - limit to 2000 chars
