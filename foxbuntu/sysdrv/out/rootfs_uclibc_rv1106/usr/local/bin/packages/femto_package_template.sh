@@ -70,7 +70,18 @@ license() {
   echo -e "Contents of $license:\n\n   $([[ -f "$license" ]] && awk -v max=2000 -v file="$license" '{ len += length($0) + 1; if (len <= max) print; else if (!cut) { cut=1; printf "%s...\n\nFile truncated, see %s for complete license.", substr($0, 1, max - len + length($0)), file; exit } }' "$license")"
 }
 
+## custom getopts example for this package
+# if [[ "$1" == "-k" ]]; then
+#   generate_keys
+# fi
+
 # parse arguments
 source /usr/local/bin/packages/femto_argument_parse.sh "$@"
+
+# extra help example for this package
+# if [[ "$1" == "-h" ]]; then
+#   echo -e "Additional argument for this package:\n\
+# -k          Generate SSL keys. Must be first argument."
+# fi
 
 exit 0
