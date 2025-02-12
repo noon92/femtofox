@@ -38,7 +38,6 @@ echo -e "\e[32m******* First boot *******\e[0m"
 
 # pulse LED during firstboot
 (
-  echo 34 > /sys/class/gpio/export && echo out > /sys/class/gpio/gpio34/direction
   while true; do
     echo 1 > /sys/class/gpio/gpio34/value;
     sleep 0.5;
