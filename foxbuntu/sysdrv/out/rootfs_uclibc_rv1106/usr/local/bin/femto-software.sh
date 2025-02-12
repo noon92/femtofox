@@ -112,7 +112,7 @@ package_menu() {
       if [ $exit_status -eq 1 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
         return
       elif [ $exit_status -eq 2 ]; then # Help ("extra") button
-        dialog --no-collapse --colors --title "$($package_dir/$1.sh -N) License" --msgbox "$($package_dir/$1.sh -G)" 0 0
+        dialog --no-collapse --colors --title "$($package_dir/$1.sh -N) License" --msgbox "   \Zu$($package_dir/$1.sh -N)\Zn\n$(if output=$($package_dir/$1.sh -T); [ -n "$output" ]; then echo "License: $output"; fi)\n\n$($package_dir/$1.sh -G)" 0 0
       else
         # execute the actual commands
         case $choice in
