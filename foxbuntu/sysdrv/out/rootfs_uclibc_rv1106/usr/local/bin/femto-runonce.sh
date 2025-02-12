@@ -22,6 +22,7 @@ Re-running this script will:\n\
 * Set the eth0 MAC to be derivative of CPU serial number\n\
 * Add terminal type to user femto's .bashrc\n\
 * Add a shortcut \`sfc\` to user femto's .bashrc\n\
+* Enable the meshtasticd service\n\
 \n\
 Finally, the Femtofox will reboot.\n\
 \n\
@@ -105,6 +106,9 @@ if ! grep -Fxq "alias sfc='sudo femto-config'" /home/femto/.bashrc; then # Check
 else
   log_message "\`alias sfc='sudo femto-config'\` already present in .bashrc, skipping"
 fi
+
+log_message "Enabling meshtasticd service"
+systemctl enable meshtasticd
 
 # remove first boot flag
 sed -i -E 's/^first_boot=.*/first_boot=false/' /etc/femto.conf
