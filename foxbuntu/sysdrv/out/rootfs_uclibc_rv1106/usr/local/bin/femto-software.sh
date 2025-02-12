@@ -70,7 +70,7 @@ package_intro() {
   echo "Loading package info..."
   # check if each field in the package info is supported by the package, and if so get it and insert it into the package info dialog
   dialog --no-collapse --colors --title "$title" --yes-label "Continue" --no-label "Back" --yesno "\
-  $($package_dir/$1.sh -N)\n\
+$($package_dir/$1.sh -N)\n\
   $(if $package_dir/$1.sh -O | grep -q 'A'; then echo -e "by $($package_dir/$1.sh -A)"; fi)\n\
 $(if $package_dir/$1.sh -O | grep -q 'D'; then echo "\n$($package_dir/$1.sh -D)"; fi)\n\
 \n\
@@ -79,7 +79,7 @@ $([ -n "$($package_dir/$1.sh -E)" ] && $package_dir/$1.sh -I && echo "Service st
 $(if output=$($package_dir/$1.sh -L); [ -n "$output" ]; then echo "Installs to:     \Zu$output\Zn\n"; fi)\
 $(if output=$($package_dir/$1.sh -C); [ -n "$output" ]; then echo "Conflicts with:  \Zu$output\Zn\n"; fi)\
 $(if output=$($package_dir/$1.sh -T); [ -n "$output" ]; then echo "License:         \Zu$output\Zn\n"; fi)\
-$(if $package_dir/$1.sh -O | grep -q 'U'; then echo "\nFor more information, visit $($package_dir/$1.sh -U)"; fi)" 0 0
+$(if $package_dir/$1.sh -O | grep -q 'U'; then echo "Website:         \Zu$($package_dir/$1.sh -U)\Zn"; fi)" 0 0
   [ $? -eq 1 ] && return 1 # Exit the loop if the user selects "Cancel" or closes the dialog
   package_menu $1 # after user hits "OK", move on to package menu
 }
@@ -140,7 +140,7 @@ while true; do
   index=1
   for file in /usr/local/bin/packages/*.sh; do
     filename=$(basename "$file" .sh)
-    [[ "$filename" == "package_template" ]] && continue # skip package_template.sh
+    [[ "$filename" == femto_* ]] && continue # skip filenames starting with femto_
     menu_entries+=("$(/usr/local/bin/packages/"$filename".sh -N)" "$($package_dir/$filename.sh -I && echo "✅ " || echo "❌ ")")
     ((index++)) # keeping an index to determine menu window height
   done
