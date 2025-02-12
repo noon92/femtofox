@@ -50,19 +50,19 @@ upgrade() {
 
 # Check if already installed. `exit 0` if yes, `exit 1` if no
 check() {
-  # the following works for cloned repos, but not for apt installs
-  if [ -d "$location" ]; then
-    exit 0
-  else
-    exit 1
-  fi
+  ## the following works for cloned repos, but not for apt installs
+  # if [ -d "$location" ]; then
+  #   exit 0
+  # else
+  #   exit 1
+  # fi
 
-  # this works for apt packages
-  if dpkg-query -W -f='${Status}' $package_name 2>/dev/null | grep -q "install ok installed"; then
-    exit 0
-  else
-    exit 1
-  fi
+  ## this works for apt packages
+  # if dpkg-query -W -f='${Status}' $package_name 2>/dev/null | grep -q "install ok installed"; then
+  #   exit 0
+  # else
+  #   exit 1
+  # fi
 }
 
 # display license - limit to 2000 chars
