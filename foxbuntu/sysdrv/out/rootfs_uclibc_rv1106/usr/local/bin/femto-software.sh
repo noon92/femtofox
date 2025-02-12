@@ -91,7 +91,7 @@ package_menu() {
     license_button=""
     if $package_dir/$1.sh -O | grep -q 'G' && $package_dir/$1.sh -I; then license_button="--help-button --help-label License"; fi
     # for each line, check if it's supported by the package, display it if the current install state of the package is appropriate (example: don't display "install" if the package is already installed, don't display "stop service" for a package with no services)
-    service_state=$(femto-utils.sh -C "$($package_dir/$1.sh -E)")
+    if $package_dir/$1.sh -I; then service_state=$(femto-utils.sh -C "$($package_dir/$1.sh -E)"); fi
     menu_list="\
       $(if $package_dir/$1.sh -O | grep -q 'l' && $package_dir/$1.sh -I; then echo "Run software x"; fi) \
       $(if $package_dir/$1.sh -O | grep -q 'i' && ! $package_dir/$1.sh -I; then echo "Install x"; fi) \
@@ -154,7 +154,7 @@ while true; do
   index=1
   for file in /usr/local/bin/packages/*.sh; do
     filename=$(basename "$file" .sh)
-    [[ "$filename" == "package_template" ]] && continue # skip package_template.sh
+    [[ "$filename" == femto_* ]] && continue # skip filenames starting with femto_
     case_block+="
       \"$(/usr/local/bin/packages/"$filename".sh -N)\") package_intro \"$filename\" ;;"
     ((index++))
