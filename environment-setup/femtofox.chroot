@@ -56,13 +56,13 @@ echo "femtofox" | tee /etc/hostname > /dev/null
 
 echo "Configuring autostart of systemd services..."
 systemctl enable button
-#systemctl enable meshtasticd
 systemctl enable femto-runonce.service
 systemctl enable femto-usb-config-tool.service
 systemctl enable femto-boot-complete.service
 systemctl enable femto-wifi-mesh-control
 systemctl enable femto-watchclock-dog
 
+systemctl disable meshtasticd
 systemctl disable apt-daily.timer
 systemctl disable unattended-upgrades
 systemctl disable smbd nmbd # samba services, can be enabled via menu
