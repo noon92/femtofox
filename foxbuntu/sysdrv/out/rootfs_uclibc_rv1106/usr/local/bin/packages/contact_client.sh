@@ -51,7 +51,7 @@ EOF
 
 name="Contact"   # software name
 author="pdxlocations"   # software author - OPTIONAL
-description="A Text-Based Console UI for Meshtastic Nodes. Formerly called Curse Client.\nAfter install, run \`contact\` to launch."   # software description - OPTIONAL (but strongly recommended!)
+description="A Text-Based Console UI for Meshtastic Nodes. Formerly called Curses Client.\nAfter install, run \`contact\` to launch."   # software description - OPTIONAL (but strongly recommended!)
 URL="https://github.com/pdxlocations/contact/"   # software URL. Can contain multiple URLs - OPTIONAL
 options="xiuglNADUOLGTCI"   # script options in use by software package. For example, for a package with no service, exclude `edsrS`
 launch="python /opt/contact/main.py --host"   # command to launch software, if applicable
@@ -128,59 +128,7 @@ license() {
   echo -e "Contents of $license:\n\n   $([[ -f "$license" ]] && awk -v max=2000 -v file="$license" '{ len += length($0) + 1; if (len <= max) print; else if (!cut) { cut=1; printf "%s...\n\nFile truncated, see %s for complete license.", substr($0, 1, max - len + length($0)), file; exit } }' "$license")"
 }
 
-while getopts ":h$options" opt; do
-  case ${opt} in
-    h) # Option -h (help)
-      echo -e "$help"
-      ;;
-    x) # Option -x (no user interaction available)
-      interactive="false"
-      ;;
-    i) # Option -i (install)
-      install
-      ;;
-    u) # Option -u (uninstall)
-      uninstall
-      ;;
-    g) # Option -g (upgrade)
-      upgrade
-      ;;
-    e) # Option -e (Enable service, if applicable)
-      systemctl enable $service_name
-      ;;
-    d) # Option -d (Disable service, if applicable)
-      systemctl disable $service_name
-      ;;
-    s) # Option -s (Stop service)
-      systemctl stop $service_name
-      ;;
-    r) # Option -r (Start/Restart)
-      systemctl restart $service_name
-      ;;
-    l) # Option -l (Run software)
-      echo "Launching $name..."
-      sudo -u ${SUDO_USER:-$(whoami)} $launch 
-      ;;
-    N) echo -e $name ;;
-    A) echo -e $author ;;
-    D) echo $description ;;
-    U) echo -e $URL ;;
-    O) echo -e $options ;;
-    S) # Option -S (Get service status)
-      systemctl status $service_name
-    ;;
-    L) echo -e $location ;;
-    G) # Option -G (Get license) 
-      license
-    ;;
-    T) # Option -T (Get license name) 
-      echo $license_name
-    ;;
-    C) echo -e $conflicts ;;
-    I) # Option -I (Check if already installed)
-      check
-    ;;
-  esac
-done
+# parse arguments
+source /usr/local/bin/packages/femto_argument_parse.sh "$@"
 
 exit 0
