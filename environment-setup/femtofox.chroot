@@ -37,6 +37,17 @@ DEBIAN_FRONTEND=noninteractive apt install -y --option Dpkg::Options::="--force-
 #DEBIAN_FRONTEND=noninteractive apt install -y --option Dpkg::Options::="--force-confold" ./meshtasticd_2.5.11.8e2a3e5_armhf.deb
 #rm ./meshtasticd_2.5.11.8e2a3e5_armhf.deb
 
+# Ensure libgcc_s.so and libc_nonshared.a exist
+mkdir -p /usr/lib/gcc/arm-linux-gnueabihf/11/
+ln -sf /usr/lib/arm-linux-gnueabihf/libgcc_s.so.1 /usr/lib/gcc/arm-linux-gnueabihf/11/libgcc_s.so
+ln -sf /usr/lib/arm-linux-gnueabihf/libgcc_s.so.1 /lib/libgcc_s.so.1
+ln -sf /usr/lib/gcc/arm-linux-gnueabihf/11/libgcc_s.so /usr/lib/libgcc.so
+
+# Add library paths
+echo "/usr/lib/gcc/arm-linux-gnueabihf/11" | tee -a /etc/ld.so.conf.d/gcc.conf
+ldconfig
+
+
 echo "Installing dependencies for meshing-around and meshtastic cli..."
 #pip config set global.extra-index-url https://www.piwheels.org/simple
 pip3 install requests pyephem pytap2 meshtastic pypubsub geopy maidenhead beautifulsoup4 dadjokes schedule wikipedia googlesearch-python
@@ -56,13 +67,13 @@ echo "femtofox" | tee /etc/hostname > /dev/null
 
 echo "Configuring autostart of systemd services..."
 systemctl enable button
-systemctl enable meshtasticd
 systemctl enable femto-runonce.service
 systemctl enable femto-usb-config-tool.service
 systemctl enable femto-boot-complete.service
 systemctl enable femto-wifi-mesh-control
 systemctl enable femto-watchclock-dog
 
+systemctl disable meshtasticd
 systemctl disable apt-daily.timer
 systemctl disable unattended-upgrades
 systemctl disable smbd nmbd # samba services, can be enabled via menu
@@ -101,5 +112,6 @@ usermod -a -G tty femto
 usermod -a -G dialout femto
 
 echo "Cleaning up chroot..."
-apt clean && rm -rf /var/lib/apt/lists/* && rm -rf /tmp/* && rm -rf /var/tmp/* && find /var/log -type f -exec truncate -s 0 {} + && : > /root/.bash_history && history -c
+rm -rf /tmp/* && rm -rf /var/tmp/* && find /var/log -type f -exec truncate -s 0 {} + && : > /root/.bash_history && history -c
+
 exit
