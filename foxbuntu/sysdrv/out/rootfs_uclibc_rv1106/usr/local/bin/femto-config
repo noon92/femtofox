@@ -314,7 +314,6 @@ utilities() {
       ;;
       2) femto-set-time.sh ;; # set timezone
       3) # Kernel modules)
-        dialog --no-collapse --title "$title" --msgbox "Kernel modules are loadable pieces of code that extend a Linux kernel's functionality without requiring a reboot. Common examples include device drivers, file systems, or system calls.\n\nThis tool will allow you to add pre-compiled modules to the Foxbuntu kernel.\n\nModules currently autostarting at boot: $(modules=$(sed -n '6,$p' /etc/modules | sed ':a;N;$!ba;s/\n/, /g;s/, $//'); [ -z "$modules" ] && echo "none" || echo "$modules")\n\nCurrently active modules: $(lsmod | awk 'NR>1 {print $1}' | tr '\n' ' ')" 18 65
         femto-kernel-modules.sh
       ;;
       4) femto-runonce.sh ;; # Re-run first-boot script
