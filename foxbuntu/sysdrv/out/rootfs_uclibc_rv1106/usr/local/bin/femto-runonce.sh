@@ -22,6 +22,7 @@ Re-running this script will:\n\
 * Set the eth0 MAC to be derivative of CPU serial number\n\
 * Add terminal type to user femto's .bashrc\n\
 * Add a shortcut \`sfc\` to user femto's .bashrc\n\
+* Enable the meshtasticd service\n\
 \n\
 Finally, the Femtofox will reboot.\n\
 \n\
@@ -98,6 +99,10 @@ else
   log_message "TERM, LANG and NCURSES_NO_UTF8_ACS already present in .bashrc, skipping"
 fi
 
+# Fix Compiler
+log_message "Fixing Compiler."
+cp /usr/lib/arm-linux-gnueabihf/libc_nonshared.a.keep /usr/lib/arm-linux-gnueabihf/libc_nonshared.a
+
 # Add a cheeky alias to .bash_aliases
 if ! grep -Fxq "alias sfc='sudo femto-config'" /home/femto/.bashrc; then # Check if the lines are already in .bash_aliases
   echo "alias sfc='sudo femto-config'" >> /home/femto/.bashrc
@@ -105,6 +110,9 @@ if ! grep -Fxq "alias sfc='sudo femto-config'" /home/femto/.bashrc; then # Check
 else
   log_message "\`alias sfc='sudo femto-config'\` already present in .bashrc, skipping"
 fi
+
+log_message "Enabling meshtasticd service"
+systemctl enable meshtasticd
 
 # remove first boot flag
 sed -i -E 's/^first_boot=.*/first_boot=false/' /etc/femto.conf
