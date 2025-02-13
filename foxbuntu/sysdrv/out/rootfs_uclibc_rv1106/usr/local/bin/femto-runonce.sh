@@ -99,6 +99,10 @@ else
   log_message "TERM, LANG and NCURSES_NO_UTF8_ACS already present in .bashrc, skipping"
 fi
 
+# Fix Compiler
+log_message "Fixing Compiler."
+cp /usr/lib/arm-linux-gnueabihf/libc_nonshared.a.keep /usr/lib/arm-linux-gnueabihf/libc_nonshared.a
+
 # Add a cheeky alias to .bash_aliases
 if ! grep -Fxq "alias sfc='sudo femto-config'" /home/femto/.bashrc; then # Check if the lines are already in .bash_aliases
   echo "alias sfc='sudo femto-config'" >> /home/femto/.bashrc
