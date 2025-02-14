@@ -256,37 +256,37 @@ while getopts ":harsl:ipcnoSEC:R:v" opt; do
     ;;
     C) # Option -C (Check service status)
       if systemctl is-enabled $OPTARG &>/dev/null; then
-        state_message="\033[0;34m\033[4menabled\e[39m, "
+        state_message="\033[0;34m\033[4menabled\033[0m, "
       else
-        state_message="\033[0;31m\033[4mdisabled\e[39m, "
+        state_message="\033[0;31m\033[4mdisabled\033[0m, "
       fi
       full_status=$(systemctl status $OPTARG)
       if echo $full_status | grep -q "active (running)"; then
-        state_message+="\033[0;34mrunning\e[0m"
+        state_message+="\033[4m\033[0;34mrunning\033[0m"
         exit_state=0
       elif echo $full_status | grep -q "inactive (dead)"; then
-        state_message+="\033[0;31mnot running\e[0m"
+        state_message+="\033[4m\033[0;31mnot running\033[0m"
         exit_state=1
       elif echo $full_status | grep -q "failed"; then
-        state_message+="\033[0;31mfailed\e[0m"
+        state_message+="\033[4m\033[0;31mfailed\033[0m"
         exit_state=1
       elif echo $full_status | grep -q "activating"; then
-        state_message+="activating\e[0m"
+        state_message+="\033[4mactivating\033[0m"
         exit_state=2
       else
-        state_message+="unknown\e[0m"
+        state_message+="\033[4munknown\033[0m"
         exit_state=2
       fi
       echo -e "$state_message"
       exit $exit_state
     ;;
-    R) 
+    R)  # replace colors)
       replace_colors "$OPTARG"
     ;;
     v) # get foxbuntu version)
       echo "Foxbuntu v$(grep -oP 'major=\K[0-9]+' /etc/foxbuntu-release).$(grep -oP 'minor=\K[0-9]+' /etc/foxbuntu-release).$(grep -oP 'patch=\K[0-9]+' /etc/foxbuntu-release)$(grep -oP 'hotfix=\K[a-z]+' /etc/foxbuntu-release)"
     ;;
-    \?) # Unknown option)
+    \?) # Unknown argument)
       echo -e "Unknown argument $1.\n$help"
     ;;
   esac
