@@ -18,5 +18,5 @@ spaces=$((21 - ${#foxbuntu_version}))
 printf "                     For settings, run \`\033[0;31msudo femto-config\033[0m\`\n"
 printf "                  Made for Femtofox  https://www.femtofox.com\n"
 printf "               $foxbuntu_version%*s%s(%s)\n\n" $spaces "" "$DISTRIB_DESCRIPTION" "$(uname -r)"
-# 																										 ^
+
 printf "IP address: $(hostname -I | sed 's/ / /g') Uptime:$(uptime -p | awk '{$1=""; print $0}' | sed -e 's/ day\b/d/g' -e 's/ hour\b/h/g' -e 's/ hours\b/h/g' -e 's/ minute\b/m/g' -e 's/ minutes\b/m/g' | sed 's/,//g')\n"
