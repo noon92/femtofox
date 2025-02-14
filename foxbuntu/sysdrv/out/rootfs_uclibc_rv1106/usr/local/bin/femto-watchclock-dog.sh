@@ -23,6 +23,12 @@ if [ ! -w "$LAST_TIME_FILE" ]; then
 fi
 
 while true; do
+    # Check if meshtasticd service is running
+    if ! systemctl is-active --quiet meshtasticd; then
+        #echo "meshtasticd service is not running. Skipping..." | tee -a "$LOGFILE"
+        sleep 30
+        continue
+    fi
     NEW_TIME=$(date +%s)
 
     # Ensure last_time file is readable before using it
@@ -47,6 +53,6 @@ while true; do
         exit 1
     fi
 
-    sleep 5
+    sleep 30
 done
 
