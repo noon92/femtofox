@@ -9,7 +9,7 @@ install() {
 
   echo "Installing $($package_dir/$1.sh -N)..."
   # Run the installation script, capturing the output and displaying it in real time
-  output=$($package_dir/$1.sh -i)
+  output=$($package_dir/$1.sh -i | tee /dev/tty)
   install_status=$?  # Capture the exit status of the eval command
   user_message=$(echo "$output" | awk '/user_message: / {found=1; split($0, arr, "user_message: "); print arr[2]; next} found {print}' | sed '/^$/q') # grab the user_message, if present
   output=$(echo -e "$output" | sed '/user_message: /,$d') # remove the user message from the detailed output
