@@ -261,8 +261,8 @@ utilities() {
         while true; do
         echo $sysinfo_choice
           sysinfo_choice=$(dialog --no-collapse --help-button --cancel-label "Back" --default-item "$sysinfo_choice" --item-help --menu "System info" 17 40 5 \
-            1 "CPU" "" \
-            2 "Operating system" "" \
+            1 "Operating system" "" \
+            2 "CPU" "" \
             3 "Storage & memory" "" \
             4 "Peripherals & devices" ""\
             5 "Networking" "" \
@@ -274,16 +274,16 @@ utilities() {
           if [ $exit_status -eq 1 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
             break
           elif [ $exit_status -eq 2 ]; then # Help ("extra") button
-            dialog --no-collapse --colors --title "System info help" --msgbox "To get system info in terminal (where it can be copied), enter \`\Zusudo femto-utils.sh -i\Zn\`.\n\nWhen getting Peripherals & Devices (or Complete System Info) without an i2c device connected, it is normal to see error messages on serial console.\n" 0 0
+            dialog --no-collapse --colors --title "System info help" --msgbox "To get system info in terminal (where it can be copied), enter \`\Zusudo femto-utils.sh -i\Zn\`.\n\nWhen getting Peripherals & Devices Info (or Complete System Info) without an i2c device connected, it is normal to see error messages on serial console.\n" 0 0
           else
             case $sysinfo_choice in
-              1) # CPU)
-                loading "Loading CPU info..."
-                dialog --no-collapse --colors --title "CPU info" --msgbox "$(ingest_data "femto-utils.sh -c" 15)" 0 0
-              ;;
-              2) # Operating system)
+              1) # Operating system)
                 loading "Loading operating system info..."
                 dialog --no-collapse --colors --title "Operating system info" --msgbox "$(ingest_data "femto-utils.sh -o" 15)" 0 0
+              ;;
+              2) # CPU)
+                loading "Loading CPU info..."
+                dialog --no-collapse --colors --title "CPU info" --msgbox "$(ingest_data "femto-utils.sh -c" 15)" 0 0
               ;;
               3) # Storage & memory)
                 loading "Loading storage & memory info..."
@@ -510,7 +510,7 @@ meshtastic_settings() {
       ;;
       3) # set URL)
         check_meshtasticd_running && (
-          newurl=$(dialog --no-collapse --title "Meshtastic URL" --inputbox "New Meshtastic LoRa configuration URL (SHIFT+INS to paste):" 8 60 3>&1 1>&2 2>&3)
+          newurl=$(dialog --no-collapse --title "Meshtastic URL" --inputbox "New Meshtastic LoRa configuration URL (SHIFT+INS to paste):" 8 63 3>&1 1>&2 2>&3)
           if [ -n "$newurl" ]; then #if a URL was entered
             dialog --no-collapse --title "$title" --yesno "New Meshtastic LoRa configuration URL:\n$newurl\n\nConfirm?" 15 60
             if [ $? -eq 0 ]; then #unless cancel/no
@@ -701,7 +701,7 @@ help_menu() {
     [ $? -eq 1 ] && break # Exit the loop if the user selects "Cancel" or closes the dialog    
     case $help_choice in
       1) #About Femtofox)
-        dialog --no-collapse --title "About Femtofox" --default-item "$choice" --backtitle "Foxbuntu $(grep -oP 'major=\K[0-9]+' /etc/foxbuntu-release).$(grep -oP 'minor=\K[0-9]+' /etc/foxbuntu-release).$(grep -oP 'patch=\K[0-9]+' /etc/foxbuntu-release)$(grep -oP 'hotfix=\K[a-z]+' /etc/foxbuntu-release)" --msgbox "$(femto-license.sh -a)" 18 65
+        dialog --no-collapse --title "About Femtofox" --default-item "$choice" --backtitle "$(femto-utils.sh -v)" --msgbox "$(femto-license.sh -a)" 18 65
       ;;
       2) #Display pinout)
         choice=""   # zero the choice before loading the submenu
@@ -778,7 +778,7 @@ done
 
 # Main menu
 while true; do
-  main_menu_choice=$(dialog --no-collapse --cancel-label "Exit" --backtitle "Foxbuntu v$(grep -oP 'major=\K[0-9]+' /etc/foxbuntu-release).$(grep -oP 'minor=\K[0-9]+' /etc/foxbuntu-release)$(output=$(grep -o 'patch=[1-9][0-9]*' /etc/foxbuntu-release | cut -d= -f2) && [ -n "$output" ] && echo ".$output")$(grep -oP 'hotfix=\K[a-z]+' /etc/foxbuntu-release)" --default-item "$main_menu_choice" --item-help --menu "Femtofox Config" 16 40 5 \
+  main_menu_choice=$(dialog --no-collapse --cancel-label "Exit" --backtitle "$(femto-utils.sh -v)" --default-item "$main_menu_choice" --item-help --menu "Femtofox Config" 16 40 5 \
     1 "Settings wizard" "" \
     2 "Networking" "" \
     3 "Meshtastic" "" \
