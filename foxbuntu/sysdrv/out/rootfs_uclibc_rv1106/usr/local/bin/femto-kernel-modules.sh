@@ -41,11 +41,11 @@ module_switch() {
 module_blacklist() {
   if [ $2 = "blacklist" ]; then
     mv "$module_dir/$1.ko" "$module_dir/$1.ko.blacklisted" > /dev/null 2>&1
-    echo -e "$1 is blacklisted."
+    module_switch $1 disable > /dev/null 2>&1 # unload and disable the module
+    echo -e "$1 is blacklisted. A reboot is sometimes required for blacklisting to fully take effect."
   elif [ $2 = "un-blacklist" ]; then
-    sudo rmmod $1 > /dev/null 2>&1    # Unload the module
     mv "$module_dir/$1.ko.blacklisted" "$module_dir/$1.ko" > /dev/null 2>&1
-    echo -e "$1 is un-blacklisted."
+    echo -e "$1 is un-blacklisted. A reboot is sometimes required for un-blacklisting to fully take effect."
   else
     echo "Invalid argument \"$2\".\n$help"
   fi
@@ -108,7 +108,7 @@ modules_changed="false"
 while true; do
   [ $modules_changed = "true" ] && load_modules
   # Create the menu options
-  selected_module=$(dialog --no-collapse --cancel-label "Back" --ok-label "Open" --title "Kernel Modules" --no-shadow --default-item "$selected_module" --menu "Module name             Loaded/Boot?             Description" 42 103 8 "${modules[@]}" 3>&1 1>&2 2>&3)
+  selected_module=$(dialog --no-collapse --cancel-label "Return" --ok-label "Open" --title "Kernel Modules" --no-shadow --default-item "$selected_module" --menu "Module name             Loaded/Boot?             Description" 42 103 8 "${modules[@]}" 3>&1 1>&2 2>&3)
   [ $? -eq 1 ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
 
   modules_changed="false"
@@ -117,14 +117,16 @@ while true; do
     modinfo_output=$(modinfo $selected_module 2>/dev/null | sed ':a;N;$!ba;s/\n/\\n/g') # add \n to module info
 
     if [ ! -e "$module_dir/$selected_module.ko" ]; then
-        module_info="\Z1\ZuMODULE BLACKLISTED!\Zn\n\n$selected_module has been blacklisted and will not load."
+        module_info="\Z1\ZuMODULE BLACKLISTED!\Zn\n\n$selected_module has been blacklisted and will not load on boot.\
+        $(lsmod | grep -q "^$selected_module " && echo "\n\n$selected_module is currently \Z4\Zuloaded\Zn!\n\
+Some modules require reboot for blacklist to take effect if they're in use when blacklisted.")"
     else
         module_info="Module is currently $(lsmod | grep -q "^$selected_module " && echo "\Z4loaded\Zn" || echo "\Z1unloaded\Zn") and is set $(femto-utils.sh -R "$(femto-kernel-modules.sh -b | sed 's/\x1b\[[0-9;]*m//g' | grep -qw "$selected_module" && echo "\Z4to load at boot\Zn" || echo "\Z1not to load at boot\Zn. It may load automatically if needed")").\n\
 \n\
 Full module info:\n$modinfo_output\n\nNote: Dependencies are loaded/unloaded automatically."
     fi
     
-    dialog --colors --yes-label "Cancel" --no-label "Disable" --extra-button --extra-label "Enable" --help-button --help-label "Blacklist" --title "$selected_module" --yesno "$module_info" 0 0
+    dialog --colors --yes-label "Return" --no-label "Disable" --extra-button --extra-label "Enable" --help-button --help-label "Blacklist" --title "$selected_module" --yesno "$module_info" 0 0
 
     exit_status=$? # This line checks the exit status of the dialog command
     if [ $exit_status -eq 0 ]; then # "Back" button
@@ -136,15 +138,15 @@ Full module info:\n$modinfo_output\n\nNote: Dependencies are loaded/unloaded aut
       dialog --colors --title "$selected_module" --msgbox "$(femto-utils.sh -R "$(module_switch $selected_module disable)")" 0 0
       modules_changed="true"
     elif [ $exit_status -eq 2 ]; then # "Blacklist" button
-      dialog --no-collapse --colors --title "$selected_module" --yes-label "Cancel" --no-label "Un-blacklist" --extra-button --extra-label "Blacklist" --yesno "$selected_module is currently $([ -e "$module_dir/$selected_module.ko" ] && echo "\Z4\Zunot blacklisted\Zn" || echo "\Z1\Zublacklisted\Zn").\n\nBlacklisting prevents a kernel module from loading.\n\nWould you like to blacklist $selected_module?" 0 0
+      dialog --no-collapse --colors --title "$selected_module" --yes-label "Return" --no-label "Un-blacklist" --extra-button --extra-label "Blacklist" --yesno "$selected_module is currently $([ -e "$module_dir/$selected_module.ko" ] && echo "\Z4\Zunot blacklisted\Zn" || echo "\Z1\Zublacklisted\Zn").\n\nBlacklisting prevents a kernel module from loading.\n\nWould you like to blacklist $selected_module?" 0 0
       exit_status=$?
       if [ $exit_status -eq 0 ]; then 
         continue
       elif [ $exit_status -eq 3 ]; then # blacklist
-        dialog --colors --title "$selected_module" --msgbox "$(femto-utils.sh -R "$(module_blacklist $selected_module blacklist)")" 6 45
+        dialog --colors --title "$selected_module" --msgbox "$(femto-utils.sh -R "$(module_blacklist $selected_module blacklist)")" 8 50
         modules_changed="true"
       else # blacklist
-        dialog --colors --title "$selected_module" --msgbox "$(femto-utils.sh -R "$(module_blacklist $selected_module un-blacklist)")" 6 45
+        dialog --colors --title "$selected_module" --msgbox "$(femto-utils.sh -R "$(module_blacklist $selected_module un-blacklist)")" 8 50
         modules_changed="true"
       fi
     fi
