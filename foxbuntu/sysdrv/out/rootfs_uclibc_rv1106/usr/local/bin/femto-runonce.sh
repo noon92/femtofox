@@ -23,6 +23,7 @@ Re-running this script will:\n\
 * Add terminal type to user femto's .bashrc\n\
 * Add a shortcut \`sfc\` to user femto's .bashrc\n\
 * Enable the meshtasticd service\n\
+* Add compiler support\n\
 \n\
 Finally, the Femtofox will reboot.\n\
 \n\
@@ -100,7 +101,7 @@ else
 fi
 
 # Fix Compiler
-log_message "Fixing Compiler."
+log_message "Adding compiler support..."
 cp /usr/lib/arm-linux-gnueabihf/libc_nonshared.a.keep /usr/lib/arm-linux-gnueabihf/libc_nonshared.a
 
 # Add a cheeky alias to .bash_aliases
