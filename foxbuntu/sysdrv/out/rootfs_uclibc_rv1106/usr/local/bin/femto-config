@@ -560,7 +560,7 @@ meshtastic_settings() {
               ;;
               2) # view/change private key)
                 loading "Getting current private key..."
-                key=$(femto-meshtasticd-config.sh -u)
+                key=$(femto-meshtasticd-config.sh -r)
                 if [ -n "$key" ]; then
                   dialog --no-collapse --title "Meshtastic private key" --yesno "Current private key:\n$key\n\nSet new key?" 9 55
                   if [ $? -eq 0 ]; then #unless cancel/no
