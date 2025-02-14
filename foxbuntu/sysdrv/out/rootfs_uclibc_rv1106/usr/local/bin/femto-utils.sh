@@ -22,6 +22,7 @@ Options are:
 -E             Generate/overwrite SSH encryption keys
 -C "service"   Check if service is enabled, disabled, running
 -R "command"   Replace colors for dialog menus
+-v             Get Foxbuntu version
 EOF
 )
 
@@ -219,7 +220,7 @@ replace_colors() {
   echo "$input"
 }
 
-while getopts ":harsl:ipcnoSEC:R:" opt; do
+while getopts ":harsl:ipcnoSEC:R:v" opt; do
   case ${opt} in
     h) # Option -h (help)
       echo -e "$help"
@@ -281,6 +282,9 @@ while getopts ":harsl:ipcnoSEC:R:" opt; do
     ;;
     R) 
       replace_colors "$OPTARG"
+    ;;
+    v) # get foxbuntu version)
+      echo "Foxbuntu v$(grep -oP 'major=\K[0-9]+' /etc/foxbuntu-release).$(grep -oP 'minor=\K[0-9]+' /etc/foxbuntu-release).$(grep -oP 'patch=\K[0-9]+' /etc/foxbuntu-release)$(grep -oP 'hotfix=\K[a-z]+' /etc/foxbuntu-release)"
     ;;
     \?) # Unknown option)
       echo -e "Unknown argument $1.\n$help"
