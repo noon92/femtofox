@@ -242,7 +242,7 @@ utilities() {
     utilities_choice=$(dialog --no-collapse --cancel-label "Back" --default-item "$utilities_choice" --item-help --menu "$title" 21 50 4 \
       1 "View system info" "" \
       2 "Set system time" "" \
-      3 "Kernel modules" "" \
+      3 "Kernel module manager" "" \
       4 "Re-run first-boot script" "" \
       5 "Run USB configuration tool" "" \
       6 "Run OEM luckfox-config" "" \
