@@ -1,7 +1,7 @@
 [Unit]
 Description=Boot Complete
-After=serial-getty@ttyFIQ0.service
 DefaultDependencies=no
+After=multi-user.target
 
 [Service]
 ExecStart=/usr/local/bin/femto-boot-complete.sh
