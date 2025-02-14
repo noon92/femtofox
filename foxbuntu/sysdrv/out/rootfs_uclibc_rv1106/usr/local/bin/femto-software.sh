@@ -92,8 +92,9 @@ package_menu() {
     if $package_dir/$1.sh -O | grep -q 'G' && $package_dir/$1.sh -I; then license_button="--help-button --help-label License"; fi
     # for each line, check if it's supported by the package, display it if the current install state of the package is appropriate (example: don't display "install" if the package is already installed, don't display "stop service" for a package with no services)
     if $package_dir/$1.sh -I; then service_state=$(femto-utils.sh -C "$($package_dir/$1.sh -E)"); fi
+    # Removed from menu list until can be fixed - contact does not launch. When returned to list, should be first entry
+    # $(if $package_dir/$1.sh -O | grep -q 'l' && $package_dir/$1.sh -I; then echo "Run software x"; fi) \
     menu_list="\
-      $(if $package_dir/$1.sh -O | grep -q 'l' && $package_dir/$1.sh -I; then echo "Run software x"; fi) \
       $(if $package_dir/$1.sh -O | grep -q 'i' && ! $package_dir/$1.sh -I; then echo "Install x"; fi) \
       $(if $package_dir/$1.sh -O | grep -q 'u' && $package_dir/$1.sh -I; then echo "Uninstall x"; fi) \
       $(if $package_dir/$1.sh -O | grep -q 'a' && $package_dir/$1.sh -I; then echo "Initialize x"; fi) \
