@@ -19,7 +19,6 @@ install() {
     output="$truncated_output"
   fi
   user_message=$(echo "$output" | awk '/user_message: / {found=1; split($0, arr, "user_message: "); print arr[2]; next} found {print}' | sed '/^$/q') # grab the user_message, if present
-  echo $user_message
   output=$(echo -e "$output" | sed '/user_message: /,$d') # remove the user message from the detailed output
 
   if [ $install_status -eq 0 ]; then # if the installation was successful
@@ -113,7 +112,11 @@ package_menu() {
       $(if $package_dir/$1.sh -O | grep -q 'e' && $package_dir/$1.sh -I; then echo "Start/restart service x"; fi) \
       $(if $package_dir/$1.sh -O | grep -q 'S' && $package_dir/$1.sh -I; then echo "Detailed service status x"; fi)"
       menu_count=$(( $(echo "$menu_list" | grep -o " x" | wc -l) $(if $package_dir/$1.sh -O | grep -q 'e' && $package_dir/$1.sh -I; then echo "+1"; fi) )) # count the number of menu items by counting how many times " x" shows up, +1 if there's a service. This is a stupid way to do this, but because each menu item only contains one space (the rest being space-sized invisible chars) it works. It's late at night, OKAY?!
-      choice=$(dialog --no-collapse --colors --title "$($package_dir/$1.sh -N)" $license_button --cancel-label "Back" --default-item "$choice" --menu "$(if $package_dir/$1.sh -O | grep -q 'S' && $package_dir/$1.sh -I; then echo "Service status: $(femto-utils.sh -R "$service_state")"; fi)" $(( menu_count + 9 )) 45 $(( menu_count + 3 )) \
+      if $package_dir/$1.sh -O | grep -q 'e' && [ "$($package_dir/$1.sh -E | wc -w)" -gt 1 ]; then
+        multiple_services_note="\nService will appear as \"running\" if any of the services are active."
+        menu_count=$((menu_count + 2))
+      fi
+      choice=$(dialog --no-collapse --colors --title "$($package_dir/$1.sh -N)" $license_button --cancel-label "Back" --default-item "$choice" --menu "$(if $package_dir/$1.sh -O | grep -q 'S' && $package_dir/$1.sh -I; then echo "Service status: $(femto-utils.sh -R "$service_state")"; fi)$multiple_services_note" $(( menu_count + 9 )) 45 $(( menu_count + 3 )) \
       $menu_list \
       " " "" \
       "Back to software manager" "" 3>&1 1>&2 2>&3)

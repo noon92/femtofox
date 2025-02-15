@@ -260,7 +260,7 @@ utilities() {
         sysinfo_choice=""   # zero the choice before loading the submenu
         while true; do
         echo $sysinfo_choice
-          sysinfo_choice=$(dialog --no-collapse --help-button --cancel-label "Back" --default-item "$sysinfo_choice" --item-help --menu "System info" 17 40 5 \
+          sysinfo_choice=$(dialog --no-collapse --help-button --backtitle "$(femto-utils.sh -v)" --cancel-label "Back" --default-item "$sysinfo_choice" --item-help --menu "System info" 17 40 5 \
             1 "Operating system" "" \
             2 "CPU" "" \
             3 "Storage & memory" "" \
@@ -379,67 +379,6 @@ utilities() {
   done
 }
 
-#set lora radio
-set_lora_radio() {
-  choice=""   # zero the choice before loading the submenu
-  while true; do
-    echo "Checking LoRa radio..."
-    #Display filename, if exists: $(files=$(ls /etc/meshtasticd/config.d/* 2>/dev/null) && [ -n "$files" ] && echo "\n\nConfiguration files in use:\n$files" | paste -sd, -))
-    choice=$(dialog --no-collapse --colors --cancel-label "Cancel" --default-item "$choice" --title "Meshtastic LoRa radio" --item-help --menu "Currently configured LoRa radio:\n$(femto-utils.sh -R "$(femto-meshtasticd-config.sh -k)")$(ls -1 /etc/meshtasticd/config.d 2>/dev/null | paste -sd ', ' - | sed 's/^/ (/; s/$/)/; s/,/, /g' | grep -v '^ ()$')" 22 50 10 \
-       "Radio name:" "Configuration:" "" \
-       "" "" "" \
-       "Ebyte e22-900m30s" "(SX1262_TCXO)" "Included in Femtofox Pro" \
-       "Ebyte e22-900m22s" "(SX1262_TCXO)" "" \
-       "Ebyte e80-900m22s" "(SX1262_XTAL)" "" \
-       "Heltec ht-ra62" "(SX1262_TCXO)" "" \
-       "Seeed wio-sx1262" "(SX1262_TCXO)" "" \
-       "Waveshare sx126x-xxxm" "(SX1262_XTAL)" "Not recommended due issues with sending longer messages" \
-       "AI Thinker ra-01sh" "(SX1262_XTAL)" "" \
-       "LoRa Meshstick 1262" "(meshstick-1262)" "USB based LoRa radio from Mark Birss. https://github.com/markbirss/MESHSTICK" \
-       "Simulated radio" "(none)" "" \
-      " " "" "" \
-      "Skip" "" "" 3>&1 1>&2 2>&3)
-    [ $? -eq 1 ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
-    local radio=""
-    case $choice in
-      "Ebyte e22-900m30s")
-        radio="sx1262_tcxo"
-      ;;
-      "Ebyte e22-900m22s")
-        radio="sx1262_tcxo"
-      ;;
-      "Ebyte e80-900m22s")
-        radio="sx1262_xtal"
-      ;;
-      "Heltec ht-ra62")
-        radio="sx1262_tcxo"
-      ;;
-      "Seeed wio-sx1262")
-        radio="sx1262_tcxo"
-      ;;
-      "Waveshare sx126x-xxxm")
-        radio="sx1262_xtal"
-      ;;
-      "AI Thinker ra-01sh")
-        radio="femto_sx1262_xtal"
-      ;;
-      "LoRa Meshstick 1262")
-        radio="lora-meshstick-1262"
-      ;;
-      "Simulated radio")
-        radio="none"
-      ;;
-      "Skip")
-        return
-      ;;
-    esac
-    if [ -n "$radio" ]; then #if a radio was selected
-      femto-meshtasticd-config.sh -l "$radio" -s # set the radio, then restart meshtasticd
-      return
-    fi
-  done
-}
-
 legacy_admin() {
   choice=""   # zero the choice before loading the submenu
   while true; do
@@ -481,18 +420,17 @@ meshtastic_settings() {
   local title="Meshtastic Settings"
   while true; do
     echo "Checking Meshtasticd service state..."
-    meshtastic_choice=$(dialog --no-collapse --colors --title "$title" --cancel-label "Back" --default-item "$meshtastic_choice" --item-help --menu "Meshtasticd service is $(femto-utils.sh -R "$(femto-utils.sh -C "meshtasticd")")$(femto-meshtasticd-config.sh -k | grep -q 'simulated' && echo '\n\Z1Warning: using simulated radio\Zn')" 19 50 4 \
+    meshtastic_choice=$(dialog --no-collapse --colors --title "$title" --cancel-label "Back" --default-item "$meshtastic_choice" --item-help --menu "Meshtasticd service is $(femto-utils.sh -R "$(femto-utils.sh -C "meshtasticd")")$(femto-meshtasticd-config.sh -k | grep -q 'simulated' && echo '\n\Z1Warning: using simulated radio\Zn')" 18 50 4 \
       1 "View node info" "" \
       2 "View configuration URL & QR code" "" \
-      3 "Set new configuration URL" "" \
-      4 "Set LoRa radio" "" \
-      5 "Security settings" "" \
-      6 "Mesh connectivity test" "" \
-      7 "Manage Meshtasticd service" "" \
-      8 "Upgrade/install Meshtasticd" "" \
-      9 "Uninstall Meshtasticd" "" \
+      3 "LoRa settings" "" \
+      4 "Security settings" "" \
+      5 "Mesh connectivity test" "" \
+      6 "Manage Meshtasticd service" "" \
+      7 "Upgrade/install Meshtasticd" "" \
+      8 "Uninstall Meshtasticd" "" \
       " " "" "" \
-      10 "Back to main menu" "" 3>&1 1>&2 2>&3)
+      9 "Back to main menu" "" 3>&1 1>&2 2>&3)
     [ $? -eq 1 ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
     case $meshtastic_choice in
       1) # view node info)
@@ -508,24 +446,10 @@ meshtastic_settings() {
           pause
         )
       ;;
-      3) # set URL)
-        check_meshtasticd_running && (
-          newurl=$(dialog --no-collapse --title "Meshtastic URL" --inputbox "New Meshtastic LoRa configuration URL (SHIFT+INS to paste):" 8 63 3>&1 1>&2 2>&3)
-          if [ -n "$newurl" ]; then #if a URL was entered
-            dialog --no-collapse --title "$title" --yesno "New Meshtastic LoRa configuration URL:\n$newurl\n\nConfirm?" 15 60
-            if [ $? -eq 0 ]; then #unless cancel/no
-              loading "Sending command..."
-              dialog --no-collapse --colors --title "Meshtastic URL" --msgbox "$(femto-meshtasticd-config.sh -q "$newurl" && echo -e "\n\Z4Command successful!\Zn\n" || echo -e "\n\Z1Command failed.\Zn\n")" 0 0
-            fi
-          fi
-        )
+      3) # LoRa settings)
+        femto-meshtasticd-lora-dialogs.sh
       ;;
-      4) # set radio)
-        check_meshtasticd_running && (
-          set_lora_radio
-        )
-      ;;
-      5) # remote admin)
+      4) # remote admin)
         check_meshtasticd_running && (
           choice=""   # zero the choice before loading the submenu
           while true; do
@@ -601,7 +525,7 @@ meshtastic_settings() {
           done
         )
       ;;
-      6) #test mesh connectivity)
+      5) #test mesh connectivity)
         check_meshtasticd_running && (
           dialog --no-collapse --title "Meshtastic Connectivity Test" --yesno "Will send \"test\" to channel 0 and wait for acknowledgement. Will try up to 3 times.\n\nPerform test?" 10 45
           if [ $? -eq 0 ]; then #unless cancel/no
@@ -610,7 +534,7 @@ meshtastic_settings() {
           fi
         )
       ;;
-      7) #manage meshtasticd service)
+      6) #manage meshtasticd service)
         choice=""   # zero the choice before loading the submenu
         while true; do
           echo "Checking Meshtasticd service state..."
@@ -663,21 +587,21 @@ meshtastic_settings() {
           esac
         done
       ;;
-      8) #Upgrade meshtasticd)
+      7) #Upgrade meshtasticd)
         dialog --no-collapse --title "$title" --yesno "Upgrade Meshtasticd?\nRequires internet connection." 0 0
         if [ $? -eq 0 ]; then #unless cancel/no
           femto-meshtasticd-config.sh -z
           pause
         fi
       ;;
-      9) #uninstall meshtasticd)
+      8) #uninstall meshtasticd)
         dialog --no-collapse --colors --title "$title" --yesno "Uninstall Meshtasticd?\n\nFoxbuntu was designed with Meshtasticd integration in mind, and may behave unexpectedly if Meshtasticd is removed.\n\nThis will take the node \Zu\Z1OFFLINE\Zn and will not restart!" 0 0
         if [ $? -eq 0 ]; then
           femto-meshtasticd-config.sh -x
           dialog --no-collapse --colors --msgbox "Meshtasticd uninstalled. To purge all remnants, run \`\Zusudo apt purge\Zn\`." 8 40
         fi
       ;;
-      10)
+      9)
         return
       ;;
     esac
@@ -754,20 +678,24 @@ Options are:\n\
 -l           Set LoRa radio model menu\n\
 -L           Meshtastic legacy admin menu\n\
 -w           Set Wi-Fi config menu\
+-c           Check if Meshtasticd is running and warn the user if not\
 "
-while getopts ":hlwLi" opt; do
+while getopts ":hlLwc" opt; do
   case ${opt} in
     h) # Option -h (help)
       echo -e $help
       ;;
     l) # Option -l (set lora radio)
-      set_lora_radio
+      femto-meshtasticd-lora-dialogs.sh # this function has moved
     ;;
     L) # Option -L (Meshtastic legacy admin menu)
       legacy_admin
     ;;
     w) # Option -w (Wi-Fi config)
       wifi_config
+    ;;
+    c) # Option -c (Check if Meshtasticd is running and warn the user if not)
+      check_meshtasticd_running
     ;;
     \?) # Unknown option)
       echo -e "Unknown argument $1.\n$help"
