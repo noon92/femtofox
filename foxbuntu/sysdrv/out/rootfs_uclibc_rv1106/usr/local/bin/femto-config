@@ -383,7 +383,7 @@ legacy_admin() {
   choice=""   # zero the choice before loading the submenu
   while true; do
     loading "Getting current legacy admin state..."
-    choice=$(dialog --no-collapse --colors --title "Legacy Admin" --default-item "$choice" --help-button --item-help --menu "If the node you Femtofox needs to administer or be administered by is running 2.4.x or earlier, you should set this to Enabled.\n\nCurrent state: $(femto-utils.sh -R "$(femto-meshtasticd-config.sh -p)")" 16 65 5 \
+    choice=$(dialog --no-collapse --colors --title "Legacy Admin" --default-item "$choice" --help-button --item-help --menu "If the node you need to administer or be administered by is running 2.4.x or earlier, you should set this to Enabled.\n\nCurrent state: $(femto-utils.sh -R "$(femto-meshtasticd-config.sh -p)")" 16 65 5 \
       1 "Enable" "" \
       2 "Disable (default)" "" \
       " " "" "" \
