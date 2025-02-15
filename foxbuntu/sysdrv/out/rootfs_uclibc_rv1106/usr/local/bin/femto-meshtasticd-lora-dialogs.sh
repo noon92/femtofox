@@ -7,20 +7,23 @@ fi
 
 args=$@
 
-loading() {
-  dialog --no-collapse --infobox "$1" 5 45
-}
-
 config_url() {
+  echo "argument $1"
+  echo "args $args"
   femto-config -c &&  (
     newurl=$(dialog --no-collapse --title "Meshtastic URL" --inputbox "The Meshtastic configuration URL allows for automatic configuration of all Meshtastic LoRa settings and channels.\n\nNew Meshtastic LoRa configuration URL (SHIFT+INS to paste):" 11 63 3>&1 1>&2 2>&3)
     if [ -n "$newurl" ]; then #if a URL was entered
       dialog --no-collapse --title "$title" --yesno "New Meshtastic LoRa configuration URL:\n$newurl\n\nConfirm?" 15 60
       if [ $? -eq 0 ]; then #unless cancel/no
-        loading "Sending command..."
-        dialog --no-collapse --colors --title "Meshtastic URL" --msgbox "$(femto-meshtasticd-config.sh -q "$newurl" && echo -e "\n\Z4Command successful!\Zn\n" || echo -e "\n\Z1Command failed.\Zn\n")" 0 0
+        set -o pipefail
+        output=$(femto-meshtasticd-config.sh -q "$newurl" | tee /dev/tty)
+        exit_status=$?
+        set +o pipefail
+        meshtastic_command_result $exit_status "$output"
       fi
     fi
+    # if we're in wizard mode AND there are no script arguments, then display a message
+    [ "$1" = "wizard" ] && [ -z "$args" ] && dialog --no-collapse --title "$title" --colors --msgbox "Meshtastic LoRa Settings Wizard complete!" 6 50
     return
   )
 }
@@ -94,7 +97,7 @@ lora_settings_actions() {
     if [ $1 -eq 1 ]; then
       dialog --no-collapse --colors --title "$title" --msgbox "$(echo -e "\Z1Command FAILED!\Zn\n\nLog:\n$2")" 0 0
     elif [ $1 -eq 0 ]; then
-      dialog --no-collapse --colors --title "$title" --msgbox "$(echo -e "\Z4Command Successful!\Zn")" 6 45
+      dialog --no-collapse --title "$title" --msgbox "$(echo -e "Command Successful!")" 6 45
     fi
   }
 
@@ -105,7 +108,7 @@ lora_settings_actions() {
     [ "$1" != "wizard" ] && return
   fi
 
-  if [ "$1" = "config_url" ] || [ "$1" = "wizard" ]; then
+  if [ "$1" = "wizard" ]; then
     femto-config -c && {
       choice=""   # zero the choice before loading the submenu
       while true; do
@@ -117,7 +120,7 @@ lora_settings_actions() {
         [ $? -eq 1 ] || [ "$choice" == "Cancel" ] && return # Exit the loop if the user selects "Cancel" or closes the dialog
         [ "$choice" == "" ] && continue #restart loop if no choice made
         [ "$choice" == "Manual configuration" ] && break
-        [ "$choice" == "Automatic configuration with URL" ] && config_url
+        [ "$choice" == "Automatic configuration with URL" ] && config_url "$1"
         return
       done
     }
@@ -467,7 +470,7 @@ TX power in db (default: 22)" 13 62 3>&1 1>&2 2>&3)
   fi
 
   # if we're in wizard mode AND there are no script arguments, then display a message
-  [ "$1" = "wizard" ] && [ -n "$args" ] && dialog --no-collapse --title "$title" --colors --msgbox "Meshtastic LoRa Settings Wizard complete!" 6 50
+  [ "$1" = "wizard" ] && [ -z "$args" ] && dialog --no-collapse --title "$title" --colors --msgbox "Meshtastic LoRa Settings Wizard complete!" 6 50
 
   [ "$1" = "wizard" ] && return # quit function if wizard
 }
