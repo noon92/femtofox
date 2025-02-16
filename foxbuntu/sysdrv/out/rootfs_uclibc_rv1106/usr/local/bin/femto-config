@@ -191,7 +191,7 @@ networking_settings() {
             case $choice in
               "View detailed service status") 
                 echo "Getting Meshtastic wifi sync service status..."
-                dialog --no-collapse --title "Meshtastic wifi sync service status" --msgbox "$(systemctl status femto-wifi-mesh-control)" 0 0
+                dialog --no-collapse --no-shadow --title "Meshtastic wifi sync service status" --msgbox "$(systemctl status femto-wifi-mesh-control)" 0 0
               ;;
               "Start/restart service") 
                 dialog --no-collapse --title "$title" --yesno "Start/restart Meshtastic wifi sync service?" 7 45
@@ -553,7 +553,7 @@ meshtastic_settings() {
           case $choice in
             "View detailed service status") 
               echo "Getting Meshtasticd service status..."
-              dialog --no-collapse --title "Meshtasticd service status" --msgbox "$(systemctl status meshtasticd)" 0 0
+              dialog --no-collapse --no-shadow --title "Meshtasticd service status" --msgbox "$(systemctl status meshtasticd)" 0 0
             ;;
             "Start/restart service") 
               dialog --no-collapse --title "$title" --yesno "Start/restart Meshtasticd service?" 6 45
@@ -614,7 +614,7 @@ help_menu() {
   local title="Help / About"
     help_choice=$(dialog --no-collapse --cancel-label "Back" --default-item "$help_choice" --item-help --menu "$title" 0 0 7 \
       1 "About Femtofox" "" \
-      2 "Display pinout" "" \
+      2 "View pinout" "" \
       3 "Femtofox licensing info - short" "" \
       4 "Femtofox licensing info - long" "" \
       5 "Meshtastic licensing info" "" \
@@ -696,6 +696,7 @@ while getopts ":hlLwc" opt; do
     ;;
     c) # Option -c (Check if Meshtasticd is running and warn the user if not)
       check_meshtasticd_running
+      exit $? # relay exit status
     ;;
     \?) # Unknown option)
       echo -e "Unknown argument $1.\n$help"

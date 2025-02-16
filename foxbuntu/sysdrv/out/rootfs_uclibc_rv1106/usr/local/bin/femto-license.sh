@@ -27,7 +27,14 @@ View the long licenses for more information.\n\
 Contact us to license Femtofox."
 
 meshtastic_license="\
-Meshtastic is a registered trademark of Meshtastic LLC. Meshtastic software components are released under various licenses, see GitHub for details. No warranty is provided - use at your own risk."
+The Meshtastic firmware is licensed GPL3.\n\
+\n\
+Meshtastic is a registered trademark of Meshtastic LLC. Meshtastic software components are released under various licenses, see GitHub for details. No warranty is provided - use at your own risk.\n\
+\n\
+Some of the verbiage in the help-texts in the menus is sourced from the Meshtastic website, also licensed GPL3.\n\
+\n\
+For more information about Meshtastic, visit https://www.meshtastic.org\
+"
 
 luckfox_license="Luckfox and Luckfox Pico Mini are property of Luckfox Technology. Femtofox does not represent Luckfox Technology in any way, shape or form. Visit their website at https://www.luckfox.com/."
 

@@ -28,25 +28,8 @@ Options are:
 -S             Get Meshtasticd service state
 -z             Upgrade Meshtasticd
 -x             Uninstall Meshtasticd
--m             Meshtastic update tool. Syntax: \`femto-meshtasticd-config.sh -m \"--set security.admin_channel_enabled false\" 10 \"Disable legacy admin\"\`
+-m             Meshtastic update tool. Syntax: \`femto-meshtasticd-config.sh -m '--set security.admin_channel_enabled false' 10 'Disable legacy admin'\`
                Will retry the \`--set security.admin_channel_enabled false\` command until successful or up to 10 times, and tag status reports with \`Disable legacy admin\` via echo and to system log.
-Meshtastic LoRa settings:
--e "value"     Region (frequency plan). Options are: UNSET, US, EU_433, EU_868, CN, JP, ANZ, KR, TW, RU ,IN, NZ_865, TH, LORA_24, UA_433, UA_868, MY_433, MY_919, SG_923
--P "true"      Use modem preset (true, false)
--E "value"     Preset. Options are: LONG_FAST, LONG_SLOW, VERY_LONG_SLOW, MEDIUM_SLOW, MEDIUM_FAST, SHORT_SLOW, SHORT_FAST, SHORT_TURBO
--b "value"     Bandwidth (only used if modem preset is disabled)
--f "value"     Spread Factor (only used if modem preset is disabled)
--C "value"     Coding rate (only used if modem preset is disabled)
--O "value"     Frequency offset (MHz)
--H "value"     Hop limit (0-7)
--T "true"      TX enabled (true/false)
--X "value"     TX power (dBm)
--F "value"     Frequency slot
--V "false"     Override duty cycle (true/false)
--B "true"      SX126X RX boosted gain (true/false)
--v "value"     Override frequency (MHz) (overrides frequency slot)
--G "false"     Ignore MQTT (true/false)
--K "false"     OK to MQTT (true/false)
 EOF
 )
 
@@ -67,12 +50,14 @@ meshtastic_update() {
     if echo "$output" | grep -qiE "Abort|invalid|Error|refused|Errno"; then
       if [ "$retries" -lt $attempts ]; then
         local msg="${ref:+$ref}Meshtastic command failed, retrying ($(($retries + 1))/$attempts)..."
+        femto-meshtasticd-config.sh -s
         echo "$msg"
         logger "$msg"
         sleep 2 # Add a small delay before retrying
       fi
     else
       local success="true"
+      echo -e "$output"
       msg="${ref:+$ref}Meshtastic command successful!"
       echo "$msg"
       logger "$msg"
@@ -92,7 +77,7 @@ meshtastic_update() {
 }
 
 # Parse options
-while getopts ":higkl:q:uU:rR:aA:cpo:sM:StwuxmP:E:b:f:C:O:e:H:T:X:F:V:B:v:G:K:" opt; do
+while getopts ":higkl:q:uU:rR:aA:cpo:sM:Stwuxm" opt; do
   case ${opt} in
     h) # Option -h (help)
       echo -e "$help"
@@ -254,159 +239,14 @@ while getopts ":higkl:q:uU:rR:aA:cpo:sM:StwuxmP:E:b:f:C:O:e:H:T:X:F:V:B:v:G:K:" 
     x) # Option -x (uninstall meshtasticd)
       apt remove meshtasticd
       ;;
-    m)
+    m) # Option -m (manual meshtastic command)
       external="true" # set a variable so the function knows it was called by an an external script and not locally
       meshtastic_update "$2" $3 "$4"
       ;;
-    e) # Option -e (Set region/frequency plan)
-      regions="UNSET US EU_433 EU_868 CN JP ANZ KR TW RU IN NZ_865 TH LORA_24 UA_433 UA_868 MY_433 MY_919 SG_923"
-      if [[ ! " $regions " =~ " $OPTARG " ]]; then
-        echo "Error: Invalid option '$OPTARG'. Must be one of $regions." >&2
-        echo -e "$help"
-        exit 1
-      else
-        meshtastic_update "--set lora.region $OPTARG" 3 "Set region"
-      fi
+    \?)  # Invalid option)
+      echo -e "Unknown argument $1.\n$help"
       ;;
-    P) # Option -P (Use modem preset: enable/disable)
-      options="true false"
-      if [[ ! " $options " =~ " $OPTARG " ]]; then
-        echo "Error: Invalid option '$OPTARG'. Must be one of $options." >&2
-        echo -e "$help"
-        exit 1
-      else
-        meshtastic_update "--set lora.use_preset $OPTARG" 3 "Set use_preset"
-      fi
-      ;;
-    E) # Option -E (Preset. Options are: LONG_FAST, LONG_SLOW, VERY_LONG_SLOW, MEDIUM_SLOW, MEDIUM_FAST, SHORT_SLOW, SHORT_FAST, SHORT_TURBO)
-      presets="LONG_FAST LONG_SLOW VERY_LONG_SLOW MEDIUM_SLOW MEDIUM_FAST SHORT_SLOW SHORT_FAST SHORT_TURBO"
-      if [[ ! " $presets " =~ " $OPTARG " ]]; then
-        echo "Error: Invalid option '$OPTARG'. Must be one of $presets." >&2
-        echo -e "$help"
-        exit 1
-      else
-        meshtastic_update "--set lora.modem_preset $OPTARG" 3 "Set modem_preset"
-      fi
-      ;;
-    b) # Option -b (Set bandwidth; used if modem preset is disabled)
-      options="31 62 125 250 500"
-      if [[ ! " $options " =~ " $OPTARG " ]]; then
-        echo "Error: Invalid option '$OPTARG'. Must be one of $options." >&2
-        echo -e "$help"
-        exit 1
-      else
-        meshtastic_update "--set lora.bandwidth $OPTARG" 3 "Set bandwidth"
-      fi
-      ;;
-    f) # Option -f (Set spread factor; used if modem preset is disabled)
-      options="7 8 9 10 11 12"
-      if [[ ! " $options " =~ " $OPTARG " ]]; then
-        echo "Error: Invalid option '$OPTARG'. Must be one of $options." >&2
-        echo -e "$help"
-        exit 1
-      else
-        meshtastic_update "--set lora.spread_factor $OPTARG" 3 "Set spread_factor"
-      fi
-      ;;
-    C) # Option -C (Set coding rate; used if modem preset is disabled)
-      options="5 6 7 8"
-      if [[ ! " $options " =~ " $OPTARG " ]]; then
-        echo "Error: Invalid option '$OPTARG'. Must be one of $options." >&2
-        echo -e "$help"
-        exit 1
-      else
-        meshtastic_update "--set lora.coding_rate $OPTARG" 3 "Set coding_rate"
-      fi
-      ;;
-    O) # Option -O (Set frequency offset in MHz)
-      if ! [[ "$OPTARG" =~ ^[0-1000000]$ ]]; then
-        echo "Error: Invalid option '$OPTARG'. Must be a number between 0 and 1000000." >&2
-        echo -e "$help"
-        exit 1
-      else
-        meshtastic_update "--set lora.frequency_offset $OPTARG" 3 "Set frequency_offset"
-      fi
-      ;;
-    H) # Option -H (Set hop limit, range 0-7)
-      if ! [[ "$OPTARG" =~ ^[0-7]$ ]]; then
-        echo "Error: Invalid option '$OPTARG'. Must be a number between 0 and 7." >&2
-        echo -e "$help"
-        exit 1
-      else
-        meshtastic_update "--set lora.hop_limit $OPTARG" 3 "Set hop limit"
-      fi
-      ;;
-    T) # Option -T (Enable/disable TX)
-      options="true false"
-      if [[ ! " $options " =~ " $OPTARG " ]]; then
-        echo "Error: Invalid option '$OPTARG'. Must be one of $options." >&2
-        echo -e "$help"
-        exit 1
-      else
-        meshtastic_update "--set lora.tx_enabled $OPTARG" 3 "Set hop limit"
-      fi
-      ;;
-    X) # Option -X (Set TX power in dBm)
-      if ! [[ "$OPTARG" =~ ^([0-9]|1[0-9]|2[0-9]|30)$ ]]; then
-        echo "Error: Invalid option '$OPTARG'. Must be a number between 0 and 30." >&2
-        echo -e "$help"
-        exit 1
-      else
-        meshtastic_update "--set lora.tx_power $OPTARG" 3 "Set tx_power"
-      fi
-      ;;
-    F) # Option -F (Set frequency slot)
-      meshtastic_update "--set lora.channel_num $OPTARG" 3 "Set frequency slot"
-      ;;
-    V) # Option -V (Enable/disable override duty cycle)
-      options="true false"
-      if [[ ! " $options " =~ " $OPTARG " ]]; then
-        echo "Error: Invalid option '$OPTARG'. Must be one of $options." >&2
-        echo -e "$help"
-        exit 1
-      else
-        meshtastic_update "--set lora.override_duty_cycle $OPTARG" 3 "Set override_duty_cycle"
-      fi
-      ;;
-    B) # Option -B (Enable/disable SX126X RX boosted gain)
-      options="true false"
-      if [[ ! " $options " =~ " $OPTARG " ]]; then
-        echo "Error: Invalid option '$OPTARG'. Must be one of $options." >&2
-        echo -e "$help"
-        exit 1
-      else
-        meshtastic_update "--set lora.sx126x_rx_boosted_gain $OPTARG" 3 "Set sx126x_rx_boosted_gain"
-      fi
-      ;;
-    v) # Option -v (Override frequency in MHz; overrides frequency slot)
-      meshtastic_update "--set lora.override_frequency $OPTARG" 3 "Set override_frequency"
-      ;;
-    G) # Option -G (enable/disable ignore MQTT)
-      options="true false"
-      if [[ ! " $options " =~ " $OPTARG " ]]; then
-        echo "Error: Invalid option '$OPTARG'. Must be one of $options." >&2
-        echo -e "$help"
-        exit 1
-      else
-        meshtastic_update "--set lora.ignore_mqtt $OPTARG" 3 "Set ignore_mqtt"
-      fi
-      ;;
-    K) # Option -K (enable/disable OK to MQTT)
-      options="true false"
-      if [[ ! " $options " =~ " $OPTARG " ]]; then
-        echo "Error: Invalid option '$OPTARG'. Must be one of $options." >&2
-        echo -e "$help"
-        exit 1
-      else
-        meshtastic_update "--set lora.config_ok_to_mqtt $OPTARG" 3 "Set config_ok_to_mqtt"
-      fi
-      ;;
-    \?)  # Invalid option
-      echo "Invalid option: -$OPTARG"
-      echo -e "$help"
-      exit 1
-      ;;
-    :) # Missing argument for option
+    :) # Missing argument for option)
       echo "Option -$OPTARG requires a setting."
       echo -e "$help"
       exit 1
