@@ -614,7 +614,7 @@ help_menu() {
   local title="Help / About"
     help_choice=$(dialog --no-collapse --cancel-label "Back" --default-item "$help_choice" --item-help --menu "$title" 0 0 7 \
       1 "About Femtofox" "" \
-      2 "Display pinout" "" \
+      2 "View pinout" "" \
       3 "Femtofox licensing info - short" "" \
       4 "Femtofox licensing info - long" "" \
       5 "Meshtastic licensing info" "" \

@@ -25,6 +25,7 @@ send_settings() {
       dialog --no-collapse --colors --title "$title" --msgbox "$(echo -e "\Z4Command Successful!\Zn\n\nLog:\n$output")" 0 0
     fi
   fi
+  [ "$1" = "wizard" ] && [ -z "$args" ] && dialog --no-collapse --title "$title" --colors --msgbox "Meshtastic LoRa Settings Wizard complete!" 6 50 # if in wizard mode AND there are no script arguments, display the message
 }
 
 config_url() {
@@ -34,8 +35,7 @@ config_url() {
       command+="--seturl $newurl "
     fi
     # if we're in wizard mode AND there are no script arguments, then display a message
-    [ "$1" = "wizard" ] && [ -z "$args" ] && dialog --no-collapse --title "$title" --colors --msgbox "Meshtastic LoRa Settings Wizard complete!" 6 50
-    send_settings
+    send_settings $1
   )
 }
 
@@ -103,7 +103,6 @@ set_lora_radio() {
 
 lora_settings_actions() {
   if femto-config -c; then
-
     if [ "$1" = "set_lora_radio_model" ] || [ "$1" = "wizard" ]; then
       set_lora_radio
       [ "$1" != "wizard" ] && return
@@ -399,7 +398,7 @@ TX power in dBm. Must be 0-30 (0 for automatic)" 0 0 3>&1 1>&2 2>&3)
     # if we're in wizard mode AND there are no script arguments, then display a message
     [ "$1" = "wizard" ] && [ -z "$args" ] && dialog --no-collapse --title "$title" --colors --msgbox "Meshtastic LoRa Settings Wizard complete!" 6 50
 
-    send_settings
+    send_settings $1
 
     [ "$1" = "wizard" ] && return # quit function if wizard
   fi
@@ -431,7 +430,7 @@ command="" # initialize command
 LoRa_menu_choice=""   # zero the choice before loading the submenu
 while true; do
   command="" # initialize command
-  LoRa_menu_choice=$(dialog --no-collapse --title "Meshtastic LoRa Settings" --default-item "$LoRa_menu_choice" --cancel-label "Back" --item-help --menu "LoRa settings can also be set automatically by entering a Meshtastic configuration URL." 30 50 20 \
+  LoRa_menu_choice=$(dialog --no-collapse --title "Meshtastic LoRa Settings" --default-item "$LoRa_menu_choice" --cancel-label "Back" --item-help --menu "Select a LoRa setting or run the wizard" 30 50 20 \
     1 "Wizard (set all)" "" \
     2 "Set LoRa radio model" "" \
     3 "Configure automatically with URL" "" \
