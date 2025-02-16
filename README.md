@@ -4,15 +4,18 @@
 # Femtofox &nbsp;&nbsp;&nbsp;<sub><sub>The tiny, low power Linux Meshtastic node
 **Femtofox is a Linux-based mesh development platform - a Raspberry Pi sized computer with onboard LoRa radio, capable of being run with only 0.3w, making it *ideal* for solar powered nodes.**
 
-The Luckfox Pico Mini is the postage stamp sized heart of the Femtofox - a compact and power efficient Linux board, running a customized version of Ubuntu. Femtofox is an expansion of the Luckfox's capabilities, utilizing a custom PCB with a 30db LoRa radio (over 6x the transmit power of a RAK Wisblock or Heltec V3) to create a power efficient, tiny and highly capable Meshtastic Linux node.
+The Luckfox Pico Mini is the postage stamp sized heart of the Femtofox - a compact and power efficient Linux board, running Foxbuntu, our own customized version of Ubuntu. Femtofox is an expansion of the Luckfox's capabilities, utilizing a custom PCB with a 30db LoRa radio (over 6x the transmit power of a RAK Wisblock or Heltec V3) to create a power efficient, tiny and highly capable Meshtastic Linux node.
 
-- [Features](#features)
-- Specifications - coming soon
+Find out more in the sections below, or in the [Wiki](https://github.com/femtofox/femtofox/wiki).
+
+- [Features](#features) and [Specifications](#Specification)
 - [Supported hardware](https://github.com/femtofox/femtofox/wiki/Supported-Hardware)
 - [Installation guide](https://github.com/femtofox/femtofox/wiki/Getting-Started)
 - How to order - coming soon
 - [DIY instructions](https://github.com/femtofox/Femtofox_Community_Hardware)
-- [USB configuration tool](https://github.com/femtofox/femtofox/wiki/USB-Config-Tool) 
+- [USB configuration tool](https://github.com/femtofox/femtofox/wiki/USB-Configuration-Tool)
+- [Building your own Foxbuntu image](https://github.com/femtofox/femtofox/wiki/Building-Foxbuntu-%28WSL%29)
+
 
 ### Features
 * Tiny size (63x54mm for Femtofox, 65x30mm for the Smol Edition). Equivalent to a standard Raspberry Pi hat and Pi Zero respectively.
@@ -23,10 +26,26 @@ The Luckfox Pico Mini is the postage stamp sized heart of the Femtofox - a compa
 * USB wifi support
 * RTC support for timekeeping
 
+### Specification
+
+| Feature      | Specification                                           |
+| ------------ | ------------------------------------------------------- |
+| Processor    | Rockchip RV1103, Cortex A7 \@1.1GHz                      |
+| Memory       | 64MB DDR2                                               |
+| OS           | Foxbuntu (based on Ubuntu 22.04.5 LTS Jammy)            |
+| Connectivity | USB 2.0 Host/Device                                     |
+| Network      | RJ45 Ethernet with filtering<br>WiFi ready              |
+| GPIO         | 17x GPIO pins (of which 8 are required for Lora module) |
+| IO           | 2x I2C JST PH                                           |
+|              | 1x UART JST PH                                          |
+| Debug        | 1x CH340 USB to serial adapter (Pro only)               |
+| Mesh         | 30dB LoRa Radio 868-915MHz                              |
+| Storage      | Micro-SD slot                                           |
+| Power        | 3.3-5V.dc via JST PH or USB-C                           |
+
 **Accomplished:**
 - [x] Meshtastic native client controlling a LoRa radio (see [supported hardware](supported_hardware.md))
 - [x] WIFI over USB (see [supported hardware](supported_hardware.md))
-- [x] Ethernet over USB (see [supported hardware](supported_hardware.md))
 - [x] Ethernet over pins (see *Networking* below and wiring diagram at bottom of page)
 - [x] UART communications with Meshtastic nodes (2 pin pairs) such as RAK Wisblock
 - [x] USB serial communications with Meshtastic nodes (see [supported hardware](supported_hardware.md))
