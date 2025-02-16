@@ -5,6 +5,10 @@ if [[ $EUID -ne 0 ]]; then
    exit 1
 fi
 
+export NCURSES_NO_UTF8_ACS=1
+export TERM=xterm-256color
+export LANG=C.UTF-8
+
 args=$@
 
 config_url() {
@@ -13,14 +17,7 @@ config_url() {
   femto-config -c &&  (
     newurl=$(dialog --no-collapse --title "Meshtastic URL" --inputbox "The Meshtastic configuration URL allows for automatic configuration of all Meshtastic LoRa settings and channels.\n\nNew Meshtastic LoRa configuration URL (SHIFT+INS to paste):" 11 63 3>&1 1>&2 2>&3)
     if [ -n "$newurl" ]; then #if a URL was entered
-      dialog --no-collapse --title "$title" --yesno "New Meshtastic LoRa configuration URL:\n$newurl\n\nConfirm?" 15 60
-      if [ $? -eq 0 ]; then #unless cancel/no
-        set -o pipefail
-        output=$(femto-meshtasticd-config.sh -q "$newurl" | tee /dev/tty)
-        exit_status=$?
-        set +o pipefail
-        meshtastic_command_result $exit_status "$output"
-      fi
+      command+="--seturl $newurl "
     fi
     # if we're in wizard mode AND there are no script arguments, then display a message
     [ "$1" = "wizard" ] && [ -z "$args" ] && dialog --no-collapse --title "$title" --colors --msgbox "Meshtastic LoRa Settings Wizard complete!" 6 50
@@ -91,30 +88,20 @@ set_lora_radio() {
 }
 
 lora_settings_actions() {
-  local title="Meshtastic LoRa Settings"
+  if femto-config -c; then
+    local title="Meshtastic LoRa Settings"
 
-  meshtastic_command_result() {
-    if [ $1 -eq 1 ]; then
-      dialog --no-collapse --colors --title "$title" --msgbox "$(echo -e "\Z1Command FAILED!\Zn\n\nLog:\n$2")" 0 0
-    elif [ $1 -eq 0 ]; then
-      dialog --no-collapse --title "$title" --msgbox "$(echo -e "Command Successful!")" 6 45
-    fi
-  }
-
-  if [ "$1" = "set_lora_radio_model" ] || [ "$1" = "wizard" ]; then
-    femto-config -c && {
+    if [ "$1" = "set_lora_radio_model" ] || [ "$1" = "wizard" ]; then
       set_lora_radio
-    }
-    [ "$1" != "wizard" ] && return
-  fi
+      [ "$1" != "wizard" ] && return
+    fi
 
-  if [ "$1" = "wizard" ]; then
-    femto-config -c && {
+    if [ "$1" = "wizard" ]; then
       choice=""   # zero the choice before loading the submenu
       while true; do
         choice=$(dialog --no-collapse --title "$title" --cancel-label "Cancel" --default-item "True" --item-help --menu "Meshtastic configuration method" 8 50 0 \
-          "Automatic configuration with URL" "x" "" \
-          "Manual configuration" "x" "" \
+          "Automatic configuration with URL" "" "" \
+          "Manual configuration" "" "" \
           " " "" "" \
           "Cancel" "" "" 3>&1 1>&2 2>&3)
         [ $? -eq 1 ] || [ "$choice" == "Cancel" ] && return # Exit the loop if the user selects "Cancel" or closes the dialog
@@ -123,11 +110,9 @@ lora_settings_actions() {
         [ "$choice" == "Automatic configuration with URL" ] && config_url "$1"
         return
       done
-    }
-  fi
+    fi
 
-  if [ "$1" = "region" ] || [ "$1" = "wizard" ]; then
-    femto-config -c && {
+    if [ "$1" = "region" ] || [ "$1" = "wizard" ]; then
       options=("UNSET" "US" "EU_433" "EU_868" "CN" "JP" "ANZ" "KR" "TW" "RU" "IN" "NZ_865" "TH" "LORA_24" "UA_433" "UA_868" "MY_433" "MY_919" "SG_923")
       menu_items=()
       # Create menu options from the array
@@ -140,49 +125,37 @@ lora_settings_actions() {
       done
       menu_items+=("" "" "" "Cancel" "" "")
       while true; do
-        choice=$(dialog --no-collapse --title "$title" --cancel-label "Cancel" --default-item "LONG_FAST" --item-help --menu "Region (default: UNSET)?" 8 40 0 \
+        choice=$(dialog --no-collapse --title "$title" --cancel-label "Cancel" --default-item "LONG_FAST" --item-help --menu "Sets the region for your node. Default is unset. As long as this is not set, the node screen will display a message and not transmit any packets.\n\nRegion (default: UNSET)?" 0 0 0 \
           "${menu_items[@]}" 3>&1 1>&2 2>&3)
         [ $? -eq 1 ] || [ "$choice" == "Cancel" ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
         [ "$choice" == "" ] && continue # Restart loop if no choice made
-        set -o pipefail
-        output=$(femto-meshtasticd-config.sh -e $choice | tee /dev/tty)
-        exit_status=$?
-        set +o pipefail
-        meshtastic_command_result $exit_status "$output"
+        command+="--set lora.region $choice "
         break
       done
-    }
-    [ "$1" != "wizard" ] && return
-  fi
+      [ "$1" != "wizard" ] && return
+    fi
 
-  if [ "$1" = "use_modem_preset" ] || [ "$1" = "wizard" ]; then
-    femto-config -c && {
+    if [ "$1" = "use_modem_preset" ] || [ "$1" = "wizard" ]; then
       choice=""   # zero the choice before loading the submenu
       while true; do
-        choice=$(dialog --no-collapse --title "$title" --cancel-label "Cancel" --default-item "True" --item-help --menu "Use modem preset?" 8 40 0 \
+        choice=$(dialog --no-collapse --title "$title" --cancel-label "Cancel" --default-item "True" --item-help --menu "Presets are pre-defined modem settings (Bandwidth, Spread Factor, and Coding Rate) which influence both message speed and range. The vast majority of users use a preset.\n\nUse modem preset?" 0 0 0 \
           "True" "(default)" "" \
           "False" "" "" \
           " " "" "" \
           "Cancel" "" "" 3>&1 1>&2 2>&3)
         [ $? -eq 1 ] || [ "$choice" == "Cancel" ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
         [ "$choice" == "" ] && continue #restart loop if no choice made
-        using_preset="$choice"
-        set -o pipefail
-        output=$(femto-meshtasticd-config.sh -P $(echo "$choice" | tr '[:upper:]' '[:lower:]') | tee /dev/tty) # make lower case
-        exit_status=$?
-        set +o pipefail
-        meshtastic_command_result $exit_status "$output"
+        using_preset=$choice
+        command+="--set lora.use_preset $(echo "$choice" | tr '[:upper:]' '[:lower:]') "
         break
       done
-    }
-    [ "$1" != "wizard" ] && return
-  fi
+      [ "$1" != "wizard" ] && return
+    fi
 
-  if [ "$1" = "wizard" ] && [ "$using_preset" = "False" ]; then
-    dialog --no-collapse --title "$title" --colors --msgbox "Not using preset, so skipping Preset setting." 6 50
-  else
-    if [ "$1" = "preset" ] || [ "$1" = "wizard" ]; then
-      femto-config -c && {
+    if [ "$1" = "wizard" ] && [ "$using_preset" = "False" ]; then
+      dialog --no-collapse --title "$title" --colors --msgbox "Not using preset, so skipping Preset setting." 6 50
+    else
+      if [ "$1" = "preset" ] || [ "$1" = "wizard" ]; then
         options=("LONG_FAST" "LONG_SLOW" "VERY_LONG_SLOW" "MEDIUM_SLOW" "MEDIUM_FAST" "SHORT_SLOW" "SHORT_FAST" "SHORT_TURBO")
         menu_items=()
         # Create menu options from the array
@@ -195,284 +168,226 @@ lora_settings_actions() {
         done
         menu_items+=("" "" "" "Cancel" "" "")
         while true; do
-          choice=$(dialog --no-collapse --title "$title" --cancel-label "Cancel" --default-item "LONG_FAST" --item-help --menu "Preset?" 8 40 0 \
+          choice=$(dialog --no-collapse --title "$title" --cancel-label "Cancel" --default-item "LONG_FAST" --item-help --menu "The default preset will provide a strong mixture of speed and range, for most users.\n\nPreset?" 0 0 0 \
             "${menu_items[@]}" 3>&1 1>&2 2>&3)
           [ $? -eq 1 ] || [ "$choice" == "Cancel" ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
           [ "$choice" == "" ] && continue # Restart loop if no choice made
-          set -o pipefail
-          output=$(femto-meshtasticd-config.sh -E $choice | tee /dev/tty)
-          exit_status=$?
-          set +o pipefail
-          meshtastic_command_result $exit_status "$output"
+          command+="--set lora.modem_preset $choice "
           break
         done
-      }
-      [ "$1" != "wizard" ] && return
-    fi
-  fi
-  
-  if [ "$1" = "wizard" ] && [ "$using_preset" = "True" ]; then
-    dialog --no-collapse --title "$title" --colors --msgbox "Using preset, so skipping Bandwidth, Spread Factor and Coding Rate settings." 7 50
-  else
-    if [ "$1" = "bandwidth" ] || [ "$1" = "wizard" ]; then
-      femto-config -c && {
-        options=("31" "62" "125" "250" "500")
-        menu_items=()
-        for option in "${options[@]}"; do
-          menu_items+=("$option" "x" "")
-        done
-        menu_items+=("" "" "" "Cancel" "" "")
-        while true; do
-          choice=$(dialog --no-collapse --title "$title" --cancel-label "Cancel" --item-help --menu "Bandwidth (only used if modem preset is disabled)?" 8 40 0 \
-            "${menu_items[@]}" 3>&1 1>&2 2>&3)
-          [ $? -eq 1 ] || [ "$choice" == "Cancel" ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
-          [ "$choice" == "" ] && continue # Restart loop if no choice made
-          set -o pipefail
-          output=$(femto-meshtasticd-config.sh -b $choice | tee /dev/tty)
-          exit_status=$?
-          set +o pipefail
-          meshtastic_command_result $exit_status "$output"
-          break
-        done
-      }
-      [ "$1" != "wizard" ] && return
-    fi
-
-    if [ "$1" = "spread_factor" ] || [ "$1" = "wizard" ]; then
-      femto-config -c && {
-        options=("7" "8" "9" "10" "11" "12")
-        menu_items=()
-        for option in "${options[@]}"; do
-          menu_items+=("$option" "x" "")
-        done
-        menu_items+=("" "" "" "Cancel" "" "")
-        while true; do
-          choice=$(dialog --no-collapse --title "$title" --cancel-label "Cancel" --item-help --menu "Spread factor (only used if modem preset is disabled)?" 8 40 0 \
-            "${menu_items[@]}" 3>&1 1>&2 2>&3)
-          [ $? -eq 1 ] || [ "$choice" == "Cancel" ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
-          [ "$choice" == "" ] && continue # Restart loop if no choice made
-          set -o pipefail
-          output=$(femto-meshtasticd-config.sh -f $choice | tee /dev/tty)
-          exit_status=$?
-          set +o pipefail
-          meshtastic_command_result $exit_status "$output"
-          break
-        done
-      }
-      [ "$1" != "wizard" ] && return
-    fi
-
-    if [ "$1" = "coding_rate" ] || [ "$1" = "wizard" ]; then
-      femto-config -c && {
-        options=("5" "6" "7" "8")
-        menu_items=()
-        for option in "${options[@]}"; do
-          menu_items+=("$option" "x" "")
-        done
-        menu_items+=("" "" "" "Cancel" "" "")
-        while true; do
-          choice=$(dialog --no-collapse --title "$title" --cancel-label "Cancel" --item-help --menu "Coding rate (only used if modem preset is disabled)?" 8 40 0 \
-            "${menu_items[@]}" 3>&1 1>&2 2>&3)
-          [ $? -eq 1 ] || [ "$choice" == "Cancel" ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
-          [ "$choice" == "" ] && continue # Restart loop if no choice made
-          set -o pipefail
-          output=$(femto-meshtasticd-config.sh -C $choice | tee /dev/tty)
-          exit_status=$?
-          set +o pipefail
-          meshtastic_command_result $exit_status "$output"
-          break
-        done
-      }
-      [ "$1" != "wizard" ] && return
-    fi
-  fi
-
-  if [ "$1" = "frequency_offset" ] || [ "$1" = "wizard" ]; then
-    femto-config -c && {
-      input=$(dialog --no-collapse --title "$title" --cancel-label "Cancel" --inputbox "Frequency offset (default: 0)" 8 50 3>&1 1>&2 2>&3)
-      if [ $? -ne 1 ] && [ -n "$input" ]; then
-        set -o pipefail
-        output=$(femto-meshtasticd-config.sh -O $input | tee /dev/tty)
-        exit_status=$?
-        set +o pipefail
-        meshtastic_command_result $exit_status "$output"
+        [ "$1" != "wizard" ] && return
       fi
-    }
-    [ "$1" != "wizard" ] && return
-  fi
-
-  if [ "$1" = "hop_limit" ] || [ "$1" = "wizard" ]; then
-    femto-config -c && {
-      input=$(dialog --no-collapse --title "$title" --cancel-label "Cancel" --inputbox "Hop limit (default: 3)\nExcessive hop limit increases congestion!" 9 50 3>&1 1>&2 2>&3)
-      if [ $? -ne 1 ] && [ -n "$input" ]; then
-        set -o pipefail
-        output=$(femto-meshtasticd-config.sh -H $input | tee /dev/tty)
-        exit_status=$?
-        set +o pipefail
-        meshtastic_command_result $exit_status "$output"
+    fi
+    
+    if [ "$1" = "wizard" ] && [ "$using_preset" = "True" ]; then
+      dialog --no-collapse --title "$title" --colors --msgbox "Using preset, so skipping Bandwidth, Spread Factor and Coding Rate settings." 7 50
+    else
+      if [ "$1" = "bandwidth" ] || [ "$1" = "wizard" ]; then
+        while true; do
+          choice=$(dialog --no-collapse --title "$title" --cancel-label "Cancel" --item-help --default-item 250 --menu "Width of the frequency \"band\" used around the calculated center frequency. Only used if modem preset is disabled.\n\nBandwidth?" 0 0 0 \
+            31 "" "" \
+            62 "" "" \
+            125 "" "" \
+            250 "(default)" "" \
+            500 "" "" \
+            " " "" "" \
+            "Cancel" "" "" 3>&1 1>&2 2>&3)
+          [ $? -eq 1 ] || [ "$choice" == "Cancel" ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
+          [ "$choice" == "" ] && continue # Restart loop if no choice made
+          command+="--set lora.bandwidth $choice "
+          break
+        done
+        [ "$1" != "wizard" ] && return
       fi
-    }
-    [ "$1" != "wizard" ] && return
-  fi
 
-  if [ "$1" = "tx_enabled" ] || [ "$1" = "wizard" ]; then
-    femto-config -c && {
+      if [ "$1" = "spread_factor" ] || [ "$1" = "wizard" ]; then
+        while true; do
+          choice=$(dialog --no-collapse --title "$title" --cancel-label "Cancel" --item-help --default-item 12 --menu "Indicates the number of chirps per symbol.\n\nSpread factor (only used if modem preset is disabled)?" 0 0 0 \
+            7 "" "" \
+            8 "" "" \
+            9 "" "" \
+            10 "" "" \
+            11 "" "" \
+            12 "(default)" "" \
+            " " "" "" \
+            "Cancel" "" "" 3>&1 1>&2 2>&3)
+          [ $? -eq 1 ] || [ "$choice" == "Cancel" ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
+          [ "$choice" == "" ] && continue # Restart loop if no choice made
+          command+="--set lora.spread_factor $choice "
+          break
+        done
+        [ "$1" != "wizard" ] && return
+      fi
+
+      if [ "$1" = "coding_rate" ] || [ "$1" = "wizard" ]; then
+        while true; do
+          choice=$(dialog --no-collapse --title "$title" --cancel-label "Cancel" --item-help --default-item 8 --menu "The proportion of each LoRa transmission that contains actual data - the rest is used for error correction.\n\nCoding rate (only used if modem preset is disabled)?" 0 0 0 \
+            5 "" "" \
+            6 "" "" \
+            7 "" "" \
+            8 "(default)" "" \
+            " " "" "" \
+            "Cancel" "" "" 3>&1 1>&2 2>&3)
+          [ $? -eq 1 ] || [ "$choice" == "Cancel" ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
+          [ "$choice" == "" ] && continue # Restart loop if no choice made
+          command+="--set lora.coding_rate $choice "
+          break
+        done
+        [ "$1" != "wizard" ] && return
+      fi
+    fi
+
+    if [ "$1" = "frequency_offset" ] || [ "$1" = "wizard" ]; then
+      while true; do
+        input=$(dialog --no-collapse --title "$title" --cancel-label "Cancel" --inputbox "This parameter is for advanced users with advanced test equipment.\n\nFrequency offset (default: 0)" 0 0 3>&1 1>&2 2>&3)
+        [[ -z $input || ($input =~ ^([0-9]{1,6})(\.[0-9]+)?$ && $(echo "$input <= 1000000" | bc -l) -eq 1) ]] && break # exit loop if user input a number between 0 and 1000000. Decimals allowed
+        dialog --no-collapse --title "$title" --msgbox "Must be between 0-1000000. Decimals allowed." 6 50
+      done
+      if [ $? -ne 1 ] && [ -n "$input" ]; then
+        command+="--set lora.frequency_offset $input "
+      fi
+      [ "$1" != "wizard" ] && return
+    fi
+
+    if [ "$1" = "hop_limit" ] || [ "$1" = "wizard" ]; then
+      while true; do
+        input=$(dialog --no-collapse --colors --title "$title" --cancel-label "Cancel" --inputbox "The maximum number of intermediate nodes between Femtofox and a node it is sending to. Does not impact received messages.\n\n\Z1WARNING:\Zn Excessive hop limit increases congestion!\n\nHop limit. Must be 0-7 (default: 3)" 0 0 3>&1 1>&2 2>&3)
+        [[ -z $input || ($input =~ ^[0-7]$) ]] && break # exit loop if user input an integer between 0 and 7
+        dialog --no-collapse --title "$title" --msgbox "Must be an integer between 0 and 7." 6 50
+      done
+      if [ $? -ne 1 ] && [ -n "$input" ]; then
+        command+="--set lora.hop_limit $input "
+      fi
+      [ "$1" != "wizard" ] && return
+    fi
+
+    if [ "$1" = "tx_enabled" ] || [ "$1" = "wizard" ]; then
       choice=""   # zero the choice before loading the submenu
       while true; do
-        choice=$(dialog --no-collapse --title "$title" --cancel-label "Cancel" --default-item "True" --item-help --menu "Enable TX?" 8 40 0 \
+        choice=$(dialog --no-collapse --title "$title" --cancel-label "Cancel" --default-item "True" --item-help --menu "Enables/disables the radio chip. Useful for hot-swapping antennas.\n\nEnable TX?" 0 0 0 \
           "True" "(default)" "" \
           "False" "" "" \
           " " "" "" \
           "Cancel" "" "" 3>&1 1>&2 2>&3)
         [ $? -eq 1 ] || [ "$choice" == "Cancel" ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
         [ "$choice" == "" ] && continue #restart loop if no choice made
-        set -o pipefail
-        output=$(femto-meshtasticd-config.sh -T $(echo "$choice" | tr '[:upper:]' '[:lower:]') | tee /dev/tty) # make lower case
-        exit_status=$?
-        set +o pipefail
-        meshtastic_command_result $exit_status "$output"
+        command+="--set lora.tx_enabled $(echo "$choice" | tr '[:upper:]' '[:lower:]') "
         break
       done
-    }
-    [ "$1" != "wizard" ] && return
-  fi
+      [ "$1" != "wizard" ] && return
+    fi
 
-  if [ "$1" = "tx_power" ] || [ "$1" = "wizard" ]; then
-    femto-config -c && {
-      input=$(dialog --no-collapse --colors --title "$title" --cancel-label "Cancel" --inputbox "\
+    if [ "$1" = "tx_power" ] || [ "$1" = "wizard" ]; then
+      while true; do
+        input=$(dialog --no-collapse --colors --title "$title" --cancel-label "Cancel" --inputbox "\
 \Z1\ZuWARNING!\Zn\n\
 Setting a 33db radio above 8db will \Zupermanently\Zn damage it.\n\
 ERP above 27db violates EU law.\n\
 ERP above 36db violates US (unlicensed) law.\n\
 \n\
-TX power in db (default: 22)" 13 62 3>&1 1>&2 2>&3)
+If 0, will use the maximum continuous power legal in your region.
+\n\
+\n\
+TX power in dBm. Must be 0-30 (0 for automatic)" 0 0 3>&1 1>&2 2>&3)
+        [[ -z $input || ($input =~ ^[0-30]$) ]] && break # exit loop if user input an integer between 0 and 30
+        dialog --no-collapse --title "$title" --msgbox "Must be an integer between 0 and 30." 6 50
+      done
       if [ $? -ne 1 ] && [ -n "$input" ]; then
-        set -o pipefail
-        output=$(femto-meshtasticd-config.sh -X $input | tee /dev/tty)
-        exit_status=$?
-        set +o pipefail
-        meshtastic_command_result $exit_status "$output"
+        command+="--set lora.tx_power $input "
       fi
-    }
-    [ "$1" != "wizard" ] && return
-  fi
+      [ "$1" != "wizard" ] && return
+    fi
 
-  if [ "$1" = "frequency_slot" ] || [ "$1" = "wizard" ]; then
-    femto-config -c && {
-      input=$(dialog --no-collapse --title "$title" --cancel-label "Cancel" --inputbox "Frequency slot (0 for automatic)" 8 50 3>&1 1>&2 2>&3)
-      if [ $? -ne 1 ] && [ -n "$input" ]; then
-        set -o pipefail
-        output=$(femto-meshtasticd-config.sh -F $input | tee /dev/tty)
-        exit_status=$?
-        set +o pipefail
-        meshtastic_command_result $exit_status "$output"
-      fi
-    }
-    [ "$1" != "wizard" ] && return
-  fi
-
-  if [ "$1" = "override_duty_cycle" ] || [ "$1" = "wizard" ]; then
-    femto-config -c && {
+    if [ "$1" = "frequency_slot" ] || [ "$1" = "wizard" ]; then
       while true; do
-        choice=$(dialog --no-collapse --title "$title" --cancel-label "Cancel" --default-item "False" --item-help --menu "Override duty cycle?\nMay have legal ramifications." 9 40 0 \
+        input=$(dialog --no-collapse --title "$title" --cancel-label "Cancel" --inputbox "Determines the exact frequency the radio transmits and receives. If unset or set to 0, determined automatically by the primary channel name.\n\nFrequency slot (0 for automatic)" 0 0 3>&1 1>&2 2>&3)
+        [[ -z $input || ($input =~ ^[0-9]+$) ]] && break # exit loop if user input an integer 0 or higher
+        dialog --no-collapse --title "$title" --msgbox "Must be an integer 0 or higher." 6 50
+      done
+      if [ $? -ne 1 ] && [ -n "$input" ]; then
+        command+="--set lora.channel_num $input "
+      fi
+      [ "$1" != "wizard" ] && return
+    fi
+
+    if [ "$1" = "override_duty_cycle" ] || [ "$1" = "wizard" ]; then
+      while true; do
+        choice=$(dialog --no-collapse --title "$title" --cancel-label "Cancel" --default-item "False" --item-help --menu "May have legal ramifications.\n\nOverride duty cycle?" 0 0 0 \
           "True" "" "" \
           "False" "(default)" "" \
           " " "" "" \
           "Cancel" "" "" 3>&1 1>&2 2>&3)
         [ $? -eq 1 ] || [ "$choice" == "Cancel" ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
         [ "$choice" == "" ] && continue #restart loop if no choice made
-        set -o pipefail
-        output=$(femto-meshtasticd-config.sh -V $(echo "$choice" | tr '[:upper:]' '[:lower:]') | tee /dev/tty) # make lower case
-        exit_status=$?
-        set +o pipefail
-        meshtastic_command_result $exit_status "$output"
+        command+="--set lora.override_duty_cycle $(echo "$choice" | tr '[:upper:]' '[:lower:]') "
         break
       done
-    }
-    [ "$1" != "wizard" ] && return
-  fi
+      [ "$1" != "wizard" ] && return
+    fi
 
-  if [ "$1" = "sx126x_rx_boosted_gain" ] || [ "$1" = "wizard" ]; then
-    femto-config -c && {
+    if [ "$1" = "sx126x_rx_boosted_gain" ] || [ "$1" = "wizard" ]; then
       while true; do
-        choice=$(dialog --no-collapse --title "$title" --cancel-label "Cancel" --default-item "True" --item-help --menu "Enable SX126X RX boosted gain?" 8 40 0 \
+        choice=$(dialog --no-collapse --title "$title" --cancel-label "Cancel" --default-item "True" --item-help --menu "This is an option specific to the SX126x chip series which allows the chip to consume a small amount of additional power to increase RX (receive) sensitivity.\n\nEnable SX126X RX boosted gain?" 0 0 0 \
           "True" "(default)" "" \
           "False" "" "" \
           " " "" "" \
           "Cancel" "" "" 3>&1 1>&2 2>&3)
         [ $? -eq 1 ] || [ "$choice" == "Cancel" ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
         [ "$choice" == "" ] && continue #restart loop if no choice made
-        set -o pipefail
-        output=$(femto-meshtasticd-config.sh -B $(echo "$choice" | tr '[:upper:]' '[:lower:]') | tee /dev/tty) # make lower case
-        exit_status=$?
-        set +o pipefail
-        meshtastic_command_result $exit_status "$output"
+        command+="--set lora.sx126x_rx_boosted_gain $(echo "$choice" | tr '[:upper:]' '[:lower:]') "
         break
       done
-    }
-    [ "$1" != "wizard" ] && return
-  fi
+      [ "$1" != "wizard" ] && return
+    fi
 
-  if [ "$1" = "override_frequency" ] || [ "$1" = "wizard" ]; then
-    femto-config -c && {
-      input=$(dialog --no-collapse --title "$title" --cancel-label "Cancel" --inputbox "Override frequency in MHz (0 for none).\nOverrides frequency slot." 9 50 3>&1 1>&2 2>&3)
+    if [ "$1" = "override_frequency" ] || [ "$1" = "wizard" ]; then
+      while true; do
+        input=$(dialog --no-collapse --title "$title" --cancel-label "Cancel" --inputbox "Overrides frequency slot. May have legal ramifications.\n\nOverride frequency in MHz (0 for none)." 0 0 3>&1 1>&2 2>&3)
+        [[ -z $input || ($input =~ ^[0-9]+(\.[0-9]+)?$) ]] && break # exit loop if user input a number 0 or higher (decimals allowed)
+        dialog --no-collapse --title "$title" --msgbox "Must be a number 0 or higher. Decimals allowed." 6 53
+      done
+
       if [ $? -ne 1 ] && [ -n "$input" ]; then
-        set -o pipefail
-        output=$(femto-meshtasticd-config.sh -v $input | tee /dev/tty | tee /dev/tty)
-        exit_status=$?
-        set +o pipefail
-        meshtastic_command_result $exit_status "$output"
+        command+="--set lora.override_frequency $input "
       fi
-    }
-    [ "$1" != "wizard" ] && return
-  fi
+      [ "$1" != "wizard" ] && return
+    fi
 
-  if [ "$1" = "ignore_mqtt" ] || [ "$1" = "wizard" ]; then
-    femto-config -c && {
+    if [ "$1" = "ignore_mqtt" ] || [ "$1" = "wizard" ]; then
       while true; do
-        choice=$(dialog --no-collapse --title "$title" --cancel-label "Cancel" --default-item "False" --item-help --menu "Ignore MQTT?" 8 40 0 \
+        choice=$(dialog --no-collapse --title "$title" --cancel-label "Cancel" --default-item "False" --item-help --menu "Ignores any messages it receives via LoRa that came via MQTT somewhere along the path towards the device.\n\nIgnore MQTT?" 0 0 0 \
           "True" "" "" \
           "False" "(default)" "" \
           " " "" "" \
           "Cancel" "" "" 3>&1 1>&2 2>&3)
         [ $? -eq 1 ] || [ "$choice" == "Cancel" ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
         [ "$choice" == "" ] && continue #restart loop if no choice made
-        set -o pipefail
-        output=$(femto-meshtasticd-config.sh -G $(echo "$choice" | tr '[:upper:]' '[:lower:]') | tee /dev/tty) # make lower case
-        exit_status=$?
-        set +o pipefail
-        meshtastic_command_result $exit_status "$output"
+        command+="--set lora.ignore_mqtt $(echo "$choice" | tr '[:upper:]' '[:lower:]') "
         break
       done
-    }
-    [ "$1" != "wizard" ] && return
-  fi
+      [ "$1" != "wizard" ] && return
+    fi
 
-  if [ "$1" = "ok_to_mqtt" ] || [ "$1" = "wizard" ]; then
-    femto-config -c && {
+    if [ "$1" = "ok_to_mqtt" ] || [ "$1" = "wizard" ]; then
       while true; do
-        choice=$(dialog --no-collapse --title "$title" --cancel-label "Cancel" --default-item "False" --item-help --menu "OK to MQTT?" 8 40 0 \
+        choice=$(dialog --no-collapse --title "$title" --cancel-label "Cancel" --default-item "False" --item-help --menu "Indicates that the user approves their packets to be uplinked to MQTT brokers.\n\nOK to MQTT?" 0 0 0 \
           "True" "" "" \
           "False" "(default)" "" \
           " " "" "" \
           "Cancel" "" "" 3>&1 1>&2 2>&3)
         [ $? -eq 1 ] || [ "$choice" == "Cancel" ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
         [ "$choice" == "" ] && continue #restart loop if no choice made
-        set -o pipefail
-        output=$(femto-meshtasticd-config.sh -K $(echo "$choice" | tr '[:upper:]' '[:lower:]') | tee /dev/tty) # make lower case
-        exit_status=$?
-        set +o pipefail
-        meshtastic_command_result $exit_status "$output"
+        command+="--set lora.config_ok_to_mqtt $(echo "$choice" | tr '[:upper:]' '[:lower:]') "
         break
       done
-    }
-    [ "$1" != "wizard" ] && return
+      [ "$1" != "wizard" ] && return
+    fi
+
+    # if we're in wizard mode AND there are no script arguments, then display a message
+    [ "$1" = "wizard" ] && [ -z "$args" ] && dialog --no-collapse --title "$title" --colors --msgbox "Meshtastic LoRa Settings Wizard complete!" 6 50
+
+    [ "$1" = "wizard" ] && return # quit function if wizard
   fi
-
-  # if we're in wizard mode AND there are no script arguments, then display a message
-  [ "$1" = "wizard" ] && [ -z "$args" ] && dialog --no-collapse --title "$title" --colors --msgbox "Meshtastic LoRa Settings Wizard complete!" 6 50
-
-  [ "$1" = "wizard" ] && return # quit function if wizard
 }
 
 
@@ -497,9 +412,10 @@ while getopts ":hw" opt; do
 done
 [ -n "$1" ] && exit # if there were arguments, exit before loading the menu
 
-
+command="" # initialize command
 LoRa_menu_choice=""   # zero the choice before loading the submenu
 while true; do
+  command="" # initialize command
   LoRa_menu_choice=$(dialog --no-collapse --title "Meshtastic LoRa Settings" --default-item "$LoRa_menu_choice" --cancel-label "Back" --item-help --menu "LoRa settings can also be set automatically by entering a Meshtastic configuration URL." 30 50 20 \
     1 "Wizard (set all)" "" \
     2 "Set LoRa radio model" "" \
@@ -583,5 +499,18 @@ while true; do
     ;;
     20) break ;;
   esac
+
+  if [ -n "$command" ]; then
+    set -o pipefail
+    echo "meshtastic --host $command"
+    output=$(eval "femto-meshtasticd-config.sh -m '$command' 5 'Save LoRa settings'" | tee /dev/tty)
+    exit_status=$?
+    set +o pipefail
+    if [ $exit_status -eq 1 ]; then
+      dialog --no-collapse --colors --title "$title" --msgbox "$(echo -e "\Z1Command FAILED!\Zn\n\nLog:\n$output")" 0 0
+    elif [ $exit_status -eq 0 ]; then
+      dialog --no-collapse --colors --title "$title" --msgbox "$(echo -e "\Z4Command Successful!\Zn\n\nLog:\n$output")" 0 0
+    fi
+  fi
 done
 

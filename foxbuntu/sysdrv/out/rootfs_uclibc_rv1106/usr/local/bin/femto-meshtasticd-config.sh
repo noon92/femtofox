@@ -28,7 +28,7 @@ Options are:
 -S             Get Meshtasticd service state
 -z             Upgrade Meshtasticd
 -x             Uninstall Meshtasticd
--m             Meshtastic update tool. Syntax: \`femto-meshtasticd-config.sh -m \"--set security.admin_channel_enabled false\" 10 \"Disable legacy admin\"\`
+-m             Meshtastic update tool. Syntax: \`femto-meshtasticd-config.sh -m '--set security.admin_channel_enabled false' 10 'Disable legacy admin'\`
                Will retry the \`--set security.admin_channel_enabled false\` command until successful or up to 10 times, and tag status reports with \`Disable legacy admin\` via echo and to system log.
 Meshtastic LoRa settings:
 -e "value"     Region (frequency plan). Options are: UNSET, US, EU_433, EU_868, CN, JP, ANZ, KR, TW, RU ,IN, NZ_865, TH, LORA_24, UA_433, UA_868, MY_433, MY_919, SG_923
@@ -67,12 +67,14 @@ meshtastic_update() {
     if echo "$output" | grep -qiE "Abort|invalid|Error|refused|Errno"; then
       if [ "$retries" -lt $attempts ]; then
         local msg="${ref:+$ref}Meshtastic command failed, retrying ($(($retries + 1))/$attempts)..."
+        femto-meshtasticd-config.sh -s
         echo "$msg"
         logger "$msg"
         sleep 2 # Add a small delay before retrying
       fi
     else
       local success="true"
+      echo -e "$output"
       msg="${ref:+$ref}Meshtastic command successful!"
       echo "$msg"
       logger "$msg"
