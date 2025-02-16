@@ -45,7 +45,7 @@ set_lora_radio() {
   while true; do
     echo "Checking LoRa radio..."
     #Display filename, if exists: $(files=$(ls /etc/meshtasticd/config.d/* 2>/dev/null) && [ -n "$files" ] && echo "\n\nConfiguration files in use:\n$files" | paste -sd, -))
-    choice=$(dialog --no-collapse --colors --cancel-label "Cancel" --default-item "$choice" --title "Meshtastic LoRa radio" --item-help --menu "Currently configured LoRa radio:\n$(femto-utils.sh -R "$(femto-meshtasticd-config.sh -k)")$(ls -1 /etc/meshtasticd/config.d 2>/dev/null | grep -v '^femto_' | paste -sd ', ' - | sed 's/^/ (/; s/$/)/; s/,/, /g' | grep -v '^ ()$')" 22 50 10 \
+    choice=$(dialog --no-collapse --colors --cancel-label "$([[ "$1" == "wizard" ]] && echo "Skip" || echo "Cancel")" --default-item "$choice" --title "Meshtastic LoRa radio" --item-help --menu "Currently configured LoRa radio:\n$(femto-utils.sh -R "$(femto-meshtasticd-config.sh -k)")$(ls -1 /etc/meshtasticd/config.d 2>/dev/null | grep -v '^femto_' | paste -sd ', ' - | sed 's/^/ (/; s/$/)/; s/,/, /g' | grep -v '^ ()$')" 22 50 10 \
        "Radio name:" "Configuration:" "" \
        "" "" "" \
        "Ebyte e22-900m30s" "(SX1262_TCXO)" "Included in Femtofox Pro" \
@@ -58,7 +58,7 @@ set_lora_radio() {
        "LoRa Meshstick 1262" "(meshstick-1262)" "USB based LoRa radio from Mark Birss. https://github.com/markbirss/MESHSTICK" \
        "Simulated radio" "(none)" "" \
       " " "" "" \
-      "Cancel" "" "" 3>&1 1>&2 2>&3)
+      "$([[ "$1" == "wizard" ]] && echo "Skip" || echo "Cancel")" "" "" 3>&1 1>&2 2>&3)
     [ $? -eq 1 ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
     local radio=""
     case $choice in
@@ -104,19 +104,19 @@ set_lora_radio() {
 lora_settings_actions() {
   if femto-config -c; then
     if [ "$1" = "set_lora_radio_model" ] || [ "$1" = "wizard" ]; then
-      set_lora_radio
+      set_lora_radio $1
       [ "$1" != "wizard" ] && return
     fi
 
     if [ "$1" = "wizard" ]; then
       choice=""   # zero the choice before loading the submenu
       while true; do
-        choice=$(dialog --no-collapse --title "$title" --cancel-label "Cancel" --default-item "True" --item-help --menu "Meshtastic configuration method" 8 50 0 \
+        choice=$(dialog --no-collapse --title "$title" --cancel-label "$([[ "$1" == "wizard" ]] && echo "Skip" || echo "Cancel")" --default-item "True" --item-help --menu "Meshtastic configuration method" 8 50 0 \
           "Automatic configuration with URL" "" "" \
           "Manual configuration" "" "" \
           " " "" "" \
-          "Cancel" "" "" 3>&1 1>&2 2>&3)
-        [ $? -eq 1 ] || [ "$choice" == "Cancel" ] && return # Exit the loop if the user selects "Cancel" or closes the dialog
+          "$([[ "$1" == "wizard" ]] && echo "Skip" || echo "Cancel")" "" "" 3>&1 1>&2 2>&3)
+        [ $? -eq 1 ] || [ "$choice" == "Cancel" ] || [ "$choice" == "Skip" ] || [ "$choice" == "Skip" ] && return # Exit the loop if the user selects "Cancel" or closes the dialog
         [ "$choice" == "" ] && continue #restart loop if no choice made
         [ "$choice" == "Manual configuration" ] && break
         [ "$choice" == "Automatic configuration with URL" ] && config_url "$1"
@@ -135,11 +135,11 @@ lora_settings_actions() {
           menu_items+=("${options[$i]}" "" "")  # Other items without "(default)"
         fi
       done
-      menu_items+=("" "" "" "Cancel" "" "")
+      menu_items+=("" "" "" "$([[ "$1" == "wizard" ]] && echo "Skip" || echo "Cancel")" "" "")
       while true; do
-        choice=$(dialog --no-collapse --title "$title" --cancel-label "Cancel" --default-item "LONG_FAST" --item-help --menu "Sets the region for your node. Default is unset. As long as this is not set, the node screen will display a message and not transmit any packets.\n\nRegion (default: UNSET)?" 0 0 0 \
+        choice=$(dialog --no-collapse --title "$title" --cancel-label "$([[ "$1" == "wizard" ]] && echo "Skip" || echo "Cancel")" --default-item "LONG_FAST" --item-help --menu "Sets the region for your node. Default is unset. As long as this is not set, the node screen will display a message and not transmit any packets.\n\nRegion (default: UNSET)?" 0 0 0 \
           "${menu_items[@]}" 3>&1 1>&2 2>&3)
-        [ $? -eq 1 ] || [ "$choice" == "Cancel" ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
+        [ $? -eq 1 ] || [ "$choice" == "Cancel" ] || [ "$choice" == "Skip" ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
         [ "$choice" == "" ] && continue # Restart loop if no choice made
         command+="--set lora.region $choice "
         break
@@ -150,12 +150,12 @@ lora_settings_actions() {
     if [ "$1" = "use_modem_preset" ] || [ "$1" = "wizard" ]; then
       choice=""   # zero the choice before loading the submenu
       while true; do
-        choice=$(dialog --no-collapse --title "$title" --cancel-label "Cancel" --default-item "True" --item-help --menu "Presets are pre-defined modem settings (Bandwidth, Spread Factor, and Coding Rate) which influence both message speed and range. The vast majority of users use a preset.\n\nUse modem preset?" 0 0 0 \
+        choice=$(dialog --no-collapse --title "$title" --cancel-label "$([[ "$1" == "wizard" ]] && echo "Skip" || echo "Cancel")" --default-item "True" --item-help --menu "Presets are pre-defined modem settings (Bandwidth, Spread Factor, and Coding Rate) which influence both message speed and range. The vast majority of users use a preset.\n\nUse modem preset?" 0 0 0 \
           "True" "(default)" "" \
           "False" "" "" \
           " " "" "" \
-          "Cancel" "" "" 3>&1 1>&2 2>&3)
-        [ $? -eq 1 ] || [ "$choice" == "Cancel" ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
+          "$([[ "$1" == "wizard" ]] && echo "Skip" || echo "Cancel")" "" "" 3>&1 1>&2 2>&3)
+        [ $? -eq 1 ] || [ "$choice" == "Cancel" ] || [ "$choice" == "Skip" ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
         [ "$choice" == "" ] && continue #restart loop if no choice made
         using_preset=$choice
         command+="--set lora.use_preset $(echo "$choice" | tr '[:upper:]' '[:lower:]') "
@@ -178,11 +178,11 @@ lora_settings_actions() {
             menu_items+=("${options[$i]}" "" "")  # Other items without "(default)"
           fi
         done
-        menu_items+=("" "" "" "Cancel" "" "")
+        menu_items+=("" "" "" "$([[ "$1" == "wizard" ]] && echo "Skip" || echo "Cancel")" "" "")
         while true; do
-          choice=$(dialog --no-collapse --title "$title" --cancel-label "Cancel" --default-item "LONG_FAST" --item-help --menu "The default preset will provide a strong mixture of speed and range, for most users.\n\nPreset?" 0 0 0 \
+          choice=$(dialog --no-collapse --title "$title" --cancel-label "$([[ "$1" == "wizard" ]] && echo "Skip" || echo "Cancel")" --default-item "LONG_FAST" --item-help --menu "The default preset will provide a strong mixture of speed and range, for most users.\n\nPreset?" 0 0 0 \
             "${menu_items[@]}" 3>&1 1>&2 2>&3)
-          [ $? -eq 1 ] || [ "$choice" == "Cancel" ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
+          [ $? -eq 1 ] || [ "$choice" == "Cancel" ] || [ "$choice" == "Skip" ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
           [ "$choice" == "" ] && continue # Restart loop if no choice made
           command+="--set lora.modem_preset $choice "
           break
@@ -196,15 +196,15 @@ lora_settings_actions() {
     else
       if [ "$1" = "bandwidth" ] || [ "$1" = "wizard" ]; then
         while true; do
-          choice=$(dialog --no-collapse --title "$title" --cancel-label "Cancel" --item-help --default-item 250 --menu "Width of the frequency \"band\" used around the calculated center frequency. Only used if modem preset is disabled.\n\nBandwidth?" 0 0 0 \
+          choice=$(dialog --no-collapse --title "$title" --cancel-label "$([[ "$1" == "wizard" ]] && echo "Skip" || echo "Cancel")" --item-help --default-item 250 --menu "Width of the frequency \"band\" used around the calculated center frequency. Only used if modem preset is disabled.\n\nBandwidth?" 0 0 0 \
             31 "" "" \
             62 "" "" \
             125 "" "" \
             250 "(default)" "" \
             500 "" "" \
             " " "" "" \
-            "Cancel" "" "" 3>&1 1>&2 2>&3)
-          [ $? -eq 1 ] || [ "$choice" == "Cancel" ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
+            "$([[ "$1" == "wizard" ]] && echo "Skip" || echo "Cancel")" "" "" 3>&1 1>&2 2>&3)
+          [ $? -eq 1 ] || [ "$choice" == "Cancel" ] || [ "$choice" == "Skip" ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
           [ "$choice" == "" ] && continue # Restart loop if no choice made
           command+="--set lora.bandwidth $choice "
           break
@@ -214,7 +214,7 @@ lora_settings_actions() {
 
       if [ "$1" = "spread_factor" ] || [ "$1" = "wizard" ]; then
         while true; do
-          choice=$(dialog --no-collapse --title "$title" --cancel-label "Cancel" --item-help --default-item 12 --menu "Indicates the number of chirps per symbol.\n\nSpread factor (only used if modem preset is disabled)?" 0 0 0 \
+          choice=$(dialog --no-collapse --title "$title" --cancel-label "$([[ "$1" == "wizard" ]] && echo "Skip" || echo "Cancel")" --item-help --default-item 12 --menu "Indicates the number of chirps per symbol.\n\nSpread factor (only used if modem preset is disabled)?" 0 0 0 \
             7 "" "" \
             8 "" "" \
             9 "" "" \
@@ -222,8 +222,8 @@ lora_settings_actions() {
             11 "" "" \
             12 "(default)" "" \
             " " "" "" \
-            "Cancel" "" "" 3>&1 1>&2 2>&3)
-          [ $? -eq 1 ] || [ "$choice" == "Cancel" ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
+            "$([[ "$1" == "wizard" ]] && echo "Skip" || echo "Cancel")" "" "" 3>&1 1>&2 2>&3)
+          [ $? -eq 1 ] || [ "$choice" == "Cancel" ] || [ "$choice" == "Skip" ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
           [ "$choice" == "" ] && continue # Restart loop if no choice made
           command+="--set lora.spread_factor $choice "
           break
@@ -233,14 +233,14 @@ lora_settings_actions() {
 
       if [ "$1" = "coding_rate" ] || [ "$1" = "wizard" ]; then
         while true; do
-          choice=$(dialog --no-collapse --title "$title" --cancel-label "Cancel" --item-help --default-item 8 --menu "The proportion of each LoRa transmission that contains actual data - the rest is used for error correction.\n\nCoding rate (only used if modem preset is disabled)?" 0 0 0 \
+          choice=$(dialog --no-collapse --title "$title" --cancel-label "$([[ "$1" == "wizard" ]] && echo "Skip" || echo "Cancel")" --item-help --default-item 8 --menu "The proportion of each LoRa transmission that contains actual data - the rest is used for error correction.\n\nCoding rate (only used if modem preset is disabled)?" 0 0 0 \
             5 "" "" \
             6 "" "" \
             7 "" "" \
             8 "(default)" "" \
             " " "" "" \
-            "Cancel" "" "" 3>&1 1>&2 2>&3)
-          [ $? -eq 1 ] || [ "$choice" == "Cancel" ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
+            "$([[ "$1" == "wizard" ]] && echo "Skip" || echo "Cancel")" "" "" 3>&1 1>&2 2>&3)
+          [ $? -eq 1 ] || [ "$choice" == "Cancel" ] || [ "$choice" == "Skip" ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
           [ "$choice" == "" ] && continue # Restart loop if no choice made
           command+="--set lora.coding_rate $choice "
           break
@@ -251,7 +251,7 @@ lora_settings_actions() {
 
     if [ "$1" = "frequency_offset" ] || [ "$1" = "wizard" ]; then
       while true; do
-        input=$(dialog --no-collapse --title "$title" --cancel-label "Cancel" --inputbox "This parameter is for advanced users with advanced test equipment.\n\nFrequency offset (default: 0)" 0 0 3>&1 1>&2 2>&3)
+        input=$(dialog --no-collapse --title "$title" --cancel-label "$([[ "$1" == "wizard" ]] && echo "Skip" || echo "Cancel")" --inputbox "This parameter is for advanced users with advanced test equipment.\n\nFrequency offset (default: 0)" 0 0 3>&1 1>&2 2>&3)
         [[ -z $input || ($input =~ ^([0-9]{1,6})(\.[0-9]+)?$ && $(echo "$input <= 1000000" | bc -l) -eq 1) ]] && break # exit loop if user input a number between 0 and 1000000. Decimals allowed
         dialog --no-collapse --title "$title" --msgbox "Must be between 0-1000000. Decimals allowed." 6 50
       done
@@ -263,7 +263,7 @@ lora_settings_actions() {
 
     if [ "$1" = "hop_limit" ] || [ "$1" = "wizard" ]; then
       while true; do
-        input=$(dialog --no-collapse --colors --title "$title" --cancel-label "Cancel" --inputbox "The maximum number of intermediate nodes between Femtofox and a node it is sending to. Does not impact received messages.\n\n\Z1WARNING:\Zn Excessive hop limit increases congestion!\n\nHop limit. Must be 0-7 (default: 3)" 0 0 3>&1 1>&2 2>&3)
+        input=$(dialog --no-collapse --colors --title "$title" --cancel-label "$([[ "$1" == "wizard" ]] && echo "Skip" || echo "Cancel")" --inputbox "The maximum number of intermediate nodes between Femtofox and a node it is sending to. Does not impact received messages.\n\n\Z1WARNING:\Zn Excessive hop limit increases congestion!\n\nHop limit. Must be 0-7 (default: 3)" 0 0 3>&1 1>&2 2>&3)
         [[ -z $input || ($input =~ ^[0-7]$) ]] && break # exit loop if user input an integer between 0 and 7
         dialog --no-collapse --title "$title" --msgbox "Must be an integer between 0 and 7." 6 50
       done
@@ -276,12 +276,12 @@ lora_settings_actions() {
     if [ "$1" = "tx_enabled" ] || [ "$1" = "wizard" ]; then
       choice=""   # zero the choice before loading the submenu
       while true; do
-        choice=$(dialog --no-collapse --title "$title" --cancel-label "Cancel" --default-item "True" --item-help --menu "Enables/disables the radio chip. Useful for hot-swapping antennas.\n\nEnable TX?" 0 0 0 \
+        choice=$(dialog --no-collapse --title "$title" --cancel-label "$([[ "$1" == "wizard" ]] && echo "Skip" || echo "Cancel")" --default-item "True" --item-help --menu "Enables/disables the radio chip. Useful for hot-swapping antennas.\n\nEnable TX?" 0 0 0 \
           "True" "(default)" "" \
           "False" "" "" \
           " " "" "" \
-          "Cancel" "" "" 3>&1 1>&2 2>&3)
-        [ $? -eq 1 ] || [ "$choice" == "Cancel" ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
+          "$([[ "$1" == "wizard" ]] && echo "Skip" || echo "Cancel")" "" "" 3>&1 1>&2 2>&3)
+        [ $? -eq 1 ] || [ "$choice" == "Cancel" ] || [ "$choice" == "Skip" ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
         [ "$choice" == "" ] && continue #restart loop if no choice made
         command+="--set lora.tx_enabled $(echo "$choice" | tr '[:upper:]' '[:lower:]') "
         break
@@ -291,7 +291,7 @@ lora_settings_actions() {
 
     if [ "$1" = "tx_power" ] || [ "$1" = "wizard" ]; then
       while true; do
-        input=$(dialog --no-collapse --colors --title "$title" --cancel-label "Cancel" --inputbox "\
+        input=$(dialog --no-collapse --colors --title "$title" --cancel-label "$([[ "$1" == "wizard" ]] && echo "Skip" || echo "Cancel")" --inputbox "\
 \Z1\ZuWARNING!\Zn\n\
 Setting a 33db radio above 8db will \Zupermanently\Zn damage it.\n\
 ERP above 27db violates EU law.\n\
@@ -312,7 +312,7 @@ TX power in dBm. Must be 0-30 (0 for automatic)" 0 0 3>&1 1>&2 2>&3)
 
     if [ "$1" = "frequency_slot" ] || [ "$1" = "wizard" ]; then
       while true; do
-        input=$(dialog --no-collapse --title "$title" --cancel-label "Cancel" --inputbox "Determines the exact frequency the radio transmits and receives. If unset or set to 0, determined automatically by the primary channel name.\n\nFrequency slot (0 for automatic)" 0 0 3>&1 1>&2 2>&3)
+        input=$(dialog --no-collapse --title "$title" --cancel-label "$([[ "$1" == "wizard" ]] && echo "Skip" || echo "Cancel")" --inputbox "Determines the exact frequency the radio transmits and receives. If unset or set to 0, determined automatically by the primary channel name.\n\nFrequency slot (0 for automatic)" 0 0 3>&1 1>&2 2>&3)
         [[ -z $input || ($input =~ ^[0-9]+$) ]] && break # exit loop if user input an integer 0 or higher
         dialog --no-collapse --title "$title" --msgbox "Must be an integer 0 or higher." 6 50
       done
@@ -324,12 +324,12 @@ TX power in dBm. Must be 0-30 (0 for automatic)" 0 0 3>&1 1>&2 2>&3)
 
     if [ "$1" = "override_duty_cycle" ] || [ "$1" = "wizard" ]; then
       while true; do
-        choice=$(dialog --no-collapse --title "$title" --cancel-label "Cancel" --default-item "False" --item-help --menu "May have legal ramifications.\n\nOverride duty cycle?" 0 0 0 \
+        choice=$(dialog --no-collapse --title "$title" --cancel-label "$([[ "$1" == "wizard" ]] && echo "Skip" || echo "Cancel")" --default-item "False" --item-help --menu "May have legal ramifications.\n\nOverride duty cycle?" 0 0 0 \
           "True" "" "" \
           "False" "(default)" "" \
           " " "" "" \
-          "Cancel" "" "" 3>&1 1>&2 2>&3)
-        [ $? -eq 1 ] || [ "$choice" == "Cancel" ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
+          "$([[ "$1" == "wizard" ]] && echo "Skip" || echo "Cancel")" "" "" 3>&1 1>&2 2>&3)
+        [ $? -eq 1 ] || [ "$choice" == "Cancel" ] || [ "$choice" == "Skip" ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
         [ "$choice" == "" ] && continue #restart loop if no choice made
         command+="--set lora.override_duty_cycle $(echo "$choice" | tr '[:upper:]' '[:lower:]') "
         break
@@ -339,12 +339,12 @@ TX power in dBm. Must be 0-30 (0 for automatic)" 0 0 3>&1 1>&2 2>&3)
 
     if [ "$1" = "sx126x_rx_boosted_gain" ] || [ "$1" = "wizard" ]; then
       while true; do
-        choice=$(dialog --no-collapse --title "$title" --cancel-label "Cancel" --default-item "True" --item-help --menu "This is an option specific to the SX126x chip series which allows the chip to consume a small amount of additional power to increase RX (receive) sensitivity.\n\nEnable SX126X RX boosted gain?" 0 0 0 \
+        choice=$(dialog --no-collapse --title "$title" --cancel-label "$([[ "$1" == "wizard" ]] && echo "Skip" || echo "Cancel")" --default-item "True" --item-help --menu "This is an option specific to the SX126x chip series which allows the chip to consume a small amount of additional power to increase RX (receive) sensitivity.\n\nEnable SX126X RX boosted gain?" 0 0 0 \
           "True" "(default)" "" \
           "False" "" "" \
           " " "" "" \
-          "Cancel" "" "" 3>&1 1>&2 2>&3)
-        [ $? -eq 1 ] || [ "$choice" == "Cancel" ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
+          "$([[ "$1" == "wizard" ]] && echo "Skip" || echo "Cancel")" "" "" 3>&1 1>&2 2>&3)
+        [ $? -eq 1 ] || [ "$choice" == "Cancel" ] || [ "$choice" == "Skip" ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
         [ "$choice" == "" ] && continue #restart loop if no choice made
         command+="--set lora.sx126x_rx_boosted_gain $(echo "$choice" | tr '[:upper:]' '[:lower:]') "
         break
@@ -354,7 +354,7 @@ TX power in dBm. Must be 0-30 (0 for automatic)" 0 0 3>&1 1>&2 2>&3)
 
     if [ "$1" = "override_frequency" ] || [ "$1" = "wizard" ]; then
       while true; do
-        input=$(dialog --no-collapse --title "$title" --cancel-label "Cancel" --inputbox "Overrides frequency slot. May have legal ramifications.\n\nOverride frequency in MHz (0 for none)." 0 0 3>&1 1>&2 2>&3)
+        input=$(dialog --no-collapse --title "$title" --cancel-label "$([[ "$1" == "wizard" ]] && echo "Skip" || echo "Cancel")" --inputbox "Overrides frequency slot. May have legal ramifications.\n\nOverride frequency in MHz (0 for none)." 0 0 3>&1 1>&2 2>&3)
         [[ -z $input || ($input =~ ^[0-9]+(\.[0-9]+)?$) ]] && break # exit loop if user input a number 0 or higher (decimals allowed)
         dialog --no-collapse --title "$title" --msgbox "Must be a number 0 or higher. Decimals allowed." 6 53
       done
@@ -367,12 +367,12 @@ TX power in dBm. Must be 0-30 (0 for automatic)" 0 0 3>&1 1>&2 2>&3)
 
     if [ "$1" = "ignore_mqtt" ] || [ "$1" = "wizard" ]; then
       while true; do
-        choice=$(dialog --no-collapse --title "$title" --cancel-label "Cancel" --default-item "False" --item-help --menu "Ignores any messages it receives via LoRa that came via MQTT somewhere along the path towards the device.\n\nIgnore MQTT?" 0 0 0 \
+        choice=$(dialog --no-collapse --title "$title" --cancel-label "$([[ "$1" == "wizard" ]] && echo "Skip" || echo "Cancel")" --default-item "False" --item-help --menu "Ignores any messages it receives via LoRa that came via MQTT somewhere along the path towards the device.\n\nIgnore MQTT?" 0 0 0 \
           "True" "" "" \
           "False" "(default)" "" \
           " " "" "" \
-          "Cancel" "" "" 3>&1 1>&2 2>&3)
-        [ $? -eq 1 ] || [ "$choice" == "Cancel" ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
+          "$([[ "$1" == "wizard" ]] && echo "Skip" || echo "Cancel")" "" "" 3>&1 1>&2 2>&3)
+        [ $? -eq 1 ] || [ "$choice" == "Cancel" ] || [ "$choice" == "Skip" ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
         [ "$choice" == "" ] && continue #restart loop if no choice made
         command+="--set lora.ignore_mqtt $(echo "$choice" | tr '[:upper:]' '[:lower:]') "
         break
@@ -382,12 +382,12 @@ TX power in dBm. Must be 0-30 (0 for automatic)" 0 0 3>&1 1>&2 2>&3)
 
     if [ "$1" = "ok_to_mqtt" ] || [ "$1" = "wizard" ]; then
       while true; do
-        choice=$(dialog --no-collapse --title "$title" --cancel-label "Cancel" --default-item "False" --item-help --menu "Indicates that the user approves their packets to be uplinked to MQTT brokers.\n\nOK to MQTT?" 0 0 0 \
+        choice=$(dialog --no-collapse --title "$title" --cancel-label "$([[ "$1" == "wizard" ]] && echo "Skip" || echo "Cancel")" --default-item "False" --item-help --menu "Indicates that the user approves their packets to be uplinked to MQTT brokers.\n\nOK to MQTT?" 0 0 0 \
           "True" "" "" \
           "False" "(default)" "" \
           " " "" "" \
-          "Cancel" "" "" 3>&1 1>&2 2>&3)
-        [ $? -eq 1 ] || [ "$choice" == "Cancel" ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
+          "$([[ "$1" == "wizard" ]] && echo "Skip" || echo "Cancel")" "" "" 3>&1 1>&2 2>&3)
+        [ $? -eq 1 ] || [ "$choice" == "Cancel" ] || [ "$choice" == "Skip" ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
         [ "$choice" == "" ] && continue #restart loop if no choice made
         command+="--set lora.config_ok_to_mqtt $(echo "$choice" | tr '[:upper:]' '[:lower:]') "
         break
