@@ -9,11 +9,25 @@ export NCURSES_NO_UTF8_ACS=1
 export TERM=xterm-256color
 export LANG=C.UTF-8
 
+title="Meshtastic LoRa Settings"
 args=$@
 
+send_settings() {
+  if [ -n "$command" ]; then
+    set -o pipefail
+    echo "meshtastic --host $command"
+    output=$(eval "femto-meshtasticd-config.sh -m '$command' 5 'Save LoRa settings'" | tee /dev/tty)
+    exit_status=$?
+    set +o pipefail
+    if [ $exit_status -eq 1 ]; then
+      dialog --no-collapse --colors --title "$title" --msgbox "$(echo -e "\Z1Command FAILED!\Zn\n\nLog:\n$output")" 0 0
+    elif [ $exit_status -eq 0 ]; then
+      dialog --no-collapse --colors --title "$title" --msgbox "$(echo -e "\Z4Command Successful!\Zn\n\nLog:\n$output")" 0 0
+    fi
+  fi
+}
+
 config_url() {
-  echo "argument $1"
-  echo "args $args"
   femto-config -c &&  (
     newurl=$(dialog --no-collapse --title "Meshtastic URL" --inputbox "The Meshtastic configuration URL allows for automatic configuration of all Meshtastic LoRa settings and channels.\n\nNew Meshtastic LoRa configuration URL (SHIFT+INS to paste):" 11 63 3>&1 1>&2 2>&3)
     if [ -n "$newurl" ]; then #if a URL was entered
@@ -21,7 +35,7 @@ config_url() {
     fi
     # if we're in wizard mode AND there are no script arguments, then display a message
     [ "$1" = "wizard" ] && [ -z "$args" ] && dialog --no-collapse --title "$title" --colors --msgbox "Meshtastic LoRa Settings Wizard complete!" 6 50
-    return
+    send_settings
   )
 }
 
@@ -89,7 +103,6 @@ set_lora_radio() {
 
 lora_settings_actions() {
   if femto-config -c; then
-    local title="Meshtastic LoRa Settings"
 
     if [ "$1" = "set_lora_radio_model" ] || [ "$1" = "wizard" ]; then
       set_lora_radio
@@ -386,6 +399,8 @@ TX power in dBm. Must be 0-30 (0 for automatic)" 0 0 3>&1 1>&2 2>&3)
     # if we're in wizard mode AND there are no script arguments, then display a message
     [ "$1" = "wizard" ] && [ -z "$args" ] && dialog --no-collapse --title "$title" --colors --msgbox "Meshtastic LoRa Settings Wizard complete!" 6 50
 
+    send_settings
+
     [ "$1" = "wizard" ] && return # quit function if wizard
   fi
 }
@@ -395,7 +410,7 @@ TX power in dBm. Must be 0-30 (0 for automatic)" 0 0 3>&1 1>&2 2>&3)
 help="If script is run without arguments, menu will load.\n\
 Options are:\n\
 -h           This message\n\
--w           Wizard mode\
+-w           Wizard mode (skips main menu)\
 "
 while getopts ":hw" opt; do
   case ${opt} in
@@ -499,18 +514,5 @@ while true; do
     ;;
     20) break ;;
   esac
-
-  if [ -n "$command" ]; then
-    set -o pipefail
-    echo "meshtastic --host $command"
-    output=$(eval "femto-meshtasticd-config.sh -m '$command' 5 'Save LoRa settings'" | tee /dev/tty)
-    exit_status=$?
-    set +o pipefail
-    if [ $exit_status -eq 1 ]; then
-      dialog --no-collapse --colors --title "$title" --msgbox "$(echo -e "\Z1Command FAILED!\Zn\n\nLog:\n$output")" 0 0
-    elif [ $exit_status -eq 0 ]; then
-      dialog --no-collapse --colors --title "$title" --msgbox "$(echo -e "\Z4Command Successful!\Zn\n\nLog:\n$output")" 0 0
-    fi
-  fi
 done
 
