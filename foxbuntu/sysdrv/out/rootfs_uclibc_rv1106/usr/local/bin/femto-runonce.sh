@@ -3,7 +3,8 @@ log_message() {
   echo -e "\e[32mFirst boot\e[0m: $1"  # Echo to the screen
   logger "First boot: $1"  # Log to the system log
 }
-if ! grep -qE '^first_boot=true' /etc/femto.conf; then # if not the first boot
+
+if ! systemctl is-enabled femto-runonce &>/dev/null; then # if not the first boot
 
   who | grep -q . || exit 0 # if not logged in, exit script. May not deal well with future web UI
 
@@ -23,12 +24,13 @@ Re-running this script will:\n\
 * Add terminal type to user femto's .bashrc\n\
 * Add a shortcut \`sfc\` to user femto's .bashrc\n\
 * Enable the meshtasticd service\n\
+* Add compiler support\n\
 \n\
 Finally, the Femtofox will reboot.\n\
 \n\
 Re-running this script after first boot should not cause any harm, but may not work as expected.\n\
 \n\
-Proceed?" 22 60
+Proceed?" 24 60
   if [ $? -eq 1 ]; then #if cancel/no
     exit 0
   fi
@@ -60,19 +62,11 @@ if [ ! -f /swapfile ]; then # check if swap file already exists
   chmod 600 /swapfile
   mkswap /swapfile > /dev/null
   swapon /swapfile > /dev/null
-  echo '/swapfile none swap sw 0 0' | tee -a /etc/fstab > /dev/null
+  echo '/swapfile none swap sw 0 0'
   log_message "Swap file allocated."
 else
 	log_message "Swap file already allocated, skipping"
 fi
-
-#generate SSH keys
-log_message "Generating new SSH encryption keys. This can take a minute..."
-femto-utils.sh -E
-
-#generate ttyd SSL keys
-log_message "Generating new Web Terminal SSL encryption keys. This can take a minute..."
-/usr/local/bin/packages/ttyd.sh -k
 
 # prevent randomized mac address for eth0. If `eth0`` is already present in /etc/network/interfaces, skip
 mac="$(awk '/Serial/ {print $3}' /proc/cpuinfo | tail -c 11 | sed 's/^\(.*\)/a2\1/' | sed 's/\(..\)/\1:/g;s/:$//')"
@@ -100,8 +94,8 @@ else
 fi
 
 # Fix Compiler
-log_message "Fixing Compiler."
 cp /usr/lib/arm-linux-gnueabihf/libc_nonshared.a.keep /usr/lib/arm-linux-gnueabihf/libc_nonshared.a
+log_message "Added compiler support"
 
 # Add a cheeky alias to .bash_aliases
 if ! grep -Fxq "alias sfc='sudo femto-config'" /home/femto/.bashrc; then # Check if the lines are already in .bash_aliases
@@ -114,8 +108,16 @@ fi
 log_message "Enabling meshtasticd service"
 systemctl enable meshtasticd
 
+#generate SSH keys
+log_message "Generating new SSH encryption keys. This can take a couple minutes..."
+#femto-utils.sh -E
+
+#generate ttyd SSL keys
+log_message "Generating new Web Terminal (ttyd) SSL encryption keys. This can take a couple minutes..."
+/usr/local/bin/packages/ttyd.sh -k
+
 # remove first boot flag
-sed -i -E 's/^first_boot=.*/first_boot=false/' /etc/femto.conf
-log_message "Removing first boot flag and rebooting in 5 seconds..."
+systemctl disable femto-runonce
+log_message "Disabled first boot service and rebooting in 5 seconds..."
 sleep 5
 reboot

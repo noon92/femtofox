@@ -1,6 +1,6 @@
 #!/bin/bash
 if grep -qE '^first_boot=true' /etc/femto.conf; then
-  log_message "First boot, skipping \`boot complete\` tasks."
+  echo "First boot, skipping \`boot complete\` tasks."
   exit 0
 fi
 
