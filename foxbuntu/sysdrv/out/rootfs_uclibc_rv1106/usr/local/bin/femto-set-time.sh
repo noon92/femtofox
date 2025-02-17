@@ -64,7 +64,7 @@ Current system time:\n\
 $(date +"%B %d, %Y %H:%M:%S") $(timedatectl show --property=Timezone --value) ($(date +"UTC%z" | sed -E 's/GMT([+-])0?([0-9]{1,2})00/GMT\1\2/'))\n\
 $(hwclock >/dev/null 2>&1 && echo "RTC module found!" || echo "RTC module not found.")\n\
 \n\
-Set new time and timezone?" 10 70
+Set new time and timezone?" 10 50
   if [ $? -eq 1 ]; then #unless cancel/no
     exit 0
   fi
