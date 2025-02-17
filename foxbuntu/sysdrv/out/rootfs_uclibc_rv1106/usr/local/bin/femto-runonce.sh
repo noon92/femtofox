@@ -62,7 +62,7 @@ if [ ! -f /swapfile ]; then # check if swap file already exists
   chmod 600 /swapfile
   mkswap /swapfile > /dev/null
   swapon /swapfile > /dev/null
-  echo '/swapfile none swap sw 0 0'
+  echo '/swapfile none swap sw 0 0' | tee -a /etc/fstab > /dev/null
   log_message "Swap file allocated."
 else
 	log_message "Swap file already allocated, skipping"
