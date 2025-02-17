@@ -28,7 +28,7 @@ Options are:
 -S             Get Meshtasticd service state
 -z             Upgrade Meshtasticd
 -x             Uninstall Meshtasticd
--m             Meshtastic update tool. Syntax: \`femto-meshtasticd-config.sh -m '--set security.admin_channel_enabled false' 10 'Disable legacy admin'\`
+-m             Meshtastic update tool. Syntax: \`femto-meshtasticd-config.sh -m \"--set security.admin_channel_enabled false\" 10 \"Disable legacy admin\"\`
                Will retry the \`--set security.admin_channel_enabled false\` command until successful or up to 10 times, and tag status reports with \`Disable legacy admin\` via echo and to system log.
 EOF
 )
@@ -45,19 +45,17 @@ meshtastic_update() {
   local ref="$3: "
   echo "Submitting to Meshtastic..."
   for retries in $(seq 1 $attempts); do
-    local output=$(meshtastic --host $command | tee /dev/tty) #>&2 lets meshtastic's output display on screen
+    local output=$(meshtastic --host $command 2>&1 | tee $(if [ -e /dev/tty ]; then echo /dev/tty; else echo /dev/ttyFIQ0; fi))
     logger $output
     if echo "$output" | grep -qiE "Abort|invalid|Error|refused|Errno"; then
       if [ "$retries" -lt $attempts ]; then
         local msg="${ref:+$ref}Meshtastic command failed, retrying ($(($retries + 1))/$attempts)..."
-        femto-meshtasticd-config.sh -s
         echo "$msg"
         logger "$msg"
         sleep 2 # Add a small delay before retrying
       fi
     else
       local success="true"
-      echo -e "$output"
       msg="${ref:+$ref}Meshtastic command successful!"
       echo "$msg"
       logger "$msg"
@@ -85,44 +83,26 @@ while getopts ":higkl:q:uU:rR:aA:cpo:sM:Stwuxm" opt; do
     i) # Option -i (Get important node info)
       declare -a output_array
       output=$(meshtastic --host --info)
-      output_array+=("Service=$(femto-meshtasticd-config.sh -S)")
-      output_array+=("Version=$(echo "$output" | grep -oP '"firmwareVersion":\s*"\K[^"]+' | head -n 1)")
-      output_array+=("Node name=$(echo "$output" | grep -oP 'Owner:\s*\K.*' | head -n 1)")
-      output_array+=("NodeID=$(echo "!$(printf "%08x\n" $(echo "$output" | grep -oP '"myNodeNum":\s*\K\d+' | head -n 1))")")
-      output_array+=("Nodenum=$(echo "$output" | grep -oP '"myNodeNum":\s*\K\d+' | head -n 1)")
-      output_array+=("TX enabled=$(echo "$output" | grep -oP '"txEnabled":\s*\K\w+')")
-      use_preset=$(echo "$output" | grep -oP '"usePreset":\s*\K\w+')
-      output_array+=("Use preset=$use_preset")
-      if [ "$use_preset" = "true" ]; then # if use-preset is true, then display the preset
-        output_array+=("Preset=$(echo "$output" | grep -oP '"modemPreset":\s*"\K[^"]+')")
-      else # otherwise, display the lora settings
-        output_array+=("Bandwidth=$(echo "$output" | grep -oP '"bandwidth":\s*\K\w+')")
-        output_array+=("Spread factor=$(echo "$output" | grep -oP '"spreadFactor":\s*\K\w+')")
-        output_array+=("Coding rate=$(echo "$output" | grep -oP '"codingRate":\s*\K\w+')")
-      fi
-      output_array+=("Role=$(echo "$output" | grep -oP '"role":\s*"\K[^"]+' | head -n 1)")
-      freq_offset=$(echo "$output" | grep -oP '"bandwidth":\s*\K\w+')
-      if [ "$freq_offset" != 0 ]; then # only display frequency offset if not 0
-        output_array+=("Freq offset=$freq_offset")
-      fi
-      output_array+=("Region=$(echo "$output" | grep -oP '"region":\s*"\K[^"]+')")
-      output_array+=("Hop limit=$(echo "$output" | grep -oP '"hopLimit":\s*\K\w+')")
-      freq_slot=$(echo "$output" | grep -oP '"channelNum":\s*\K\d+' | head -n 1)
-      if [ "$freq_slot" != 0 ]; then # only display frequency slot if not 0
-        freq_slot+=("Freq slot=$freq_slot")
-      fi
-      override_freq=$(echo "$output" | grep -oP '"overrideFrequency":\s*\K[0-9.]+')
-      if [ "$override_freq" != "0.0" ]; then # only display override frequency if not 0.0
-        output_array+=("Override freq=$override_freq")
-      fi
-      output_array+=("Public key=$(echo "$output" | grep -oP '"publicKey":\s*"\K[^"]+' | head -n 1)")
-      output_array+=("Nodes in db=$(echo "$output" | grep -oP '"![a-zA-Z0-9]+":\s*\{' | wc -l)")
-      # now, echo the array
-      for pair in "${output_array[@]}"; do
-        key=$(echo "$pair" | cut -d'=' -f1)
-        value=$(echo "$pair" | cut -d'=' -f2-)
-        echo "$key:$value"
-      done
+      echo -e "\
+Service:$(femto-meshtasticd-config.sh -S)
+Version:$(echo "$output" | grep -oP '"firmwareVersion":\s*"\K[^"]+' | head -n 1)
+Node name:$(echo "$output" | grep -oP 'Owner:\s*\K.*' | head -n 1)
+NodeID:$(echo "!$(printf "%08x\n" $(echo "$output" | grep -oP '"myNodeNum":\s*\K\d+' | head -n 1))")
+Nodenum:$(echo "$output" | grep -oP '"myNodeNum":\s*\K\d+' | head -n 1)
+TX enabled:$(echo "$output" | grep -oP '"txEnabled":\s*\K\w+')
+Use preset:$(echo "$output" | grep -oP '"usePreset":\s*\K\w+')
+Preset:$(echo "$output" | grep -oP '"modemPreset":\s*"\K[^"]+')
+Bandwidth:$(echo "$output" | grep -oP '"bandwidth":\s*\K\w+')
+Spread factor:$(echo "$output" | grep -oP '"spreadFactor":\s*\K\w+')
+Coding rate:$(echo "$output" | grep -oP '"codingRate":\s*\K\w+')
+Role:$(echo "$output" | grep -oP '"role":\s*"\K[^"]+' | head -n 1)
+Freq offset:$(echo "$output" | grep -oP '"bandwidth":\s*\K\w+')
+Region:$(echo "$output" | grep -oP '"region":\s*"\K[^"]+')
+Hop limit:$(echo "$output" | grep -oP '"hopLimit":\s*\K\w+')
+Freq slot:$(echo "$output" | grep -oP '"channelNum":\s*\K\d+' | head -n 1)
+Override freq:$(echo "$output" | grep -oP '"overrideFrequency":\s*\K[0-9.]+')
+Public key:$(echo "$output" | grep -oP '"publicKey":\s*"\K[^"]+' | head -n 1)
+Nodes in db:$(echo "$output" | grep -oP '"![a-zA-Z0-9]+":\s*\{' | wc -l)"
       ;;
     g) # Option -g (get config URL)
       url=$(meshtastic --host --qr-all | grep -oP '(?<=Complete URL \(includes all channels\): )https://[^ ]+') #add look for errors
@@ -239,14 +219,16 @@ while getopts ":higkl:q:uU:rR:aA:cpo:sM:Stwuxm" opt; do
     x) # Option -x (uninstall meshtasticd)
       apt remove meshtasticd
       ;;
-    m) # Option -m (manual meshtastic command)
+    m)
       external="true" # set a variable so the function knows it was called by an an external script and not locally
       meshtastic_update "$2" $3 "$4"
       ;;
-    \?)  # Invalid option)
-      echo -e "Unknown argument $1.\n$help"
+    \?)  # Invalid option
+      echo "Invalid option: -$OPTARG"
+      echo -e "$help"
+      exit 1
       ;;
-    :) # Missing argument for option)
+    :) # Missing argument for option
       echo "Option -$OPTARG requires a setting."
       echo -e "$help"
       exit 1

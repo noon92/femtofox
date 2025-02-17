@@ -32,7 +32,7 @@ for i in {1..5}; do
       echo "Time Zone updated to:\n$(timedatectl show --property=Timezone --value) $(date +%Z) (UTC$(date +%:z))\nSystem time updated to:\n$(date)\n\nNew time successfully saved to RTC.\nTime & date are also set automatically from internet, if connected."
       return 0
     else
-      echo "System time updated to:\n$(date) ($(date +"UTC%z" | sed -E 's/GMT([+-])0?([0-9]{1,2})00/GMT\1\2/'))\n\nUnable to communicate with RTC module. An RTC module can remember system time between reboots/power outages.\nTime & date are also set automatically from internet, if connected."
+      echo "System time updated to:\n$(date +"%B %d, %Y %H:%M:%S") $(timedatectl show --property=Timezone --value) ($(date +"UTC%z" | sed -E 's/GMT([+-])0?([0-9]{1,2})00/GMT\1\2/'))\n\nUnable to communicate with RTC module. An RTC module can remember system time between reboots/power outages.\nTime & date are also set automatically from internet, if connected."
       return 0
     fi
   fi
@@ -64,7 +64,7 @@ Current system time:\n\
 $(date +"%B %d, %Y %H:%M:%S") $(timedatectl show --property=Timezone --value) ($(date +"UTC%z" | sed -E 's/GMT([+-])0?([0-9]{1,2})00/GMT\1\2/'))\n\
 $(hwclock >/dev/null 2>&1 && echo "RTC module found!" || echo "RTC module not found.")\n\
 \n\
-Set new time and timezone?" 10 70
+Set new time and timezone?" 10 50
   if [ $? -eq 1 ]; then #unless cancel/no
     exit 0
   fi
@@ -83,7 +83,7 @@ Set new time and timezone?" 10 70
   # Show timezone selection menu with preselection of current timezone
   selected_timezone=$(dialog --title "Set Time Zone" \
                             --default-item "$current_timezone" \
-                            --menu "Current time zone: $current_timezone (UTC$(date +%z))" 20 60 10 \
+                            --menu "Current time zone: $current_timezone (UTC$(date +%z))" 20 50 10 \
                             $(printf "%s " "${options[@]}") 3>&1 1>&2 2>&3)
   exit_status=$?
   if [[ $exit_status -eq 0 && -n "$selected_timezone" ]]; then

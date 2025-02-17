@@ -62,10 +62,16 @@ ingest_data() { # usage: `ingest_data "command.sh -argument" key_width`
 }
 
 check_meshtasticd_running() {
-  if echo $(femto-utils.sh -C "meshtasticd") | grep -q "not running"; then
+  if ! echo $(femto-utils.sh -C "meshtasticd") | sed 's/\x1b\[[0-9;]*m//g' | grep -q ", running"; then
     dialog --no-collapse --title "Meshtasticd service" --yesno "Meshtasticd service is not running but is required.\n\nStart service?" 9 50
     if [ $? -eq 0 ]; then #unless cancel/no
       femto-meshtasticd-config.sh -s
+      echo "Waiting for meshtasticd service to start..."
+      sleep 3
+      if ! echo $(femto-utils.sh -C "meshtasticd") | sed 's/\x1b\[[0-9;]*m//g' | grep -q ", running"; then
+        dialog --no-collapse --colors --title "Meshtasticd service" --msgbox "Meshtasticd service ($(femto-utils.sh -R "$(femto-utils.sh -C "meshtasticd")")) failed to run, but is required." 7 50
+        return 1
+      fi
       return 0
     else
       return 1
@@ -186,12 +192,12 @@ networking_settings() {
           if [ $exit_status -eq 1 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
             break
           elif [ $exit_status -eq 2 ]; then # Help ("extra") button
-            dialog --no-collapse --colors --title "Meshtastic wifi sync service help" --msgbox "The Meshtastic wifi sync service synchronizes wifi settings with Meshtastic wifi settings. This allows you to use remote node administration to enable/disable Femtofox wifi.\n\nIn future, this will also allow you to reconfigure SSID and password.\n" 0 0
+            dialog --no-collapse --colors --title "Meshtastic wifi sync service help" --msgbox "The Meshtastic wifi sync service synchronizes system wifi settings with Meshtastic wifi settings. This allows you to use Meshtastic's remote node administration feature to enable/disable wifi.\n\nIn future, this will also allow you to reconfigure SSID and password.\n" 0 0
           else
             case $choice in
               "View detailed service status") 
                 echo "Getting Meshtastic wifi sync service status..."
-                dialog --no-collapse --no-shadow --title "Meshtastic wifi sync service status" --msgbox "$(systemctl status femto-wifi-mesh-control)" 0 0
+                dialog --no-collapse --title "Meshtastic wifi sync service status" --msgbox "$(systemctl status femto-wifi-mesh-control)" 0 0
               ;;
               "Start/restart service") 
                 dialog --no-collapse --title "$title" --yesno "Start/restart Meshtastic wifi sync service?" 7 45
@@ -383,7 +389,7 @@ legacy_admin() {
   choice=""   # zero the choice before loading the submenu
   while true; do
     loading "Getting current legacy admin state..."
-    choice=$(dialog --no-collapse --colors --title "Legacy Admin" --default-item "$choice" --help-button --item-help --menu "If the node you need to administer or be administered by is running 2.4.x or earlier, you should set this to Enabled.\n\nCurrent state: $(femto-utils.sh -R "$(femto-meshtasticd-config.sh -p)")" 16 65 5 \
+    choice=$(dialog --no-collapse --colors --title "Legacy Admin" --default-item "$choice" --help-button --item-help --menu "If the node you Femtofox needs to administer or be administered by is running 2.4.x or earlier, you should set this to Enabled.\n\nCurrent state: $(femto-utils.sh -R "$(femto-meshtasticd-config.sh -p)")" 16 65 5 \
       1 "Enable" "" \
       2 "Disable (default)" "" \
       " " "" "" \
@@ -553,7 +559,7 @@ meshtastic_settings() {
           case $choice in
             "View detailed service status") 
               echo "Getting Meshtasticd service status..."
-              dialog --no-collapse --no-shadow --title "Meshtasticd service status" --msgbox "$(systemctl status meshtasticd)" 0 0
+              dialog --no-collapse --title "Meshtasticd service status" --msgbox "$(systemctl status meshtasticd)" 0 0
             ;;
             "Start/restart service") 
               dialog --no-collapse --title "$title" --yesno "Start/restart Meshtasticd service?" 6 45
@@ -614,7 +620,7 @@ help_menu() {
   local title="Help / About"
     help_choice=$(dialog --no-collapse --cancel-label "Back" --default-item "$help_choice" --item-help --menu "$title" 0 0 7 \
       1 "About Femtofox" "" \
-      2 "View pinout" "" \
+      2 "Display pinout" "" \
       3 "Femtofox licensing info - short" "" \
       4 "Femtofox licensing info - long" "" \
       5 "Meshtastic licensing info" "" \
@@ -696,7 +702,7 @@ while getopts ":hlLwc" opt; do
     ;;
     c) # Option -c (Check if Meshtasticd is running and warn the user if not)
       check_meshtasticd_running
-      exit $? # relay exit status
+      exit $?
     ;;
     \?) # Unknown option)
       echo -e "Unknown argument $1.\n$help"
