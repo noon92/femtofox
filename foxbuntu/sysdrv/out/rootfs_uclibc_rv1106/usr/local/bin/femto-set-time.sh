@@ -59,7 +59,12 @@ done
 if [ $arg_count -eq 0 ]; then # if the script was launched with no arguments, then load the UI.
   echo "Loading current time settings..."
   current_timezone=$(timedatectl show --property=Timezone --value)
-  dialog --no-collapse --title "System time" --yesno "Current system time: $(date +"%H:%M:%S")\nCurrent time zone:   $current_timezone ($(date +"UTC%z" | sed -E 's/GMT([+-])0?([0-9]{1,2})00/GMT\1\2/'))\n$(hwclock >/dev/null 2>&1 && echo "RTC module found!" || echo "RTC module not found.")\n\nSet new time and timezone?" 10 60
+  dialog --no-collapse --title "System time" --yesno "\
+Current system time:\n\
+$(date +"%B %d, %Y %H:%M:%S") $(timedatectl show --property=Timezone --value) ($(date +"UTC%z" | sed -E 's/GMT([+-])0?([0-9]{1,2})00/GMT\1\2/'))\n\
+$(hwclock >/dev/null 2>&1 && echo "RTC module found!" || echo "RTC module not found.")\n\
+\n\
+Set new time and timezone?" 10 70
   if [ $? -eq 1 ]; then #unless cancel/no
     exit 0
   fi
