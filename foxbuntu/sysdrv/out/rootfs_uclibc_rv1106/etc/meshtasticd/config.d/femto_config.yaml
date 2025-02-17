@@ -2,3 +2,10 @@
 # of course, eth0 also has its mac address derived from CPU s/n, but this way meshtastic uses the exact mac address, instead of a bastardized version converted to a 9 digit int with `| bc | tail -c -9`.
 General:
   MACAddressSource: eth0
+
+# this activates the webserver
+Webserver:
+  Port: 443 # Port for Webserver & Webservices
+  RootPath: /usr/share/meshtasticd/web # Root Dir of WebServer
+  SSLKey: /etc/meshtasticd/ssl/private_key.pem # Path to SSL Key, generated if>
+  SSLCert: /etc/meshtasticd/ssl/certificate.pem # Pa
