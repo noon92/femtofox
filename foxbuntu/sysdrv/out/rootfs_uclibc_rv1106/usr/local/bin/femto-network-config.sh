@@ -147,11 +147,12 @@ $wifi_settings"
       updated_wifi="true"
       ;;
     n) # Option -n (set hostname)
+      old_hostname=$(hostname)
       sed -i "s/$(hostname)/$OPTARG/g" /etc/hosts
       hostnamectl set-hostname "$OPTARG"
       systemctl restart avahi-daemon
       echo "Regenerating web terminal ssl keys..."
-      /usr/local/bin/packages/ttyd.sh -k
+      [ "$OPTARG" != "$old_hostname" ] && /usr/local/bin/packages/ttyd.sh -k
       ;;
     \?)  # Invalid option)
       echo "Invalid option: -$OPTARG"
