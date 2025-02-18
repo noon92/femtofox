@@ -21,7 +21,7 @@ loading() {
 }
 
 ## function to pull data from various femto scripts and convert it to the contents of a read only dialog --form
-# ingest_data() { # usage: `ingest_data "command.sh -argument" key_width value_width`
+# ingest_form_data() { # usage: `ingest_form_data "command.sh -argument" key_width value_width`
 #   unset  output_array #debug code, delete me
 #   declare -a output_array
 #   # Read the output from femto-meshtasticd-config.sh and store it in the array
@@ -42,7 +42,7 @@ loading() {
 #   echo "$form_contents" | sed 's/\x1b\[[0-9;]*m//g'
 # }
 ## CODE TO USE THIS FUNCTION:
-# eval "$(echo -e "dialog --no-collapse --no-cancel --form \"Meshtastic node info\" 0 0 0 $(ingest_data "femto-meshtasticd-config.sh -i" 18 0) 2>/dev/null")"
+# eval "$(echo -e "dialog --no-collapse --no-cancel --form \"Meshtastic node info\" 0 0 0 $(ingest_form_data "femto-meshtasticd-config.sh -i" 18 0) 2>/dev/null")"
 
 
 # function to pull data from various femto scripts and convert it a simple text string, with dialog colors
