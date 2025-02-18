@@ -8,6 +8,7 @@ help=$(cat <<EOF
 Options are:
 -h             This message
 -i             Get important node info
+-C "all"       Get node configuration, by category. Multiple categories can be selected by comma delineation. \`quiet\`: do not echo to console. Options are \`quiet\`, \`all\`, \`nodeinfo\`, \`settings\`, \`channels\`
 -g             Gets the current configuration URL and QR code
 -k             Get current LoRa radio selection
 -l "RADIO"     Choose LoRa radio model. Options are \`lr1121_tcxo\`, \`sx1262_tcxo\`, \`sx1262_xtal\`, \`none\` (simradio)
@@ -28,7 +29,7 @@ Options are:
 -S             Get Meshtasticd service state
 -z             Upgrade Meshtasticd
 -x             Uninstall Meshtasticd
--m             Meshtastic update tool. Syntax: \`femto-meshtasticd-config.sh -m '--set security.admin_channel_enabled false' 10 'Disable legacy admin'\`
+-m             Meshtastic update tool. Syntax: \`femto-meshtasticd-config.sh -m \"--set security.admin_channel_enabled false\" 10 \"Disable legacy admin\"\`
                Will retry the \`--set security.admin_channel_enabled false\` command until successful or up to 10 times, and tag status reports with \`Disable legacy admin\` via echo and to system log.
 EOF
 )
@@ -45,19 +46,18 @@ meshtastic_update() {
   local ref="$3: "
   echo "Submitting to Meshtastic..."
   for retries in $(seq 1 $attempts); do
-    local output=$(meshtastic --host $command | tee /dev/tty) #>&2 lets meshtastic's output display on screen
+    local output=$(meshtastic --host $command 2>&1 | tee $(if [ -e /dev/tty ]; then echo /dev/tty; else echo /dev/ttyFIQ0; fi))
     logger $output
     if echo "$output" | grep -qiE "Abort|invalid|Error|refused|Errno"; then
       if [ "$retries" -lt $attempts ]; then
         local msg="${ref:+$ref}Meshtastic command failed, retrying ($(($retries + 1))/$attempts)..."
-        femto-meshtasticd-config.sh -s
         echo "$msg"
         logger "$msg"
+        femto-meshtasticd-config.sh -s
         sleep 2 # Add a small delay before retrying
       fi
     else
       local success="true"
-      echo -e "$output"
       msg="${ref:+$ref}Meshtastic command successful!"
       echo "$msg"
       logger "$msg"
@@ -76,53 +76,144 @@ meshtastic_update() {
   fi
 }
 
+get_meshtastic_settings() {
+  for retries in $(seq 1 3); do
+    if meshtastic_info=$(meshtastic --host --info); then # if successful
+      success="true"
+      break
+    else # if failed
+      if [ "$retries" -lt 3 ]; then # if under 3 retries
+        echo "Meshtastic command failed, retrying ($(($retries + 1))/3)..."
+        femto-meshtasticd-config.sh -s
+        sleep 2 # Add a small delay before retrying
+      fi
+    fi
+  done
+  if [ -z "$success" ]; then # if failed all retries
+    echo "Meshtastic command FAILED."
+    exit 1 # always exit script if failed
+  fi
+
+  if [[ "$1" == *"all"*  ]] || [[ "$1" == *"nodeinfo"* ]]; then
+    # myInfo
+    eval "myInfo_owner='$(echo "$meshtastic_info" | grep "^Owner: " | sed 's/^Owner: //')'"
+    [[ "$1" != *"quiet"*  ]] && echo "myInfo_owner:$myInfo_owner"
+    while IFS="=" read -r varname value; do
+      eval "myInfo_$varname='$value'"  # Create a variable with the formatted name
+      [[ "$1" != *"quiet"*  ]] && echo "myInfo_$varname:$value"
+    done < <(
+      echo "$(echo "$meshtastic_info" | grep '^My info: ' | sed 's/^My info: //')" | 
+      jq -r 'to_entries[] | "\(.key)=\(.value)"'
+    )
+
+    # metadata
+    while IFS="=" read -r varname value; do
+      eval "metadata_$varname='$value'"  # Create a variable with the formatted name
+      [[ "$1" != *"quiet"*  ]] && echo "metadata_$varname:$value"
+    done < <(
+      echo "$(echo "$meshtastic_info" | grep '^Metadata: ' | sed 's/^Metadata: //')" | 
+      jq -r 'to_entries[] | "\(.key)=\(.value)"'
+    )
+    metadata_nodedbCount=$(echo "$meshtastic_info" | grep -oP '"![a-zA-Z0-9]+":\s*\{' | wc -l)
+    [[ "$1" != *"quiet"*  ]] && echo "metadata_nodedbCount:$metadata_nodedbCount"
+
+    # nodeinfo
+    while IFS='=' read -r var value; do
+      eval "nodeinfo_$var=\"$value\""
+      [[ "$1" != *"quiet"*  ]] && echo "nodeinfo_$var:$value"
+    done < <(echo "$(echo "$meshtastic_info" | sed -n '/Nodes in mesh:/,$p' | sed '1s/^Nodes in mesh: *//' | sed '/^[[:space:]]*$/q' | jq -r 'to_entries | .[0] | "\(.key)=\(.value)"' | sed 's/^[^=]*=//;s/^[ \t]*}//')" | jq -r '
+      def recurse:
+        if type == "object" then
+          to_entries | .[] | "\(.key)=\(.value | recurse)"
+        elif type == "array" then
+          . | tostring
+        else
+          .
+        end;
+      recurse' | sed '/=/ {s/\(.*\)=\(.*\)=/\1_\2=/; }'
+    )
+  fi
+
+  if [[ "$1" == *"all"*  ]] || [[ "$1" == *"settings"* ]]; then
+    # settings
+    while IFS="=" read -r varname value; do
+      eval "$varname='$value'"
+      [[ "$1" != *"quiet"*  ]] && echo "$varname:$value"
+    done < <(
+      echo "$(echo "$meshtastic_info" | sed -n '/Preferences: {/,$p' | sed '1s/.*/{/; /^[[:space:]]*$/q')" | 
+      jq -r 'to_entries[] | select(.value | type == "object") | .key as $block | .value | to_entries[] | "\($block)_\(.key)=\(.value)"'
+    )
+
+    # module settings
+    while IFS="=" read -r varname value; do
+      eval "$varname='$value'"
+      [[ "$1" != *"quiet"*  ]] && echo "$varname:$value"
+    done < <(
+      echo "$(echo "$meshtastic_info" | sed -n '/Module preferences: {/,$p' | sed '1s/.*/{/; /^[[:space:]]*$/q')" | 
+      jq -r 'to_entries[] | select(.value | type == "object") | .key as $block | .value | to_entries[] | "\($block)_\(.key)=\(.value)"'
+    )
+  fi
+
+  if [[ "$1" == *"all"*  ]] || [[ "$1" == *"channels"* ]]; then
+    # channels
+    while read index line; do
+      channel_type=$(echo "$line" | awk '{print $3}')
+      psk_type=$(echo "$line" | grep -o 'psk=[^ ]*' | cut -d= -f2)
+      eval "channel${index}_type='$channel_type'"
+      [[ "$1" != *"quiet"*  ]] && echo "channel${index}_type:$channel_type"
+      eval "channel${index}_psk_type='$psk_type'"
+      [[ "$1" != *"quiet"*  ]] && echo "channel${index}_psk_type:$psk_type"
+
+      # get the json portion of the channel listing
+      while IFS=":" read -r key value; do
+        eval "$key='$value'"
+        [[ "$1" != *"quiet"*  ]] && echo "$key:$value"
+      done < <(
+        echo "$(echo "$line" | sed 's/.*\({.*\)/\1/')" | jq -r 'to_entries | .[] | "channel'${index}'_\(.key):\(.value)"'
+      )
+    done < <(
+      echo "$meshtastic_info" | awk '/Channels:/ {f=1; next} f && NF {print} f && !NF {exit}' | nl -v 0
+    )
+
+    eval "url_primary_channel='$(echo "$meshtastic_info" | sed -n 's/^Primary channel URL: //p')'"
+    [[ "$1" != *"quiet"*  ]] && echo "url_primary_channel:$url_primary_channel"
+    eval "url_all_channels='$(echo "$meshtastic_info" | sed -n 's/^Complete URL (includes all channels): //p')'"
+    [[ "$1" != *"quiet"*  ]] && echo "url_all_channels:$url_all_channels"
+  fi
+}
+
 # Parse options
-while getopts ":higkl:q:uU:rR:aA:cpo:sM:Stwuxm" opt; do
+while getopts ":hiC:gkl:q:uU:rR:aA:cpo:sM:Stwuxm" opt; do
   case ${opt} in
     h) # Option -h (help)
       echo -e "$help"
       ;;
     i) # Option -i (Get important node info)
-      declare -a output_array
-      output=$(meshtastic --host --info)
-      output_array+=("Service=$(femto-meshtasticd-config.sh -S)")
-      output_array+=("Version=$(echo "$output" | grep -oP '"firmwareVersion":\s*"\K[^"]+' | head -n 1)")
-      output_array+=("Node name=$(echo "$output" | grep -oP 'Owner:\s*\K.*' | head -n 1)")
-      output_array+=("NodeID=$(echo "!$(printf "%08x\n" $(echo "$output" | grep -oP '"myNodeNum":\s*\K\d+' | head -n 1))")")
-      output_array+=("Nodenum=$(echo "$output" | grep -oP '"myNodeNum":\s*\K\d+' | head -n 1)")
-      output_array+=("TX enabled=$(echo "$output" | grep -oP '"txEnabled":\s*\K\w+')")
-      use_preset=$(echo "$output" | grep -oP '"usePreset":\s*\K\w+')
-      output_array+=("Use preset=$use_preset")
-      if [ "$use_preset" = "true" ]; then # if use-preset is true, then display the preset
-        output_array+=("Preset=$(echo "$output" | grep -oP '"modemPreset":\s*"\K[^"]+')")
-      else # otherwise, display the lora settings
-        output_array+=("Bandwidth=$(echo "$output" | grep -oP '"bandwidth":\s*\K\w+')")
-        output_array+=("Spread factor=$(echo "$output" | grep -oP '"spreadFactor":\s*\K\w+')")
-        output_array+=("Coding rate=$(echo "$output" | grep -oP '"codingRate":\s*\K\w+')")
-      fi
-      output_array+=("Role=$(echo "$output" | grep -oP '"role":\s*"\K[^"]+' | head -n 1)")
-      freq_offset=$(echo "$output" | grep -oP '"bandwidth":\s*\K\w+')
-      if [ "$freq_offset" != 0 ]; then # only display frequency offset if not 0
-        output_array+=("Freq offset=$freq_offset")
-      fi
-      output_array+=("Region=$(echo "$output" | grep -oP '"region":\s*"\K[^"]+')")
-      output_array+=("Hop limit=$(echo "$output" | grep -oP '"hopLimit":\s*\K\w+')")
-      freq_slot=$(echo "$output" | grep -oP '"channelNum":\s*\K\d+' | head -n 1)
-      if [ "$freq_slot" != 0 ]; then # only display frequency slot if not 0
-        freq_slot+=("Freq slot=$freq_slot")
-      fi
-      override_freq=$(echo "$output" | grep -oP '"overrideFrequency":\s*\K[0-9.]+')
-      if [ "$override_freq" != "0.0" ]; then # only display override frequency if not 0.0
-        output_array+=("Override freq=$override_freq")
-      fi
-      output_array+=("Public key=$(echo "$output" | grep -oP '"publicKey":\s*"\K[^"]+' | head -n 1)")
-      output_array+=("Nodes in db=$(echo "$output" | grep -oP '"![a-zA-Z0-9]+":\s*\{' | wc -l)")
-      # now, echo the array
-      for pair in "${output_array[@]}"; do
-        key=$(echo "$pair" | cut -d'=' -f1)
-        value=$(echo "$pair" | cut -d'=' -f2-)
-        echo "$key:$value"
-      done
+      get_meshtastic_settings quiet,nodeinfo,settings
+      echo -e "\
+Service:$(femto-meshtasticd-config.sh -S)
+Version:$metadata_firmwareVersion
+Node name:$myInfo_owner
+NodeID:$nodeinfo_user_id
+Nodenum:$myInfo_myNodeNum
+TX enabled:$lora_txEnabled
+Use preset:$lora_usePreset
+Preset:$lora_modemPreset
+Bandwidth:$lora_bandwidth
+Spread factor:$lora_spreadFactor
+Coding rate:$lora_codingRate
+Role:$device_role
+Freq offset:$lora_frequencyOffset
+Region:$lora_region
+Hop limit:$lora_hopLimit
+Freq slot:$lora_channelNum
+Override freq:$lora_overrideFrequency
+Public key:$security_publicKey
+Nodes in db:$metadata_nodedbCount"
+
+      ;;
+    C) # Option -C (Complete node config)
+      get_meshtastic_settings $OPTARG
       ;;
     g) # Option -g (get config URL)
       url=$(meshtastic --host --qr-all | grep -oP '(?<=Complete URL \(includes all channels\): )https://[^ ]+') #add look for errors
@@ -239,14 +330,16 @@ while getopts ":higkl:q:uU:rR:aA:cpo:sM:Stwuxm" opt; do
     x) # Option -x (uninstall meshtasticd)
       apt remove meshtasticd
       ;;
-    m) # Option -m (manual meshtastic command)
+    m)
       external="true" # set a variable so the function knows it was called by an an external script and not locally
       meshtastic_update "$2" $3 "$4"
       ;;
-    \?)  # Invalid option)
-      echo -e "Unknown argument $1.\n$help"
+    \?)  # Invalid option
+      echo "Invalid option: -$OPTARG"
+      echo -e "$help"
+      exit 1
       ;;
-    :) # Missing argument for option)
+    :) # Missing argument for option
       echo "Option -$OPTARG requires a setting."
       echo -e "$help"
       exit 1
