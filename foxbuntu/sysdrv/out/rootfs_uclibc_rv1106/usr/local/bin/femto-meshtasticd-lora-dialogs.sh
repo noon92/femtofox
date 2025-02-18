@@ -11,11 +11,12 @@ export LANG=C.UTF-8
 
 title="Meshtastic LoRa Settings"
 args=$@
+
 send_settings() {
   if [ -n "$command" ]; then
     set -o pipefail
     echo "meshtastic --host $command"
-    output=$(eval "femto-meshtasticd-config.sh -m '$command' 5 'Save LoRa settings'" | tee /dev/tty)
+    output=$(eval "femto-meshtasticd-config.sh -m '$command' 5 'Save Meshtastic settings'" | tee /dev/tty)
     exit_status=$?
     set +o pipefail
     if [ $exit_status -eq 1 ]; then
@@ -30,7 +31,7 @@ send_settings() {
 
 config_url() {
   femto-config -c &&  (
-    newurl=$(dialog --no-collapse --title "Meshtastic URL" --inputbox "The Meshtastic configuration URL allows for automatic configuration of all Meshtastic LoRa settings and channels.\n\nNew Meshtastic LoRa configuration URL (SHIFT+INS to paste):" 11 63 3>&1 1>&2 2>&3)
+    newurl=$(dialog --no-collapse --colors --title "Meshtastic URL" --inputbox "The Meshtastic configuration URL allows for automatic configuration of all Meshtastic LoRa settings and channels.\nEntering a URL may \Z1\ZuOVERWRITE\Zn your LoRa settings and channels!\n\nNew Meshtastic LoRa configuration URL (SHIFT+INS to paste):" 13 63 3>&1 1>&2 2>&3)
     if [ -n "$newurl" ]; then #if a URL was entered
       command+="--seturl $newurl "
     fi
@@ -39,71 +40,67 @@ config_url() {
   )
 }
 
-#set lora radio
-set_lora_radio() {
-  choice=""   # zero the choice before loading the submenu
-  while true; do
-    echo "Checking LoRa radio..."
-    #Display filename, if exists: $(files=$(ls /etc/meshtasticd/config.d/* 2>/dev/null) && [ -n "$files" ] && echo "\n\nConfiguration files in use:\n$files" | paste -sd, -))
-    choice=$(dialog --no-collapse --colors --cancel-label "$([[ "$1" == "wizard" ]] && echo "Skip" || echo "Cancel")" --default-item "$choice" --title "Meshtastic LoRa radio" --item-help --menu "Currently configured LoRa radio:\n$(femto-utils.sh -R "$(femto-meshtasticd-config.sh -k)")$(ls -1 /etc/meshtasticd/config.d 2>/dev/null | grep -v '^femto_' | paste -sd ', ' - | sed 's/^/ (/; s/$/)/; s/,/, /g' | grep -v '^ ()$')" 22 50 10 \
-       "Radio name:" "Configuration:" "" \
-       "" "" "" \
-       "Ebyte e22-900m30s" "(SX1262_TCXO)" "Included in Femtofox Pro" \
-       "Ebyte e22-900m22s" "(SX1262_TCXO)" "" \
-       "Ebyte e80-900m22s" "(SX1262_XTAL)" "" \
-       "Heltec ht-ra62" "(SX1262_TCXO)" "" \
-       "Seeed wio-sx1262" "(SX1262_TCXO)" "" \
-       "Waveshare sx126x-xxxm" "(SX1262_XTAL)" "Not recommended due issues with sending longer messages" \
-       "AI Thinker ra-01sh" "(SX1262_XTAL)" "" \
-       "LoRa Meshstick 1262" "(meshstick-1262)" "USB based LoRa radio from Mark Birss. https://github.com/markbirss/MESHSTICK" \
-       "Simulated radio" "(none)" "" \
-      " " "" "" \
-      "$([[ "$1" == "wizard" ]] && echo "Skip" || echo "Cancel")" "" "" 3>&1 1>&2 2>&3)
-    [ $? -eq 1 ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
-    local radio=""
-    case $choice in
-      "Ebyte e22-900m30s")
-        radio="sx1262_tcxo"
-      ;;
-      "Ebyte e22-900m22s")
-        radio="sx1262_tcxo"
-      ;;
-      "Ebyte e80-900m22s")
-        radio="sx1262_xtal"
-      ;;
-      "Heltec ht-ra62")
-        radio="sx1262_tcxo"
-      ;;
-      "Seeed wio-sx1262")
-        radio="sx1262_tcxo"
-      ;;
-      "Waveshare sx126x-xxxm")
-        radio="sx1262_xtal"
-      ;;
-      "AI Thinker ra-01sh")
-        radio="femto_sx1262_xtal"
-      ;;
-      "LoRa Meshstick 1262")
-        radio="lora-meshstick-1262"
-      ;;
-      "Simulated radio")
-        radio="none"
-      ;;
-      "Skip")
-        return
-      ;;
-    esac
-    if [ -n "$radio" ]; then #if a radio was selected
-      femto-meshtasticd-config.sh -l "$radio" -s # set the radio, then restart meshtasticd
-      dialog --no-collapse --colors --title "$title" --msgbox "$(echo -e "Radio \Zu$choice\Zn selected.\nMeshtasticd service restarted.\Zn")" 7 45
-      return
-    fi
-  done
-}
-
 lora_settings_actions() {
   if [ "$1" = "set_lora_radio_model" ] || [ "$1" = "wizard" ]; then
-    set_lora_radio $1
+    choice=""   # zero the choice before loading the submenu
+    while true; do
+      echo "Checking LoRa radio..."
+      #Display filename, if exists: $(files=$(ls /etc/meshtasticd/config.d/* 2>/dev/null) && [ -n "$files" ] && echo "\n\nConfiguration files in use:\n$files" | paste -sd, -))
+      choice=$(dialog --no-collapse --colors --cancel-label "$([[ "$1" == "wizard" ]] && echo "Skip" || echo "Cancel")" --default-item "$choice" --title "Meshtastic LoRa radio" --item-help --menu "Currently configured LoRa radio:\n$(femto-utils.sh -R "$(femto-meshtasticd-config.sh -k)")$(ls -1 /etc/meshtasticd/config.d 2>/dev/null | grep -v '^femto_' | paste -sd ', ' - | sed 's/^/ (/; s/$/)/; s/,/, /g' | grep -v '^ ()$')" 22 50 10 \
+        "Radio name:" "Configuration:" "" \
+        "" "" "" \
+        "Ebyte e22-900m30s" "(SX1262_TCXO)" "Included in Femtofox Pro" \
+        "Ebyte e22-900m22s" "(SX1262_TCXO)" "" \
+        "Ebyte e80-900m22s" "(SX1262_XTAL)" "" \
+        "Heltec ht-ra62" "(SX1262_TCXO)" "" \
+        "Seeed wio-sx1262" "(SX1262_TCXO)" "" \
+        "Waveshare sx126x-xxxm" "(SX1262_XTAL)" "Not recommended due issues with sending longer messages" \
+        "AI Thinker ra-01sh" "(SX1262_XTAL)" "" \
+        "LoRa Meshstick 1262" "(meshstick-1262)" "USB based LoRa radio from Mark Birss. https://github.com/markbirss/MESHSTICK" \
+        "Simulated radio" "(none)" "" \
+        " " "" "" \
+        "$([[ "$1" == "wizard" ]] && echo "Skip" || echo "Cancel")" "" "" 3>&1 1>&2 2>&3)
+      [ $? -eq 1 ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
+      local radio=""
+      case $choice in
+        "Ebyte e22-900m30s")
+          radio="sx1262_tcxo"
+        ;;
+        "Ebyte e22-900m22s")
+          radio="sx1262_tcxo"
+        ;;
+        "Ebyte e80-900m22s")
+          radio="sx1262_xtal"
+        ;;
+        "Heltec ht-ra62")
+          radio="sx1262_tcxo"
+        ;;
+        "Seeed wio-sx1262")
+          radio="sx1262_tcxo"
+        ;;
+        "Waveshare sx126x-xxxm")
+          radio="sx1262_xtal"
+        ;;
+        "AI Thinker ra-01sh")
+          radio="femto_sx1262_xtal"
+        ;;
+        "LoRa Meshstick 1262")
+          radio="lora-meshstick-1262"
+        ;;
+        "Simulated radio")
+          radio="none"
+        ;;
+        "Skip")
+          return
+        ;;
+      esac
+      if [ -n "$radio" ]; then #if a radio was selected
+        femto-meshtasticd-config.sh -l "$radio" -s # set the radio, then restart meshtasticd
+        dialog --no-collapse --colors --title "$title" --msgbox "$(echo -e "Radio \Zu$choice\Zn selected.\nMeshtasticd service restarted.\Zn")" 7 45
+        break
+      fi
+    done
+    [ "$1" = "set_lora_radio_model" ] && return
   fi
 
   if femto-config -c; then
