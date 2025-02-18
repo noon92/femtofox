@@ -11,11 +11,12 @@ Find out more in the sections below, or in the [Wiki](https://github.com/femtofo
 - [Features](#features) and [Specifications](#Specification)
 - [Supported hardware](https://github.com/femtofox/femtofox/wiki/Supported-Hardware)
 - [Installation guide](https://github.com/femtofox/femtofox/wiki/Getting-Started)
-- How to order - coming soon
+- How to order
+   - [Etsy (USA)](https://www.etsy.com/listing/1861858340/femtofox-pro-v1-kit-compact-arm-linux)
+   - [Tindie (UK)](tbc)
 - [DIY instructions](https://github.com/femtofox/Femtofox_Community_Hardware)
 - [USB configuration tool](https://github.com/femtofox/femtofox/wiki/USB-Configuration-Tool)
 - [Building your own Foxbuntu image](https://github.com/femtofox/femtofox/wiki/Building-Foxbuntu-%28WSL%29)
-
 
 ### Features
 * Tiny size (63x54mm for Femtofox, 65x30mm for the Smol Edition). Equivalent to a standard Raspberry Pi hat and Pi Zero respectively.
@@ -30,11 +31,12 @@ Find out more in the sections below, or in the [Wiki](https://github.com/femtofo
 
 | Feature      | Specification                                           |
 | ------------ | ------------------------------------------------------- |
-| Processor    | Rockchip RV1103, Cortex A7 \@1.1GHz                      |
+| Processor    | Rockchip RV1103, Cortex A7 \@1.1GHz                     |
 | Memory       | 64MB DDR2                                               |
 | OS           | Foxbuntu (based on Ubuntu 22.04.5 LTS Jammy)            |
 | Connectivity | USB 2.0 Host/Device                                     |
-| Network      | RJ45 Ethernet with filtering<br>WiFi ready              |
+| Network      | RJ45 Ethernet with filtering<br>                        |
+|              | WiFi ready                                              |
 | GPIO         | 17x GPIO pins (of which 8 are required for Lora module) |
 | IO           | 2x I2C JST PH                                           |
 |              | 1x UART JST PH                                          |
@@ -42,6 +44,7 @@ Find out more in the sections below, or in the [Wiki](https://github.com/femtofo
 | Mesh         | 30dB LoRa Radio 868-915MHz                              |
 | Storage      | Micro-SD slot                                           |
 | Power        | 3.3-5V.dc via JST PH or USB-C                           |
+| Dimensions   | 63 x 54 x 19mm                                          |
 
 **Accomplished:**
 - [x] Meshtastic native client controlling a LoRa radio (see [supported hardware](supported_hardware.md))
