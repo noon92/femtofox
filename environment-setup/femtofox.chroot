@@ -62,7 +62,8 @@ systemctl enable femto-boot-complete.service
 systemctl enable femto-wifi-mesh-control
 systemctl enable femto-watchclock-dog
 
-systemctl disable meshtasticd
+systemctl disable ttyd   # enabled on first boot
+systemctl disable meshtasticd   # enabled on first boot
 systemctl disable apt-daily.timer
 systemctl disable unattended-upgrades
 systemctl disable smbd nmbd # samba services, can be enabled via menu
