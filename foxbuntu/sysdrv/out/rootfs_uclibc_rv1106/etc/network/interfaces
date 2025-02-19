@@ -1,4 +1,3 @@
-# interfaces(5) file used by ifup(8) and ifdown(8)
 # Include files from /etc/network/interfaces.d:
 source /etc/network/interfaces.d/*
 
@@ -8,4 +7,13 @@ iface lo inet loopback
 allow-hotplug wlan0
 iface wlan0 inet dhcp
     wpa-conf /etc/wpa_supplicant/wpa_supplicant.conf
+    metric 100
+    post-up sleep 5 && dhclient wlan0
+    pre-down ip route del default via $(ip route | awk '/default/ {print $3}') dev wlan0 metric 100
 
+
+allow-hotplug eth0
+iface eth0 inet dhcp
+    metric 10
+    post-up ip route replace default via $(ip route | awk '/default/ {print $3}') dev eth0 metric 10
+    pre-down ip route del default via $(ip route | awk '/default/ {print $3}') dev eth0 metric 10
