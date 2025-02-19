@@ -76,13 +76,16 @@ log_message "Generating new Web Terminal SSL encryption keys. This can take a mi
 
 # prevent randomized mac address for eth0. If `eth0`` is already present in /etc/network/interfaces, skip
 mac="$(awk '/Serial/ {print $3}' /proc/cpuinfo | tail -c 11 | sed 's/^\(.*\)/a2\1/' | sed 's/\(..\)/\1:/g;s/:$//')"
-if ! grep -q "eth0" /etc/network/interfaces; then
+file="/etc/network/interfaces"
+if ! grep -q "    hwaddress ether $mac" "$file"; then
   log_message "Setting eth0 MAC address to $mac (derivative of CPU s/n)"
-  cat <<EOF >> /etc/network/interfaces
-    hwaddress ether $mac
-EOF
+  awk -v mac="$mac" '
+    { print }
+    /allow-hotplug eth0/ { count=5 }
+    count && --count == 0 { print "    hwaddress ether " mac }
+  ' "$file" > "$file.tmp" && mv "$file.tmp" "$file"
 else
-  log_message "eth0 already exists in /etc/network/interfaces, skipping"
+  log_message "eth0 mac address already set in /etc/network/interfaces, skipping"
 fi
 
 # Add term stuff to .bashrc
