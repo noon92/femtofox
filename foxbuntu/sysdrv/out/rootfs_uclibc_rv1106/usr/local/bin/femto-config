@@ -636,7 +636,7 @@ help_menu() {
       2) #Display pinout)
         choice=""   # zero the choice before loading the submenu
         while true; do
-          choice=$(dialog --no-collapse --cancel-label "Back" --item-help --menu "Pinouts" 15 40 5 \
+          choice=$(dialog --no-collapse --cancel-label "Back" --default-item "$choice" --item-help --menu "Pinouts" 15 40 5 \
             1 "Femtofox Pro/CE" "" \
             2 "Femtofox Zero" "" \
             3 "Femtofox Tiny" "" \
