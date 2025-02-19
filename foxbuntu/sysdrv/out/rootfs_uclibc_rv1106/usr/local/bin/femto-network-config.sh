@@ -103,7 +103,7 @@ MAC address:$(ifconfig wlan0 | grep ether | awk '{print $2}')"
 Wi-Fi status:\033[4m\033[0;34menabled\033[0m\n\
 Connected to:$(iwconfig 2>/dev/null | grep -i 'ESSID' | awk -F 'ESSID:"' '{print $2}' | awk -F '"' '{print $1}' | sed 's/^$/none/')\n\
 Sig. strength:$(iwconfig 2>/dev/null | grep -i 'Signal level' | awk -F 'Signal level=' '{print $2}' | awk '{print $1}')\n\
-Current IP:$(hostname -I | awk '{print $1}')\n
+Current IP:$(ip addr show wlan0 | grep 'inet ' | awk '{print $2}' | cut -d/ -f1)\n
 Hostname:$(hostname).local\n\
 $mac_address_line"
         else
@@ -147,11 +147,12 @@ $wifi_settings"
       updated_wifi="true"
       ;;
     n) # Option -n (set hostname)
+      old_hostname=$(hostname)
       sed -i "s/$(hostname)/$OPTARG/g" /etc/hosts
       hostnamectl set-hostname "$OPTARG"
       systemctl restart avahi-daemon
       echo "Regenerating web terminal ssl keys..."
-      /usr/local/bin/packages/ttyd.sh -k
+      [ "$OPTARG" != "$old_hostname" ] && /usr/local/bin/packages/ttyd.sh -k
       ;;
     \?)  # Invalid option)
       echo "Invalid option: -$OPTARG"

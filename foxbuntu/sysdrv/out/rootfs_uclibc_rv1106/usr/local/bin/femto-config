@@ -21,7 +21,7 @@ loading() {
 }
 
 ## function to pull data from various femto scripts and convert it to the contents of a read only dialog --form
-# ingest_data() { # usage: `ingest_data "command.sh -argument" key_width value_width`
+# ingest_form_data() { # usage: `ingest_form_data "command.sh -argument" key_width value_width`
 #   unset  output_array #debug code, delete me
 #   declare -a output_array
 #   # Read the output from femto-meshtasticd-config.sh and store it in the array
@@ -42,7 +42,7 @@ loading() {
 #   echo "$form_contents" | sed 's/\x1b\[[0-9;]*m//g'
 # }
 ## CODE TO USE THIS FUNCTION:
-# eval "$(echo -e "dialog --no-collapse --no-cancel --form \"Meshtastic node info\" 0 0 0 $(ingest_data "femto-meshtasticd-config.sh -i" 18 0) 2>/dev/null")"
+# eval "$(echo -e "dialog --no-collapse --no-cancel --form \"Meshtastic node info\" 0 0 0 $(ingest_form_data "femto-meshtasticd-config.sh -i" 18 0) 2>/dev/null")"
 
 
 # function to pull data from various femto scripts and convert it a simple text string, with dialog colors
@@ -62,10 +62,16 @@ ingest_data() { # usage: `ingest_data "command.sh -argument" key_width`
 }
 
 check_meshtasticd_running() {
-  if echo $(femto-utils.sh -C "meshtasticd") | grep -q "not running"; then
+  if ! echo $(femto-utils.sh -C "meshtasticd") | sed 's/\x1b\[[0-9;]*m//g' | grep -q ", running"; then
     dialog --no-collapse --title "Meshtasticd service" --yesno "Meshtasticd service is not running but is required.\n\nStart service?" 9 50
     if [ $? -eq 0 ]; then #unless cancel/no
       femto-meshtasticd-config.sh -s
+      echo "Waiting for meshtasticd service to start..."
+      sleep 3
+      if ! echo $(femto-utils.sh -C "meshtasticd") | sed 's/\x1b\[[0-9;]*m//g' | grep -q ", running"; then
+        dialog --no-collapse --colors --title "Meshtasticd service" --msgbox "Meshtasticd service ($(femto-utils.sh -R "$(femto-utils.sh -C "meshtasticd")")) failed to run, but is required." 7 50
+        return 1
+      fi
       return 0
     else
       return 1
@@ -186,7 +192,7 @@ networking_settings() {
           if [ $exit_status -eq 1 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
             break
           elif [ $exit_status -eq 2 ]; then # Help ("extra") button
-            dialog --no-collapse --colors --title "Meshtastic wifi sync service help" --msgbox "The Meshtastic wifi sync service synchronizes wifi settings with Meshtastic wifi settings. This allows you to use remote node administration to enable/disable Femtofox wifi.\n\nIn future, this will also allow you to reconfigure SSID and password.\n" 0 0
+            dialog --no-collapse --colors --title "Meshtastic wifi sync service help" --msgbox "The Meshtastic wifi sync service synchronizes system wifi settings with Meshtastic wifi settings. This allows you to use Meshtastic's remote node administration feature to enable/disable wifi.\n\nIn future, this will also allow you to reconfigure SSID and password.\n" 0 0
           else
             case $choice in
               "View detailed service status") 
@@ -242,7 +248,7 @@ utilities() {
     utilities_choice=$(dialog --no-collapse --cancel-label "Back" --default-item "$utilities_choice" --item-help --menu "$title" 21 50 4 \
       1 "View system info" "" \
       2 "Set system time" "" \
-      3 "Kernel modules" "" \
+      3 "Kernel module manager" "" \
       4 "Re-run first-boot script" "" \
       5 "Run USB configuration tool" "" \
       6 "Run OEM luckfox-config" "" \
@@ -260,9 +266,9 @@ utilities() {
         sysinfo_choice=""   # zero the choice before loading the submenu
         while true; do
         echo $sysinfo_choice
-          sysinfo_choice=$(dialog --no-collapse --help-button --cancel-label "Back" --default-item "$sysinfo_choice" --item-help --menu "System info" 17 40 5 \
-            1 "CPU" "" \
-            2 "Operating system" "" \
+          sysinfo_choice=$(dialog --no-collapse --help-button --backtitle "$(femto-utils.sh -v)" --cancel-label "Back" --default-item "$sysinfo_choice" --item-help --menu "System info" 17 40 5 \
+            1 "Operating system" "" \
+            2 "CPU" "" \
             3 "Storage & memory" "" \
             4 "Peripherals & devices" ""\
             5 "Networking" "" \
@@ -274,16 +280,16 @@ utilities() {
           if [ $exit_status -eq 1 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
             break
           elif [ $exit_status -eq 2 ]; then # Help ("extra") button
-            dialog --no-collapse --colors --title "System info help" --msgbox "To get system info in terminal (where it can be copied), enter \`\Zusudo femto-utils.sh -i\Zn\`.\n\nWhen getting Peripherals & Devices (or Complete System Info) without an i2c device connected, it is normal to see error messages on serial console.\n" 0 0
+            dialog --no-collapse --colors --title "System info help" --msgbox "To get system info in terminal (where it can be copied), enter \`\Zusudo femto-utils.sh -i\Zn\`.\n\nWhen getting Peripherals & Devices Info (or Complete System Info) without an i2c device connected, it is normal to see error messages on serial console.\n" 0 0
           else
             case $sysinfo_choice in
-              1) # CPU)
-                loading "Loading CPU info..."
-                dialog --no-collapse --colors --title "CPU info" --msgbox "$(ingest_data "femto-utils.sh -c" 15)" 0 0
-              ;;
-              2) # Operating system)
+              1) # Operating system)
                 loading "Loading operating system info..."
                 dialog --no-collapse --colors --title "Operating system info" --msgbox "$(ingest_data "femto-utils.sh -o" 15)" 0 0
+              ;;
+              2) # CPU)
+                loading "Loading CPU info..."
+                dialog --no-collapse --colors --title "CPU info" --msgbox "$(ingest_data "femto-utils.sh -c" 15)" 0 0
               ;;
               3) # Storage & memory)
                 loading "Loading storage & memory info..."
@@ -314,7 +320,6 @@ utilities() {
       ;;
       2) femto-set-time.sh ;; # set timezone
       3) # Kernel modules)
-        dialog --no-collapse --title "$title" --msgbox "Kernel modules are loadable pieces of code that extend a Linux kernel's functionality without requiring a reboot. Common examples include device drivers, file systems, or system calls.\n\nThis tool will allow you to add pre-compiled modules to the Foxbuntu kernel.\n\nModules currently autostarting at boot: $(modules=$(sed -n '6,$p' /etc/modules | sed ':a;N;$!ba;s/\n/, /g;s/, $//'); [ -z "$modules" ] && echo "none" || echo "$modules")\n\nCurrently active modules: $(lsmod | awk 'NR>1 {print $1}' | tr '\n' ' ')" 18 65
         femto-kernel-modules.sh
       ;;
       4) femto-runonce.sh ;; # Re-run first-boot script
@@ -380,67 +385,6 @@ utilities() {
   done
 }
 
-#set lora radio
-set_lora_radio() {
-  choice=""   # zero the choice before loading the submenu
-  while true; do
-    echo "Checking LoRa radio..."
-    #Display filename, if exists: $(files=$(ls /etc/meshtasticd/config.d/* 2>/dev/null) && [ -n "$files" ] && echo "\n\nConfiguration files in use:\n$files" | paste -sd, -))
-    choice=$(dialog --no-collapse --colors --cancel-label "Cancel" --default-item "$choice" --title "Meshtastic LoRa radio" --item-help --menu "Currently configured LoRa radio:\n$(femto-utils.sh -R "$(femto-meshtasticd-config.sh -k)")$(ls -1 /etc/meshtasticd/config.d 2>/dev/null | paste -sd ', ' - | sed 's/^/ (/; s/$/)/; s/,/, /g' | grep -v '^ ()$')" 22 50 10 \
-       "Radio name:" "Configuration:" "" \
-       "" "" "" \
-       "Ebyte e22-900m30s" "(SX1262_TCXO)" "Included in Femtofox Pro" \
-       "Ebyte e22-900m22s" "(SX1262_TCXO)" "" \
-       "Ebyte e80-900m22s" "(SX1262_XTAL)" "" \
-       "Heltec ht-ra62" "(SX1262_TCXO)" "" \
-       "Seeed wio-sx1262" "(SX1262_TCXO)" "" \
-       "Waveshare sx126x-xxxm" "(SX1262_XTAL)" "Not recommended due issues with sending longer messages" \
-       "AI Thinker ra-01sh" "(SX1262_XTAL)" "" \
-       "LoRa Meshstick 1262" "(meshstick-1262)" "USB based LoRa radio from Mark Birss. https://github.com/markbirss/MESHSTICK" \
-       "Simulated radio" "(none)" "" \
-      " " "" "" \
-      "Skip" "" "" 3>&1 1>&2 2>&3)
-    [ $? -eq 1 ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
-    local radio=""
-    case $choice in
-      "Ebyte e22-900m30s")
-        radio="sx1262_tcxo"
-      ;;
-      "Ebyte e22-900m22s")
-        radio="sx1262_tcxo"
-      ;;
-      "Ebyte e80-900m22s")
-        radio="sx1262_xtal"
-      ;;
-      "Heltec ht-ra62")
-        radio="sx1262_tcxo"
-      ;;
-      "Seeed wio-sx1262")
-        radio="sx1262_tcxo"
-      ;;
-      "Waveshare sx126x-xxxm")
-        radio="sx1262_xtal"
-      ;;
-      "AI Thinker ra-01sh")
-        radio="femto_sx1262_xtal"
-      ;;
-      "LoRa Meshstick 1262")
-        radio="lora-meshstick-1262"
-      ;;
-      "Simulated radio")
-        radio="none"
-      ;;
-      "Skip")
-        return
-      ;;
-    esac
-    if [ -n "$radio" ]; then #if a radio was selected
-      femto-meshtasticd-config.sh -l "$radio" -s # set the radio, then restart meshtasticd
-      return
-    fi
-  done
-}
-
 legacy_admin() {
   choice=""   # zero the choice before loading the submenu
   while true; do
@@ -482,18 +426,17 @@ meshtastic_settings() {
   local title="Meshtastic Settings"
   while true; do
     echo "Checking Meshtasticd service state..."
-    meshtastic_choice=$(dialog --no-collapse --colors --title "$title" --cancel-label "Back" --default-item "$meshtastic_choice" --item-help --menu "Meshtasticd service is $(femto-utils.sh -R "$(femto-utils.sh -C "meshtasticd")")$(femto-meshtasticd-config.sh -k | grep -q 'simulated' && echo '\n\Z1Warning: using simulated radio\Zn')" 19 50 4 \
+    meshtastic_choice=$(dialog --no-collapse --colors --title "$title" --cancel-label "Back" --default-item "$meshtastic_choice" --item-help --menu "Meshtasticd service is $(femto-utils.sh -R "$(femto-utils.sh -C "meshtasticd")")$(femto-meshtasticd-config.sh -k | grep -q 'simulated' && echo '\n\Z1Warning: using simulated radio\Zn')" 18 50 4 \
       1 "View node info" "" \
       2 "View configuration URL & QR code" "" \
-      3 "Set new configuration URL" "" \
-      4 "Set LoRa radio" "" \
-      5 "Security settings" "" \
-      6 "Mesh connectivity test" "" \
-      7 "Manage Meshtasticd service" "" \
-      8 "Upgrade/install Meshtasticd" "" \
-      9 "Uninstall Meshtasticd" "" \
+      3 "LoRa settings" "" \
+      4 "Security settings" "" \
+      5 "Mesh connectivity test" "" \
+      6 "Manage Meshtasticd service" "" \
+      7 "Upgrade/install Meshtasticd" "" \
+      8 "Uninstall Meshtasticd" "" \
       " " "" "" \
-      10 "Back to main menu" "" 3>&1 1>&2 2>&3)
+      9 "Back to main menu" "" 3>&1 1>&2 2>&3)
     [ $? -eq 1 ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
     case $meshtastic_choice in
       1) # view node info)
@@ -509,24 +452,10 @@ meshtastic_settings() {
           pause
         )
       ;;
-      3) # set URL)
-        check_meshtasticd_running && (
-          newurl=$(dialog --no-collapse --title "Meshtastic URL" --inputbox "New Meshtastic LoRa configuration URL (SHIFT+INS to paste):" 8 60 3>&1 1>&2 2>&3)
-          if [ -n "$newurl" ]; then #if a URL was entered
-            dialog --no-collapse --title "$title" --yesno "New Meshtastic LoRa configuration URL:\n$newurl\n\nConfirm?" 15 60
-            if [ $? -eq 0 ]; then #unless cancel/no
-              loading "Sending command..."
-              dialog --no-collapse --colors --title "Meshtastic URL" --msgbox "$(femto-meshtasticd-config.sh -q "$newurl" && echo -e "\n\Z4Command successful!\Zn\n" || echo -e "\n\Z1Command failed.\Zn\n")" 0 0
-            fi
-          fi
-        )
+      3) # LoRa settings)
+        femto-meshtasticd-lora-dialogs.sh
       ;;
-      4) # set radio)
-        check_meshtasticd_running && (
-          set_lora_radio
-        )
-      ;;
-      5) # remote admin)
+      4) # remote admin)
         check_meshtasticd_running && (
           choice=""   # zero the choice before loading the submenu
           while true; do
@@ -602,7 +531,7 @@ meshtastic_settings() {
           done
         )
       ;;
-      6) #test mesh connectivity)
+      5) #test mesh connectivity)
         check_meshtasticd_running && (
           dialog --no-collapse --title "Meshtastic Connectivity Test" --yesno "Will send \"test\" to channel 0 and wait for acknowledgement. Will try up to 3 times.\n\nPerform test?" 10 45
           if [ $? -eq 0 ]; then #unless cancel/no
@@ -611,7 +540,7 @@ meshtastic_settings() {
           fi
         )
       ;;
-      7) #manage meshtasticd service)
+      6) #manage meshtasticd service)
         choice=""   # zero the choice before loading the submenu
         while true; do
           echo "Checking Meshtasticd service state..."
@@ -664,21 +593,21 @@ meshtastic_settings() {
           esac
         done
       ;;
-      8) #Upgrade meshtasticd)
+      7) #Upgrade meshtasticd)
         dialog --no-collapse --title "$title" --yesno "Upgrade Meshtasticd?\nRequires internet connection." 0 0
         if [ $? -eq 0 ]; then #unless cancel/no
           femto-meshtasticd-config.sh -z
           pause
         fi
       ;;
-      9) #uninstall meshtasticd)
+      8) #uninstall meshtasticd)
         dialog --no-collapse --colors --title "$title" --yesno "Uninstall Meshtasticd?\n\nFoxbuntu was designed with Meshtasticd integration in mind, and may behave unexpectedly if Meshtasticd is removed.\n\nThis will take the node \Zu\Z1OFFLINE\Zn and will not restart!" 0 0
         if [ $? -eq 0 ]; then
           femto-meshtasticd-config.sh -x
           dialog --no-collapse --colors --msgbox "Meshtasticd uninstalled. To purge all remnants, run \`\Zusudo apt purge\Zn\`." 8 40
         fi
       ;;
-      10)
+      9)
         return
       ;;
     esac
@@ -702,7 +631,7 @@ help_menu() {
     [ $? -eq 1 ] && break # Exit the loop if the user selects "Cancel" or closes the dialog    
     case $help_choice in
       1) #About Femtofox)
-        dialog --no-collapse --title "About Femtofox" --default-item "$choice" --backtitle "Foxbuntu $(grep -oP 'major=\K[0-9]+' /etc/foxbuntu-release).$(grep -oP 'minor=\K[0-9]+' /etc/foxbuntu-release).$(grep -oP 'patch=\K[0-9]+' /etc/foxbuntu-release)$(grep -oP 'hotfix=\K[a-z]+' /etc/foxbuntu-release)" --msgbox "$(femto-license.sh -a)" 18 65
+        dialog --no-collapse --title "About Femtofox" --default-item "$choice" --backtitle "$(femto-utils.sh -v)" --msgbox "$(femto-license.sh -a)" 18 65
       ;;
       2) #Display pinout)
         choice=""   # zero the choice before loading the submenu
@@ -755,20 +684,25 @@ Options are:\n\
 -l           Set LoRa radio model menu\n\
 -L           Meshtastic legacy admin menu\n\
 -w           Set Wi-Fi config menu\
+-c           Check if Meshtasticd is running and warn the user if not\
 "
-while getopts ":hlwLi" opt; do
+while getopts ":hlLwc" opt; do
   case ${opt} in
     h) # Option -h (help)
       echo -e $help
       ;;
     l) # Option -l (set lora radio)
-      set_lora_radio
+      femto-meshtasticd-lora-dialogs.sh # this function has moved
     ;;
     L) # Option -L (Meshtastic legacy admin menu)
       legacy_admin
     ;;
     w) # Option -w (Wi-Fi config)
       wifi_config
+    ;;
+    c) # Option -c (Check if Meshtasticd is running and warn the user if not)
+      check_meshtasticd_running
+      exit $?
     ;;
     \?) # Unknown option)
       echo -e "Unknown argument $1.\n$help"
@@ -779,7 +713,7 @@ done
 
 # Main menu
 while true; do
-  main_menu_choice=$(dialog --no-collapse --cancel-label "Exit" --backtitle "Foxbuntu v$(grep -oP 'major=\K[0-9]+' /etc/foxbuntu-release).$(grep -oP 'minor=\K[0-9]+' /etc/foxbuntu-release)$(output=$(grep -o 'patch=[1-9][0-9]*' /etc/foxbuntu-release | cut -d= -f2) && [ -n "$output" ] && echo ".$output")$(grep -oP 'hotfix=\K[a-z]+' /etc/foxbuntu-release)" --default-item "$main_menu_choice" --item-help --menu "Femtofox Config" 16 40 5 \
+  main_menu_choice=$(dialog --no-collapse --cancel-label "Exit" --backtitle "$(femto-utils.sh -v)" --default-item "$main_menu_choice" --item-help --menu "Femtofox Config" 16 40 5 \
     1 "Settings wizard" "" \
     2 "Networking" "" \
     3 "Meshtastic" "" \

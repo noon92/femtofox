@@ -33,13 +33,7 @@ wizard() {
   dialog --title "$title" --cancel-label "Skip" --yesno "Configure Meshtastic?" 6 40
   if [ $? -eq 0 ]; then #unless cancel/no
 
-    femto-config -l #set lora radio model
-    
-    newurl=$(dialog --title "Meshtastic URL" --inputbox "New Meshtasticd URL (SHIFT+INS to paste):" 8 50 3>&1 1>&2 2>&3)
-    if [ -n "$newurl" ]; then #if a URL was entered
-      loading "Sending URL..."
-      dialog --no-collapse --colors --title "Meshtastic URL" --msgbox "$(femto-meshtasticd-config.sh -q "$newurl" && echo -e "\n\Z4Command successful!\Zn\n" || echo -e "\n\Z1Command failed.\Zn\n")" 0 0
-    fi
+    femto-meshtasticd-lora-dialogs.sh -w
 
     # public key
     loading "Getting current public key..."

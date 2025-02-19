@@ -4,13 +4,20 @@ title="Software Manager"
 package_dir="/usr/local/bin/packages"
 
 install() {
-  dialog --no-collapse --title "Install $($package_dir/$1.sh -N)" --yesno "\nInstallation requires internet connectivity.\n\nProceed?" 10 40
+  dialog --no-collapse --title "Install $($package_dir/$1.sh -N)" --yesno "\nInstallation requires internet connectivity.\n\nInstall $($package_dir/$1.sh -N)?" 10 40
   [ $? -eq 1 ] && return 1 #if cancel/no
 
   echo "Installing $($package_dir/$1.sh -N)..."
   # Run the installation script, capturing the output and displaying it in real time
-  output=$($package_dir/$1.sh -i)
+  output=$($package_dir/$1.sh -i | tee /dev/tty)
   install_status=$?  # Capture the exit status of the eval command
+  if [ ${#output} -gt 2048 ]; then   # Truncate to 2048 characters and append ellipsis and note if necessary
+    truncated_output="${output:0:2000}...\nLOG TRUNCATED"
+    if [[ "$output" =~ user_message: ]]; then # preserve user_message by adding to end of string
+      truncated_output="$truncated_output\n$(echo "$output" | sed -n 's/.*\(user_message:.*\)/\1/p')"
+    fi
+    output="$truncated_output"
+  fi
   user_message=$(echo "$output" | awk '/user_message: / {found=1; split($0, arr, "user_message: "); print arr[2]; next} found {print}' | sed '/^$/q') # grab the user_message, if present
   output=$(echo -e "$output" | sed '/user_message: /,$d') # remove the user message from the detailed output
 
@@ -22,7 +29,7 @@ install() {
 }
 
 uninstall() {
-  dialog --no-collapse --title "Uninstall $($package_dir/$1.sh -N)" --yesno "\nReinstallation will require internet connectivity.\n\nProceed?" 10 40
+  dialog --no-collapse --title "Uninstall $($package_dir/$1.sh -N)" --yesno "\nNote: reinstallation will require internet connectivity.\n\nUninstall $($package_dir/$1.sh -N)?" 10 40
   [ $? -eq 1 ] && return 1 #if cancel/no
   echo "Uninstalling $($package_dir/$1.sh -N)..."
   output=$(eval "$package_dir/$1.sh -u 2>&1 | tee /dev/tty")
@@ -37,7 +44,7 @@ uninstall() {
 }
 
 initialize() {
-  dialog --no-collapse --title "$title" --yesno "\nIntialize $($package_dir/$1.sh -N)\n\nInitialization runs commands that require user interaction and so can only be run from terminal.\n\nProceed?" 13 50
+  dialog --no-collapse --title "$title" --yesno "\nIntialize $($package_dir/$1.sh -N)\n\nInitialization runs commands that require user interaction and so can only be run from terminal.\n\nInitialize $($package_dir/$1.sh -N)?" 13 50
   [ $? -eq 1 ] && return 1 #if cancel/no
   clear
   echo "Initializing $($package_dir/$1.sh -N)..."
@@ -50,7 +57,7 @@ initialize() {
 }
 
 upgrade() {
-  dialog --no-collapse --title "Upgrade $($package_dir/$1.sh -N)" --yesno "\nUpgrade requires internet connectivity.\n\nProceed?" 10 40
+  dialog --no-collapse --title "Upgrade $($package_dir/$1.sh -N)" --yesno "\nUpgrade requires internet connectivity.\n\nUpgrade $($package_dir/$1.sh -N)?" 10 40
   [ $? -eq 1 ] && return 1 #if cancel/no
   echo "Upgrading $($package_dir/$1.sh -N)..."
   output=$(eval "$package_dir/$1.sh -g 2>&1 | tee /dev/tty")
@@ -92,8 +99,9 @@ package_menu() {
     if $package_dir/$1.sh -O | grep -q 'G' && $package_dir/$1.sh -I; then license_button="--help-button --help-label License"; fi
     # for each line, check if it's supported by the package, display it if the current install state of the package is appropriate (example: don't display "install" if the package is already installed, don't display "stop service" for a package with no services)
     if $package_dir/$1.sh -I; then service_state=$(femto-utils.sh -C "$($package_dir/$1.sh -E)"); fi
+    # Removed from menu list until can be fixed - contact does not launch. When returned to list, should be first entry
+    # $(if $package_dir/$1.sh -O | grep -q 'l' && $package_dir/$1.sh -I; then echo "Run software x"; fi) \
     menu_list="\
-      $(if $package_dir/$1.sh -O | grep -q 'l' && $package_dir/$1.sh -I; then echo "Run software x"; fi) \
       $(if $package_dir/$1.sh -O | grep -q 'i' && ! $package_dir/$1.sh -I; then echo "Install x"; fi) \
       $(if $package_dir/$1.sh -O | grep -q 'u' && $package_dir/$1.sh -I; then echo "Uninstall x"; fi) \
       $(if $package_dir/$1.sh -O | grep -q 'a' && $package_dir/$1.sh -I; then echo "Initialize x"; fi) \
@@ -104,7 +112,11 @@ package_menu() {
       $(if $package_dir/$1.sh -O | grep -q 'e' && $package_dir/$1.sh -I; then echo "Start/restart service x"; fi) \
       $(if $package_dir/$1.sh -O | grep -q 'S' && $package_dir/$1.sh -I; then echo "Detailed service status x"; fi)"
       menu_count=$(( $(echo "$menu_list" | grep -o " x" | wc -l) $(if $package_dir/$1.sh -O | grep -q 'e' && $package_dir/$1.sh -I; then echo "+1"; fi) )) # count the number of menu items by counting how many times " x" shows up, +1 if there's a service. This is a stupid way to do this, but because each menu item only contains one space (the rest being space-sized invisible chars) it works. It's late at night, OKAY?!
-      choice=$(dialog --no-collapse --colors --title "$($package_dir/$1.sh -N)" $license_button --cancel-label "Back" --default-item "$choice" --menu "$(if $package_dir/$1.sh -O | grep -q 'S' && $package_dir/$1.sh -I; then echo "Service status: $(femto-utils.sh -R "$service_state")"; fi)" $(( menu_count + 9 )) 45 $(( menu_count + 3 )) \
+      if $package_dir/$1.sh -O | grep -q 'e' && [ "$($package_dir/$1.sh -E | wc -w)" -gt 1 ]; then
+        multiple_services_note="\nService will appear as \"running\" if any of the services are active."
+        menu_count=$((menu_count + 2))
+      fi
+      choice=$(dialog --no-collapse --colors --title "$($package_dir/$1.sh -N)" $license_button --cancel-label "Back" --default-item "$choice" --menu "$(if $package_dir/$1.sh -O | grep -q 'S' && $package_dir/$1.sh -I; then echo "Service status: $(femto-utils.sh -R "$service_state")"; fi)$multiple_services_note" $(( menu_count + 9 )) 45 $(( menu_count + 3 )) \
       $menu_list \
       " " "" \
       "Back to software manager" "" 3>&1 1>&2 2>&3)
