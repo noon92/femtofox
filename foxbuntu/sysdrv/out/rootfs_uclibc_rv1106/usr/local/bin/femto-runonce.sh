@@ -110,7 +110,7 @@ systemctl enable meshtasticd
 
 #generate SSH keys
 log_message "Generating new SSH encryption keys. This can take a couple minutes..."
-#femto-utils.sh -E
+femto-utils.sh -E
 
 #generate ttyd SSL keys
 log_message "Generating new Web Terminal (ttyd) SSL encryption keys. This can take a couple minutes..."
