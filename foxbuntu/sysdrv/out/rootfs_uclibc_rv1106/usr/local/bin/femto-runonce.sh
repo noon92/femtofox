@@ -79,10 +79,7 @@ mac="$(awk '/Serial/ {print $3}' /proc/cpuinfo | tail -c 11 | sed 's/^\(.*\)/a2\
 if ! grep -q "eth0" /etc/network/interfaces; then
   log_message "Setting eth0 MAC address to $mac (derivative of CPU s/n)"
   cat <<EOF >> /etc/network/interfaces
-# static mac address for onboard ethernet (castellated pins)
-allow-hotplug eth0
-iface eth0 inet dhcp
-hwaddress ether $mac
+    hwaddress ether $mac
 EOF
 else
   log_message "eth0 already exists in /etc/network/interfaces, skipping"
