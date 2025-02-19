@@ -115,6 +115,7 @@ femto-utils.sh -E
 #generate ttyd SSL keys
 log_message "Generating new Web Terminal (ttyd) SSL encryption keys. This can take a couple minutes..."
 /usr/local/bin/packages/ttyd.sh -k
+systemctl enable ttyd
 
 # remove first boot flag
 systemctl disable femto-runonce
