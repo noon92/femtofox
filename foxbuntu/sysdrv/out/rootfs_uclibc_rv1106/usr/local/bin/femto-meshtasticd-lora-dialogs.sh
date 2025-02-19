@@ -180,7 +180,7 @@ lora_settings_actions() {
         done
         menu_items+=("" "" "" "$([[ "$1" == "wizard" ]] && echo "Skip" || echo "Cancel")" "" "")
         while true; do
-          choice=$(dialog --no-collapse --title "$title" --cancel-label "$([[ "$1" == "wizard" ]] && echo "Skip" || echo "Cancel")" --default-item "${$lora_modemPreset^}" --item-help --menu "The default preset will provide a strong mixture of speed and range, for most users.\n\nPreset?  (current: ${lora_modemPreset:-unknown})" 0 0 0 \
+          choice=$(dialog --no-collapse --title "$title" --cancel-label "$([[ "$1" == "wizard" ]] && echo "Skip" || echo "Cancel")" --default-item "${lora_modemPreset^}" --item-help --menu "The default preset will provide a strong mixture of speed and range, for most users.\n\nPreset?  (current: ${lora_modemPreset:-unknown})" 0 0 0 \
             "${menu_items[@]}" 3>&1 1>&2 2>&3)
           [ $? -eq 1 ] || [ "$choice" == "Cancel" ] || [ "$choice" == "Skip" ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
           [ "$choice" == "" ] && continue # Restart loop if no choice made
