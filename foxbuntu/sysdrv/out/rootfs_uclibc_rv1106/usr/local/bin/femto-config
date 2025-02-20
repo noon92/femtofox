@@ -135,7 +135,7 @@ networking_settings() {
               1 "Turn Wi-Fi on" "" \
               2 "Turn Wi-Fi off" "" \
               " " "" "" \
-              3 "Return to previous menu" "" 3>&1 1>&2 2>&3)
+              3 "Back to previous menu" "" 3>&1 1>&2 2>&3)
             [ $? -eq 1 ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
             case $choice in
               1) femto-network-config.sh -x "up" && break ;;
@@ -340,7 +340,7 @@ utilities() {
             1 "Enable (default)" "" \
             2 "Disable" "" \
             " " "" "" \
-            3 "Return to previous menu" "" 3>&1 1>&2 2>&3)
+            3 "Back to previous menu" "" 3>&1 1>&2 2>&3)
           [ $? -eq 1 ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
           case $choice in
             1) femto-utils.sh -l "enable" ;;
@@ -357,7 +357,7 @@ utilities() {
             1 "Enable (default)" "" \
             2 "Disable" "" \
             " " "" "" \
-            3 "Return to previous menu" "" 3>&1 1>&2 2>&3)
+            3 "Back to previous menu" "" 3>&1 1>&2 2>&3)
           [ $? -eq 1 ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
           case $choice in
             1) femto-utils.sh -a "enable" ;;
@@ -385,42 +385,6 @@ utilities() {
   done
 }
 
-legacy_admin() {
-  choice=""   # zero the choice before loading the submenu
-  while true; do
-    loading "Getting current legacy admin state..."
-    choice=$(dialog --no-collapse --colors --title "Legacy Admin" --default-item "$choice" --help-button --item-help --menu "If the node you Femtofox needs to administer or be administered by is running 2.4.x or earlier, you should set this to Enabled.\n\nCurrent state: $(femto-utils.sh -R "$(femto-meshtasticd-config.sh -p)")" 16 65 5 \
-      1 "Enable" "" \
-      2 "Disable (default)" "" \
-      " " "" "" \
-      3 "Return to previous menu" "" 3>&1 1>&2 2>&3)
-    exit_status=$? # This line checks the exit status of the dialog command
-    if [ $exit_status -eq 1 ]; then # Exit the loop if the user selects "Cancel" or closes the dialog
-      break
-    elif [ $exit_status -eq 2 ]; then # Help ("extra") button
-      dialog --no-collapse --colors --title "System info help" --msgbox "For Meshtastic versions 2.4.x and earlier, remote admin is achieved by creating a secondary channel named admin with a shared PSK. In this setup, messages exchanged on this channel are encrypted only with the channel's PSK, allowing any node in the channel to administer others.\n\nFor more information:\nhttps://meshtastic.org/docs/configuration/remote-admin/\n" 0 0
-    else
-      case $choice in
-        1) # enable legacy admin)
-          dialog --no-collapse --title "Legacy Admin" --yesno "Enable legacy admin channel?\n" 0 0
-          if [ $? -eq 0 ]; then #unless cancel/no
-            loading "Sending command..."
-            dialog --no-collapse --colors --title "Legacy admin" --msgbox "$(femto-meshtasticd-config.sh -o "true" && echo -e "\n\Z4Command successful!\Zn\n" || echo -e "\n\Z1Command failed.\Zn\n")" 0 0
-          fi
-        ;;
-        2) # disable legacy admin)
-          dialog --no-collapse --title "Legacy Admin" --yesno "Disable legacy admin channel?\n" 0 0
-          if [ $? -eq 0 ]; then #unless cancel/no
-            loading "Sending command..."
-            dialog --no-collapse --colors --title "Legacy admin" --msgbox "$(femto-meshtasticd-config.sh -o "false" && echo -e "\n\Z4Command successful!\Zn\n" || echo -e "\n\Z1Command failed.\Zn\n")" 0 0
-          fi
-        ;;
-        3) break ;;
-      esac
-    fi
-  done
-}
-
 # Function to handle Meshtasticd settings
 meshtastic_settings() {
   local title="Meshtastic Settings"
@@ -429,14 +393,13 @@ meshtastic_settings() {
     meshtastic_choice=$(dialog --no-collapse --colors --title "$title" --cancel-label "Back" --default-item "$meshtastic_choice" --item-help --menu "Meshtasticd service is $(femto-utils.sh -R "$(femto-utils.sh -C "meshtasticd")")$(femto-meshtasticd-config.sh -k | grep -q 'simulated' && echo '\n\Z1Warning: using simulated radio\Zn')" 18 50 4 \
       1 "View node info" "" \
       2 "View configuration URL & QR code" "" \
-      3 "LoRa settings" "" \
-      4 "Security settings" "" \
-      5 "Mesh connectivity test" "" \
-      6 "Manage Meshtasticd service" "" \
-      7 "Upgrade/install Meshtasticd" "" \
-      8 "Uninstall Meshtasticd" "" \
+      3 "Meshtastic settings" "" \
+      4 "Mesh connectivity test" "" \
+      5 "Manage Meshtasticd service" "" \
+      6 "Upgrade/install Meshtasticd" "" \
+      7 "Uninstall Meshtasticd" "" \
       " " "" "" \
-      9 "Back to main menu" "" 3>&1 1>&2 2>&3)
+      8 "Back to main menu" "" 3>&1 1>&2 2>&3)
     [ $? -eq 1 ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
     case $meshtastic_choice in
       1) # view node info)
@@ -452,86 +415,10 @@ meshtastic_settings() {
           pause
         )
       ;;
-      3) # LoRa settings)
-        femto-meshtasticd-lora-dialogs.sh
+      3) # Meshtastic settings)
+        femto-meshtasticd-settings-menu.sh
       ;;
-      4) # remote admin)
-        check_meshtasticd_running && (
-          choice=""   # zero the choice before loading the submenu
-          while true; do
-            choice=$(dialog --no-collapse --cancel-label "Back" --default-item "$choice" --title "Meshtastic Security Settings" --item-help --menu "" 16 40 5 \
-              1 "View/change public key" "" \
-              2 "View/change private key" "" \
-              " " "" "" \
-              3 "View admin keys" "" \
-              4 "Set admin key" "" \
-              5 "Clear admin keys" "" \
-              6 "Legacy admin channel" "" \
-              " " "" "" \
-              7 "Return to previous menu" "" 3>&1 1>&2 2>&3)
-            [ $? -eq 1 ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
-            case $choice in
-              1) # view/change public key)
-                loading "Getting current public key..."
-                key=$(femto-meshtasticd-config.sh -u)
-                if [ -n "$key" ]; then
-                  dialog --no-collapse --title "Meshtastic public key" --yesno "Current public key:\n$key\n\nSet new key?" 9 55
-                  if [ $? -eq 0 ]; then #unless cancel/no
-                    key=$(dialog --no-collapse --title "Meshtastic public key" --inputbox "New Meshtastic public key (SHIFT+INS to paste):" 8 60 3>&1 1>&2 2>&3)
-                    if [ $? -eq 0 ]; then #unless cancel/no
-                      loading "Sending command..."
-                      dialog --no-collapse --colors --title "Meshtastic public key" --msgbox "$(femto-meshtasticd-config.sh -U "$key" && echo -e "\n\Z4Command successful!\Zn\n" || echo -e "\n\Z1Command failed.\Zn\n")" 0 0
-                    fi
-                  fi
-                else
-                  dialog --no-collapse --colors --title "Meshtastic public key" --msgbox "\Z1Failed to communicate with Meshtasticd.\Zn\n\nIs the service running?\n" 0 0
-                fi
-              ;;
-              2) # view/change private key)
-                loading "Getting current private key..."
-                key=$(femto-meshtasticd-config.sh -r)
-                if [ -n "$key" ]; then
-                  dialog --no-collapse --title "Meshtastic private key" --yesno "Current private key:\n$key\n\nSet new key?" 9 55
-                  if [ $? -eq 0 ]; then #unless cancel/no
-                    key=$(dialog --no-collapse --title "Meshtastic private key" --inputbox "New Meshtastic private key (SHIFT+INS to paste):" 8 60 3>&1 1>&2 2>&3)
-                    if [ $? -eq 0 ]; then #unless cancel/no
-                      loading "Sending command..."
-                      dialog --no-collapse --colors --title "Meshtastic private key" --msgbox "$(femto-meshtasticd-config.sh -R "$key" && echo -e "\n\Z4Command successful!\Zn\n" || echo -e "\n\Z1Command failed.\Zn\n")" 0 0
-                    fi
-                  fi
-                else
-                  dialog --no-collapse --colors --title "Meshtastic private key" --msgbox "\Z1Failed to communicate with Meshtasticd.\Zn\n\nIs the service running?\n" 0 0
-                fi
-              ;;
-              3) # view admin keys)
-                loading "Getting Admin Keys..."
-                dialog --no-collapse --title "Admin keys" --msgbox "Up to 3 admin keys are permitted, more will be ignored.\n\nKeys:$(femto-meshtasticd-config.sh -a | tail -n 1 | sed 's/|n/\\n/g')" 0 0
-              ;;
-              4) # set admin key)
-                key=$(dialog --no-collapse --title "Admin Keys" --inputbox "Meshtastic admin key - up to 3, more will be ignored.\n\n(SHIFT+INS to paste):" 11 40 3>&1 1>&2 2>&3)
-                if [ -n "$key" ]; then #if a key was entered
-                  loading "Sending command..."
-                  dialog --no-collapse --colors --title "Admin Keys" --msgbox "$(femto-meshtasticd-config.sh -A "$key" && echo -e "\n\Z4Command successful!\Zn\n" || echo -e "\n\Z1Command failed.\Zn\n")" 0 0
-                fi
-              ;;
-              5) # clear admin keys)
-                dialog --no-collapse --title "Admin Keys" --yesno "Meshtasticd can have up to 3 admin keys. If more are added, they will be ignored.\n\nClear admin key list?\n" 0 0
-                if [ $? -eq 0 ]; then #unless cancel/no
-                  loading "Sending command..."
-                  dialog --no-collapse --colors --title "Admin Keys" --msgbox "$(femto-meshtasticd-config.sh -c && echo -e "\n\Z4Command successful!\Zn\n" || echo -e "\n\Z1Command failed.\Zn\n")" 0 0
-                fi
-              ;;
-              6) # legacy admin)
-                legacy_admin
-              ;;
-              7) # return to previous menu)
-                break
-              ;;            
-            esac
-          done
-        )
-      ;;
-      5) #test mesh connectivity)
+      4) #test mesh connectivity)
         check_meshtasticd_running && (
           dialog --no-collapse --title "Meshtastic Connectivity Test" --yesno "Will send \"test\" to channel 0 and wait for acknowledgement. Will try up to 3 times.\n\nPerform test?" 10 45
           if [ $? -eq 0 ]; then #unless cancel/no
@@ -540,7 +427,7 @@ meshtastic_settings() {
           fi
         )
       ;;
-      6) #manage meshtasticd service)
+      5) #manage meshtasticd service)
         choice=""   # zero the choice before loading the submenu
         while true; do
           echo "Checking Meshtasticd service state..."
@@ -593,21 +480,21 @@ meshtastic_settings() {
           esac
         done
       ;;
-      7) #Upgrade meshtasticd)
+      6) #Upgrade meshtasticd)
         dialog --no-collapse --title "$title" --yesno "Upgrade Meshtasticd?\nRequires internet connection." 0 0
         if [ $? -eq 0 ]; then #unless cancel/no
           femto-meshtasticd-config.sh -z
           pause
         fi
       ;;
-      8) #uninstall meshtasticd)
+      7) #uninstall meshtasticd)
         dialog --no-collapse --colors --title "$title" --yesno "Uninstall Meshtasticd?\n\nFoxbuntu was designed with Meshtasticd integration in mind, and may behave unexpectedly if Meshtasticd is removed.\n\nThis will take the node \Zu\Z1OFFLINE\Zn and will not restart!" 0 0
         if [ $? -eq 0 ]; then
           femto-meshtasticd-config.sh -x
           dialog --no-collapse --colors --msgbox "Meshtasticd uninstalled. To purge all remnants, run \`\Zusudo apt purge\Zn\`." 8 40
         fi
       ;;
-      9)
+      8)
         return
       ;;
     esac
@@ -682,7 +569,6 @@ help="If script is run without arguments, femto-config menu will load.\n\
 Options are:\n\
 -h           This message\n\
 -l           Set LoRa radio model menu\n\
--L           Meshtastic legacy admin menu\n\
 -w           Set Wi-Fi config menu\
 -c           Check if Meshtasticd is running and warn the user if not\
 "
@@ -693,9 +579,6 @@ while getopts ":hlLwc" opt; do
       ;;
     l) # Option -l (set lora radio)
       femto-meshtasticd-lora-dialogs.sh # this function has moved
-    ;;
-    L) # Option -L (Meshtastic legacy admin menu)
-      legacy_admin
     ;;
     w) # Option -w (Wi-Fi config)
       wifi_config

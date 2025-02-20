@@ -32,48 +32,7 @@ wizard() {
 
   dialog --title "$title" --cancel-label "Skip" --yesno "Configure Meshtastic?" 6 40
   if [ $? -eq 0 ]; then #unless cancel/no
-
-    femto-meshtasticd-lora-dialogs.sh -w
-
-    # public key
-    loading "Getting current public key..."
-    key=$(femto-meshtasticd-config.sh -u)
-    if [ -n "$key" ]; then
-      dialog --no-collapse --title "Meshtastic public key" --yesno "Current public key:\n$key\n\nSet new key?" 9 55
-      if [ $? -eq 0 ]; then #unless cancel/no
-        key=$(dialog --no-collapse --title "Meshtastic public key" --inputbox "New Meshtastic public key (SHIFT+INS to paste):" 8 60 3>&1 1>&2 2>&3)
-        if [ $? -eq 0 ]; then #unless cancel/no
-          loading "Sending command..."
-          dialog --no-collapse --colors --title "Meshtastic public key" --msgbox "$(femto-meshtasticd-config.sh -U "$key" && echo -e "\n\Z4Command successful!\Zn\n" || echo -e "\n\Z1Command failed.\Zn\n")" 0 0
-        fi
-      fi
-    else
-      dialog --no-collapse --colors --title "Meshtastic public key" --msgbox "\Z1Failed to communicate with Meshtasticd.\Zn\n\nIs the service running?\n" 0 0
-    fi
-
-    # private key
-    loading "Getting current private key..."
-    key=$(femto-meshtasticd-config.sh -u)
-    if [ -n "$key" ]; then
-      dialog --no-collapse --title "Meshtastic private key" --yesno "Current private key:\n$key\n\nSet new key?" 9 55
-      if [ $? -eq 0 ]; then #unless cancel/no
-        key=$(dialog --no-collapse --title "Meshtastic private key" --inputbox "New Meshtastic private key (SHIFT+INS to paste):" 8 60 3>&1 1>&2 2>&3)
-        if [ $? -eq 0 ]; then #unless cancel/no
-          loading "Sending command..."
-          dialog --no-collapse --colors --title "Meshtastic private key" --msgbox "$(femto-meshtasticd-config.sh -R "$key" && echo -e "\n\Z4Command successful!\Zn\n" || echo -e "\n\Z1Command failed.\Zn\n")" 0 0
-        fi
-      fi
-    else
-      dialog --no-collapse --colors --title "Meshtastic private key" --msgbox "\Z1Failed to communicate with Meshtasticd.\Zn\n\nIs the service running?\n" 0 0
-    fi
-
-    key=$(dialog --title "Meshtastic admin key" --cancel-label "Skip" --inputbox "Enter Meshtastic admin key (optional). If 3 admin keys are already in Meshtastic, more will be ignored.\n(SHIFT+INS to paste):" 11 50 3>&1 1>&2 2>&3)
-    if [ -n "$key" ]; then #if a URL was entered
-      loading "Sending key..."
-      dialog --no-collapse --colors --title "Meshtastic URL" --msgbox "$(femto-meshtasticd-config.sh -A "$key" && echo -e "\n\Z4Command successful!\Zn\n" || echo -e "\n\Z1Command failed.\Zn\n")" 0 0
-    fi
-
-    femto-config -L # legacy admin menu
+    femto-meshtasticd-lora-dialogs.sh
   fi
 
   dialog --title "$title" --msgbox "Setup wizard complete!" 6 40
