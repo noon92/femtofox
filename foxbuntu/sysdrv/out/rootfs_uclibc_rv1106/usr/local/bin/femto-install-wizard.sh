@@ -32,7 +32,7 @@ wizard() {
 
   dialog --title "$title" --cancel-label "Skip" --yesno "Configure Meshtastic?" 6 40
   if [ $? -eq 0 ]; then #unless cancel/no
-    femto-meshtasticd-lora-dialogs.sh
+    femto-meshtasticd-settings-menu.sh
   fi
 
   dialog --title "$title" --msgbox "Setup wizard complete!" 6 40

@@ -72,7 +72,7 @@ security_menu() {
           dialog --no-collapse --colors --title "Meshtastic private key" --yesno "The private key of the device, used to create a shared key with a remote device for secure communication.\n\n\Z1This key should be kept confidential.\nSetting an invalid key will lead to unexpected behaviors.\Zn\n\nCurrent private key:\n${security_privateKey:-unknown}\n\nSet new key?" 15 63
           if [ $? -eq 0 ]; then #unless cancel/no
             key=$(dialog --no-collapse --colors --title "$title" --cancel-label "Cancel" --inputbox "Private key  (default: random)" 8 60 "${security_privateKey:-unknown}" 3>&1 1>&2 2>&3)
-            if [ $? -eq 0 ]; then #unless cancel/no
+            if [ $? -eq 0 ] && [[ "$security_privateKey" != "$key" ]]; then #unless cancel/no
               loading "Sending command..."
               dialog --no-collapse --colors --title "Meshtastic private key" --msgbox "$(femto-meshtasticd-config.sh -R "$key" && echo -e "\n\Z4Command successful!\Zn\n" || echo -e "\n\Z1Command failed.\Zn\n")" 0 0
             fi
@@ -82,7 +82,7 @@ security_menu() {
           dialog --no-collapse --colors --title "Meshtastic public key" --yesno "The public key of the device, shared with other nodes on the mesh to allow them to compute a shared secret key for secure communication. Generated automatically to match private key.\n\n\Z1Don't change this if you don't know what you're doing.\Zn\n\nCurrent public key:\n${security_publicKey:-unknown}\n\nSet new key?" 16 60
           if [ $? -eq 0 ]; then #unless cancel/no
             input=$(dialog --no-collapse --colors --title "$title" --cancel-label "Cancel" --inputbox "Public key  (default: generated from private key)" 8 60 "${security_publicKey:-unknown}" 3>&1 1>&2 2>&3)
-            if [ $? -eq 0 ]; then #unless cancel/no
+            if [ $? -eq 0 ] && [[ "$security_publicKey" != "$key" ]]; then #unless cancel/no
               loading "Sending command..."
               dialog --no-collapse --colors --title "Meshtastic public key" --msgbox "$(femto-meshtasticd-config.sh -U "$key" && echo -e "\n\Z4Command successful!\Zn\n" || echo -e "\n\Z1Command failed.\Zn\n")" 0 0
             fi
@@ -114,11 +114,11 @@ security_menu() {
               "Cancel" "" "" 3>&1 1>&2 2>&3)
             [ $? -eq 1 ] || [ "$choice" == "Cancel" ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
             [ "$choice" == " " ] && continue #restart loop if no choice made
-            if [[ "$security_adminChannelEnabled" != "$choice " ]]; then
+            if [[ "${security_adminChannelEnabled^}" != "$choice" ]]; then
               security_adminChannelEnabled="$choice"
               command="--set security.admin_channel_enabled $(echo "$choice" | tr '[:upper:]' '[:lower:]') "
+              send_settings not_wizard Security
             fi
-            send_settings not_wizard Security
             break
           done
         ;;
@@ -132,11 +132,11 @@ security_menu() {
               "Cancel" "" "" 3>&1 1>&2 2>&3)
             [ $? -eq 1 ] || [ "$choice" == "Cancel" ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
             [ "$choice" == " " ] && continue #restart loop if no choice made
-            if [[ "$security_isManaged" != "$choice " ]]; then
+            if [[ "${security_isManaged^}" != "$choice" ]]; then
               security_isManaged="$choice"
               command="--set security.is_managed $(echo "$choice" | tr '[:upper:]' '[:lower:]') "
+              send_settings not_wizard Security
             fi
-            send_settings not_wizard Security
             break
           done
        ;;
@@ -150,11 +150,11 @@ security_menu() {
               "Cancel" "" "" 3>&1 1>&2 2>&3)
             [ $? -eq 1 ] || [ "$choice" == "Cancel" ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
             [ "$choice" == " " ] && continue #restart loop if no choice made
-            if [[ "$security_serialEnabled" != "$choice " ]]; then
+            if [[ "${security_serialEnabled^}" != "$choice" ]]; then
               security_serialEnabled="$choice"
               command="--set security.serial_enabled $(echo "$choice" | tr '[:upper:]' '[:lower:]') "
+              send_settings not_wizard Security
             fi
-            send_settings not_wizard Security
             break
           done
         ;;
@@ -168,9 +168,11 @@ security_menu() {
               "Cancel" "" "" 3>&1 1>&2 2>&3)
             [ $? -eq 1 ] || [ "$choice" == "Cancel" ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
             [ "$choice" == " " ] && continue #restart loop if no choice made
-            security_debugLogApiEnabled="$choice"
-            command="--set security.debug_log_api_enabled $(echo "$choice" | tr '[:upper:]' '[:lower:]') "
-            send_settings not_wizard Security
+            if [[ "${security_debugLogApiEnabled^}" != "$choice" ]]; then
+              security_debugLogApiEnabled="$choice"
+              command="--set security.debug_log_api_enabled $(echo "$choice" | tr '[:upper:]' '[:lower:]') "
+              send_settings not_wizard Security
+            fi
             break
           done
         ;;
@@ -287,8 +289,10 @@ lora_menu() {
             "${menu_items[@]}" 3>&1 1>&2 2>&3)
           [ $? -eq 1 ] || [ "$choice" == "Cancel" ] || [ "$choice" == "Skip" ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
           [ "$choice" == " " ] && continue # Restart loop if no choice made
-          lora_region="$choice"
-          command+="--set lora.region $choice "
+          if [[ "${lora_region^}" != "$choice" ]]; then
+            lora_region="$choice"
+            command+="--set lora.region $choice "
+          fi
           break
         done
       fi
@@ -303,9 +307,11 @@ lora_menu() {
             "$([[ "$1" == "wizard" ]] && echo "Skip" || echo "Cancel")" "" "" 3>&1 1>&2 2>&3)
           [ $? -eq 1 ] || [ "$choice" == "Cancel" ] || [ "$choice" == "Skip" ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
           [ "$choice" == " " ] && continue #restart loop if no choice made
-          using_preset="$choice"
-          lora_usePreset="$choice"
-          command+="--set lora.use_preset $(echo "$choice" | tr '[:upper:]' '[:lower:]') "
+          if [[ "${lora_usePreset^}" != "$choice" ]]; then
+            using_preset="$choice"
+            lora_usePreset="$choice"
+            command+="--set lora.use_preset $(echo "$choice" | tr '[:upper:]' '[:lower:]') "
+          fi
           break
         done
       fi
@@ -330,8 +336,10 @@ lora_menu() {
               "${menu_items[@]}" 3>&1 1>&2 2>&3)
             [ $? -eq 1 ] || [ "$choice" == "Cancel" ] || [ "$choice" == "Skip" ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
             [ "$choice" == " " ] && continue # Restart loop if no choice made
-            lora_modemPreset="$choice"
-            command+="--set lora.modem_preset $choice "
+            if [[ "${lora_modemPreset^}" != "$choice" ]]; then
+              lora_modemPreset="$choice"
+              command+="--set lora.modem_preset $choice "
+            fi
             break
           done
         fi
@@ -353,8 +361,10 @@ lora_menu() {
               "$([[ "$1" == "wizard" ]] && echo "Skip" || echo "Cancel")" "" "" 3>&1 1>&2 2>&3)
             [ $? -eq 1 ] || [ "$choice" == "Cancel" ] || [ "$choice" == "Skip" ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
             [ "$choice" == " " ] && continue # Restart loop if no choice made
-            lora_bandwidth="$choice"
-            command+="--set lora.bandwidth $choice "
+            if [[ "$lora_bandwidth" != "$choice" ]]; then
+              lora_bandwidth="$choice"
+              command+="--set lora.bandwidth $choice "
+            fi
             break
           done
         fi
@@ -373,8 +383,10 @@ lora_menu() {
               "$([[ "$1" == "wizard" ]] && echo "Skip" || echo "Cancel")" "" "" 3>&1 1>&2 2>&3)
             [ $? -eq 1 ] || [ "$choice" == "Cancel" ] || [ "$choice" == "Skip" ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
             [ "$choice" == " " ] && continue # Restart loop if no choice made
-            lora_spreadFactor="$choice"
-            command+="--set lora.spread_factor $choice "
+            if [[ "$lora_spreadFactor" != "$choice" ]]; then
+              lora_spreadFactor="$choice"
+              command+="--set lora.spread_factor $choice "
+            fi
             break
           done
         fi
@@ -391,8 +403,10 @@ lora_menu() {
               "$([[ "$1" == "wizard" ]] && echo "Skip" || echo "Cancel")" "" "" 3>&1 1>&2 2>&3)
             [ $? -eq 1 ] || [ "$choice" == "Cancel" ] || [ "$choice" == "Skip" ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
             [ "$choice" == " " ] && continue # Restart loop if no choice made
-            lora_codingRate="$choice"
-            command+="--set lora.coding_rate $choice "
+            if [[ "$lora_codingRate" != "$choice" ]]; then
+              lora_codingRate="$choice"
+              command+="--set lora.coding_rate $choice "
+            fi
             break
           done
         fi
@@ -404,7 +418,7 @@ lora_menu() {
           [[ -z $input || ($input =~ ^([0-9]{1,6})(\.[0-9]+)?$ && $(echo "$input <= 1000000" | bc -l) -eq 1) ]] && break # exit loop if user input a number between 0 and 1000000. Decimals allowed
           dialog --no-collapse --title "$title" --msgbox "Must be between 0-1000000. Decimals allowed." 6 50
         done
-        if [ $? -ne 1 ] && [ -n "$input" ]; then
+        if [ $? -ne 1 ] && [ -n "$input" ] && [[ "$lora_frequencyOffset" != "$input" ]]; then
           lora_frequencyOffset="$input"
           command+="--set lora.frequency_offset $input "
         fi
@@ -416,7 +430,7 @@ lora_menu() {
           [[ -z $input || ($input =~ ^[0-7]$) ]] && break # exit loop if user input an integer between 0 and 7
           dialog --no-collapse --title "$title" --msgbox "Must be an integer between 0 and 7." 6 50
         done
-        if [ $? -ne 1 ] && [ -n "$input" ]; then
+        if [ $? -ne 1 ] && [ -n "$input" ] && [[ "$lora_hopLimit" != "$input" ]]; then
           lora_hopLimit="$input"
           command+="--set lora.hop_limit $input "
         fi
@@ -432,8 +446,10 @@ lora_menu() {
             "$([[ "$1" == "wizard" ]] && echo "Skip" || echo "Cancel")" "" "" 3>&1 1>&2 2>&3)
           [ $? -eq 1 ] || [ "$choice" == "Cancel" ] || [ "$choice" == "Skip" ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
           [ "$choice" == " " ] && continue #restart loop if no choice made
-          lora_txEnabled="$choice"
-          command+="--set lora.tx_enabled $(echo "$choice" | tr '[:upper:]' '[:lower:]') "
+          if [[ "${lora_txEnabled^}" != "$choice" ]] && [[ "$lora_txEnabled" != "$input" ]]; then
+            lora_txEnabled="$choice"
+            command+="--set lora.tx_enabled $(echo "$choice" | tr '[:upper:]' '[:lower:]') "
+          fi
           break
         done
       fi
@@ -453,7 +469,7 @@ TX power in dBm. Must be 0-30 (0 for automatic)" 0 0 ${lora_txPower:-unknown} 3>
           [[ -z $input || $input =~ ^([12]?[0-9]|30)$ ]] && break # exit loop if user input an integer between 0 and 30
           dialog --no-collapse --title "$title" --msgbox "Must be an integer between 0 and 30." 6 50
         done
-        if [ $? -ne 1 ] && [ -n "$input" ]; then
+        if [ $? -ne 1 ] && [ -n "$input" ] && [[ "$lora_txPower" != "$input" ]]; then
           lora_txPower="$input"
           command+="--set lora.tx_power $input "
         fi
@@ -465,7 +481,7 @@ TX power in dBm. Must be 0-30 (0 for automatic)" 0 0 ${lora_txPower:-unknown} 3>
           [[ -z $input || ($input =~ ^[0-9]+$) ]] && break # exit loop if user input an integer 0 or higher
           dialog --no-collapse --title "$title" --msgbox "Must be an integer 0 or higher." 6 50
         done
-        if [ $? -ne 1 ] && [ -n "$input" ]; then
+        if [ $? -ne 1 ] && [ -n "$input" ] && [[ "$lora_channelNum" != "$input" ]]; then
           lora_channelNum="$input"
           command+="--set lora.channel_num $input "
         fi
@@ -480,8 +496,10 @@ TX power in dBm. Must be 0-30 (0 for automatic)" 0 0 ${lora_txPower:-unknown} 3>
             "$([[ "$1" == "wizard" ]] && echo "Skip" || echo "Cancel")" "" "" 3>&1 1>&2 2>&3)
           [ $? -eq 1 ] || [ "$choice" == "Cancel" ] || [ "$choice" == "Skip" ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
           [ "$choice" == " " ] && continue #restart loop if no choice made
-          lora_overrideDutyCycle="$choice"
-          command+="--set lora.override_duty_cycle $(echo "$choice" | tr '[:upper:]' '[:lower:]') "
+          if [[ "${lora_overrideDutyCycle^}" != "$choice" ]]; then
+            lora_overrideDutyCycle="$choice"
+            command+="--set lora.override_duty_cycle $(echo "$choice" | tr '[:upper:]' '[:lower:]') "
+          fi
           break
         done
       fi
@@ -495,8 +513,10 @@ TX power in dBm. Must be 0-30 (0 for automatic)" 0 0 ${lora_txPower:-unknown} 3>
             "$([[ "$1" == "wizard" ]] && echo "Skip" || echo "Cancel")" "" "" 3>&1 1>&2 2>&3)
           [ $? -eq 1 ] || [ "$choice" == "Cancel" ] || [ "$choice" == "Skip" ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
           [ "$choice" == " " ] && continue #restart loop if no choice made
-          lora_sx126xRxBoostedGain="$choice"
-          command+="--set lora.sx126x_rx_boosted_gain $(echo "$choice" | tr '[:upper:]' '[:lower:]') "
+          if [[ "${lora_sx126xRxBoostedGain^}" != "$choice" ]]; then
+            lora_sx126xRxBoostedGain="$choice"
+            command+="--set lora.sx126x_rx_boosted_gain $(echo "$choice" | tr '[:upper:]' '[:lower:]') "
+          fi
           break
         done
       fi
@@ -507,7 +527,7 @@ TX power in dBm. Must be 0-30 (0 for automatic)" 0 0 ${lora_txPower:-unknown} 3>
           [[ -z $input || ($input =~ ^[0-9]+(\.[0-9]+)?$) ]] && break # exit loop if user input a number 0 or higher (decimals allowed)
           dialog --no-collapse --title "$title" --msgbox "Must be a number 0 or higher. Decimals allowed." 6 53
         done
-        if [ $? -ne 1 ] && [ -n "$input" ]; then
+        if [ $? -ne 1 ] && [ -n "$input" ] && [[ "$lora_overrideFrequency" != "$input" ]]; then
           lora_overrideFrequency="$input"
           command+="--set lora.override_frequency $input "
         fi
@@ -522,8 +542,10 @@ TX power in dBm. Must be 0-30 (0 for automatic)" 0 0 ${lora_txPower:-unknown} 3>
             "$([[ "$1" == "wizard" ]] && echo "Skip" || echo "Cancel")" "" "" 3>&1 1>&2 2>&3)
           [ $? -eq 1 ] || [ "$choice" == "Cancel" ] || [ "$choice" == "Skip" ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
           [ "$choice" == " " ] && continue #restart loop if no choice made
-          lora_ignoreMqtt="$choice"
-          command+="--set lora.ignore_mqtt $(echo "$choice" | tr '[:upper:]' '[:lower:]') "
+          if [[ "${lora_ignoreMqtt^}" != "$choice" ]]; then
+            lora_ignoreMqtt="$choice"
+            command+="--set lora.ignore_mqtt $(echo "$choice" | tr '[:upper:]' '[:lower:]') "
+          fi
           break
         done
       fi
@@ -537,8 +559,10 @@ TX power in dBm. Must be 0-30 (0 for automatic)" 0 0 ${lora_txPower:-unknown} 3>
             "$([[ "$1" == "wizard" ]] && echo "Skip" || echo "Cancel")" "" "" 3>&1 1>&2 2>&3)
           [ $? -eq 1 ] || [ "$choice" == "Cancel" ] || [ "$choice" == "Skip" ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
           [ "$choice" == " " ] && continue #restart loop if no choice made
-          lora_configOkToMqtt="$choice"
-          command+="--set lora.config_ok_to_mqtt $(echo "$choice" | tr '[:upper:]' '[:lower:]') "
+          if [[ "${lora_configOkToMqtt^}" != "$choice" ]]; then
+            lora_configOkToMqtt="$choice"
+            command+="--set lora.config_ok_to_mqtt $(echo "$choice" | tr '[:upper:]' '[:lower:]') "
+          fi
           break
         done
       fi
@@ -646,7 +670,7 @@ user_menu() {
     if femto-config -c; then
       if [ "$1" = "long_name" ] || [ "$1" = "wizard" ]; then
         input=$(dialog --no-collapse --colors --title "$title" --cancel-label "$([[ "$1" == "wizard" ]] && echo "Skip" || echo "Cancel")" --inputbox "If you are a licensed HAM operator and have enabled HAM mode, this must be set to your HAM operator call sign.\n\nNode long name (default: Meshtastic ${nodeinfo_user_id: -4})" 0 0 "${nodeinfo_user_longName:-unknown}" 3>&1 1>&2 2>&3)
-        if [ $? -ne 1 ] && [ -n "$input" ]; then
+        if [ $? -ne 1 ] && [ -n "$input" ] && [[ "$nodeinfo_user_longName" != "$input" ]]; then
           nodeinfo_user_longName="$input"
           command+="--set-owner $input "
         fi
@@ -658,7 +682,7 @@ user_menu() {
           [ $? -eq 1 ] || [[ ${#input} -le 4 ]] && break # break if valid input
           dialog --no-collapse --title "$title" --msgbox "Must be up to 4 bytes.\n\nUsually this is 4 characters, if using latin characters and no emojis." 9 50
         done
-        if [ $? -ne 1 ] && [ -n "$input" ]; then
+        if [ $? -ne 1 ] && [ -n "$input" ] && [[ "$nodeinfo_user_shortName" != "$input" ]]; then
           nodeinfo_user_shortName="$input"
           command+="--set-owner-short $input "
         fi
@@ -686,8 +710,10 @@ HAM radio mode has both privileges and restrictions:\n\
 When using HAM mode, you must set your node's Long Name to your HAM callsign and remove encryption from all your channels. Not doing so may violate the law." 0 0
             else
               [ "$choice" == " " ] && continue #restart loop if no choice made
-              nodeinfo_user_isLicensed="${choice,,}"
-              command+="--set --set-ham $nodeinfo_user_longName"
+              if [[ "${nodeinfo_user_isLicensed^}" != "$choice" ]]; then
+                nodeinfo_user_isLicensed="${choice,,}"
+                command+="--set-ham \"$nodeinfo_user_longName\""
+              fi
               break
             fi
         done
@@ -752,8 +778,10 @@ device_menu() {
             "${menu_items[@]}" 3>&1 1>&2 2>&3)
           [ $? -eq 1 ] || [ "$choice" == "Cancel" ] || [ "$choice" == "Skip" ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
           [ "$choice" == " " ] && continue # Restart loop if no choice made
-          device_role="$choice"
-          command+="--set device.role $choice "
+          if [[ "$device_role" != "$choice" ]]; then
+            device_role="$choice"
+            command+="--set device.role $choice "
+          fi
           break
         done
       fi
@@ -764,7 +792,7 @@ device_menu() {
           [ $? -eq 1 ] || [[ "$input" =~ ^[0-9]+$ ]] && (( input >= 0 && input <= 34 )) && break # break if valid input
           dialog --no-collapse --title "$title" --msgbox "Must be an integer between 0 and 34." 6 50
         done
-        if [ $? -ne 1 ] && [ -n "$input" ]; then
+        if [ $? -ne 1 ] && [ -n "$input" ] && [[ "$device_buttonGpio" != "$input" ]]; then
           device_buttonGpio="$input"
           command+="--set device.button_gpio $input "
         fi
@@ -776,7 +804,7 @@ device_menu() {
           [ $? -eq 1 ] || [[ "$input" =~ ^[0-9]+$ ]] && (( input >= 0 && input <= 34 )) && break # break if valid input
           dialog --no-collapse --title "$title" --msgbox "Must be an integer between 0 and 34." 6 50
         done
-        if [ $? -ne 1 ] && [ -n "$input" ]; then
+        if [ $? -ne 1 ] && [ -n "$input" ] && [[ "$device_buzzerGpio" != "$input" ]]; then
           device_buzzerGpio="$input"
           command+="--set device.buzzer_gpio $input "
         fi
@@ -795,8 +823,10 @@ device_menu() {
             "$([[ "$1" == "wizard" ]] && echo "Skip" || echo "Cancel")" "" "" 3>&1 1>&2 2>&3)
           [ $? -eq 1 ] || [ "$choice" == "Cancel" ] || [ "$choice" == "Skip" ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
           [ "$choice" == " " ] && continue # Restart loop if no choice made
-          device_rebroadcastMode="$choice"
-          command+="--set device.rebroadcast_mode $choice "
+          if [[ "$device_rebroadcastMode" != "$choice" ]]; then
+            device_rebroadcastMode="$choice"
+            command+="--set device.rebroadcast_mode $choice "
+          fi
           break
         done
       fi
@@ -807,13 +837,13 @@ device_menu() {
           [ $? -eq 1 ] || [[ "$input" =~ ^[0-9]+$ ]] && (( input >= 0 && input <= 4294967295 )) && break # break if valid input
           dialog --no-collapse --title "$title" --msgbox "Must be an integer between 0 and 4294967295." 6 50
         done
-        if [ $? -ne 1 ] && [ -n "$input" ]; then
+        if [ $? -ne 1 ] && [ -n "$input" ] && [[ "$device_nodeInfoBroadcastSecs" != "$input" ]]; then
           device_nodeInfoBroadcastSecs="$input"
           command+="--set device.node_info_broadcast_secs $input "
         fi
       fi
 
-      if [ "$1" = "double_tap_as_button" ] || [ "$1" = "wizard" ]; then
+      if [ "$1" = "double_tap_as_button_press" ] || [ "$1" = "wizard" ]; then
         while true; do
           choice=$(dialog --no-collapse --title "$title" --cancel-label "$([[ "$1" == "wizard" ]] && echo "Skip" || echo "Cancel")" --default-item "$(echo "${device_doubleTapAsButtonPress:-false}" | sed 's/^./\U&/')" --item-help --menu "This option will enable a double tap, when a supported accelerometer is attached to the device, to be treated as a button press.\n\nDouble Tap as Button Press?  (current: ${device_doubleTapAsButtonPress:-unknown})" 0 0 0 \
             "True" "" "" \
@@ -822,8 +852,10 @@ device_menu() {
             "$([[ "$1" == "wizard" ]] && echo "Skip" || echo "Cancel")" "" "" 3>&1 1>&2 2>&3)
           [ $? -eq 1 ] || [ "$choice" == "Cancel" ] || [ "$choice" == "Skip" ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
           [ "$choice" == " " ] && continue #restart loop if no choice made
-          device_doubleTapAsButtonPress="$choice"
-          command+="--set device.double_tap_as_button_press $(echo "$choice" | tr '[:upper:]' '[:lower:]') "
+          if [[ "${device_doubleTapAsButtonPress^}" != "$choice" ]]; then
+            device_doubleTapAsButtonPress="$choice"
+            command+="--set device.double_tap_as_button_press $(echo "$choice" | tr '[:upper:]' '[:lower:]') "
+          fi
           break
         done
       fi
@@ -837,15 +869,17 @@ device_menu() {
             "$([[ "$1" == "wizard" ]] && echo "Skip" || echo "Cancel")" "" "" 3>&1 1>&2 2>&3)
           [ $? -eq 1 ] || [ "$choice" == "Cancel" ] || [ "$choice" == "Skip" ] && break # Exit the loop if the user selects "Cancel" or closes the dialog
           [ "$choice" == " " ] && continue #restart loop if no choice made
-          device_disableTripleClick="$choice"
-          command+="--set device.disable_triple_click $(echo "$choice" | tr '[:upper:]' '[:lower:]') "
+          if [[ "${device_disableTripleClick^}" != "$choice" ]]; then
+            device_disableTripleClick="$choice"
+            command+="--set device.disable_triple_click $(echo "$choice" | tr '[:upper:]' '[:lower:]') "
+          fi
           break
         done
       fi
 
       if [ "$1" = "posix_timezone" ] || [ "$1" = "wizard" ]; then
         input=$(dialog --no-collapse --colors --title "$title" --cancel-label "$([[ "$1" == "wizard" ]] && echo "Skip" || echo "Cancel")" --inputbox "Uses the TZ Database format to display the correct local time on the device display and in its logs.\n\nPOSIX TZDEF Timezone Definition (default: blank)" 0 0 "$device_tzdef" 3>&1 1>&2 2>&3)
-        if [ $? -ne 1 ] && [ -n "$input" ]; then
+        if [ $? -ne 1 ] && [ -n "$input" ] && [[ "$device_tzdef" != "$input" ]]; then
           device_tzdef="$input"
           command+="--set device.tzdef $input "
         fi
