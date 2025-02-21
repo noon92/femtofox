@@ -12,15 +12,11 @@ if [[ $(id -u) != 0 ]]; then
   exit 1
 fi
 
-if [ -f /etc/os-release ]; then
-    . /etc/os-release
-    if [ "$VERSION_ID" != "22.04" ] || [ "$NAME" != "Ubuntu" ]; then
-        echo "This script is intended for Ubuntu 22.04, exiting..."
-        exit 1
-    fi
-else
-    echo "This script is intended for Ubuntu 22.04, exiting..."
-    exit 1
+[ -f /etc/os-release ] && . /etc/os-release
+
+if [ "$VERSION_ID" != "22.04" ] || [ "$NAME" != "Ubuntu" ]; then
+    echo -e "This script is intended for Ubuntu 22.04, your operating system is not supported (but may work).\nPress Ctrl+C to cancel, or Enter to continue."
+    read
 fi
 
 sudoer=$(echo $SUDO_USER)
